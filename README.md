@@ -1,4 +1,4 @@
-# take6-viewer-svg
+# container-viewer
 
 ## Project setup
 ```
