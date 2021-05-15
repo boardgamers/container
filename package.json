@@ -1,0 +1,41 @@
+{
+    "name": "@gaia-project/take6-viewer",
+    "version": "0.3.8",
+    "scripts": {
+        "serve": "vue-cli-service serve",
+        "build": "vue-cli-service build",
+        "test:unit": "vue-cli-service test:unit",
+        "package": "vue-cli-service build --target lib src/wrapper.ts",
+        "prepublishOnly": "npm run package"
+    },
+    "dependencies": {
+        "core-js": "^3.6.5",
+        "lodash": "^4.17.19",
+        "container-engine": "workspace:../container-engine",
+        "vue": "^2.6.11",
+        "vue-class-component": "^7.2.3",
+        "vue-property-decorator": "^8.4.2"
+    },
+    "devDependencies": {
+        "@types/assert": "^1.4.7",
+        "@types/chai": "^4.2.11",
+        "@types/lodash": "^4.14.154",
+        "@types/mocha": "^5.2.4",
+        "@vue/cli-plugin-babel": "~4.4.0",
+        "@vue/cli-plugin-typescript": "~4.4.0",
+        "@vue/cli-plugin-unit-mocha": "~4.4.0",
+        "@vue/cli-service": "~4.4.0",
+        "@vue/test-utils": "^1.0.3",
+        "chai": "^4.1.2",
+        "sass": "^1.26.5",
+        "sass-loader": "^8.0.2",
+        "typescript": "~3.9.3",
+        "vue-template-compiler": "^2.6.11"
+    },
+    "files": [
+        "src",
+        "dist/take6-viewer.umd.min.js",
+        "dist/take6-viewer.css",
+        "tsconfig.json"
+    ]
+}
