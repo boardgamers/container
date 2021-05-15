@@ -78,9 +78,9 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
             // BuyFactory
             if (player.actions > 0) {
                 const factoriesLeft: ContainerColor[] = [];
-                Object.keys(ContainerColor).forEach(key => {
-                    if (G.factoriesLeft.filter(f => f.toString() === key).length > 0)
-                        factoriesLeft.push(ContainerColor[key]);
+                Object.values(ContainerColor).forEach(color => {
+                    if (G.factoriesLeft.filter(f => f.toString() === color).length > 0)
+                        factoriesLeft.push(color);
                 });
                 // G.factoriesLeft.forEach((v, k) => {
                 //     if (v > 0 && player.factories.indexOf(k) === -1) factoriesLeft.push(k);

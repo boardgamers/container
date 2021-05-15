@@ -1,6 +1,6 @@
 # gaia-engine
 
-Typescript engine for Take6, a game similar to 6nimmt.
+Typescript engine for Container.
 
 ## Setup
 
@@ -40,5 +40,5 @@ another module, do this:
 yarn link
 
 ## In the other project's folder
-yarn link take6-engine
+yarn link container-engine
 ```

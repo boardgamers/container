@@ -1,20 +1,20 @@
 {
-    "name": "take6-engine",
-    "version": "0.5.1",
-    "description": "An engine for a game similar to 6nimmt",
+    "name": "container-engine",
+    "version": "0.0.1",
+    "description": "An engine for Container",
     "main": "dist/index.js",
     "types": "index.ts",
     "source": "index.ts",
-    "repository": "git@github.com:donkeytech/take6-engine.git",
+    "repository": "git@github.com:LucasAMello/container-engine.git",
     "publishConfig": {
         "access": "public"
     },
-    "author": "coyotte508",
+    "author": "LucasAMello",
     "license": "MIT",
     "scripts": {
         "prepublishOnly": "npm run test && npm run clean && tsc",
         "build": "npm run clean && tsc",
-        "clean": "rm -Rf dist",
+        "clean": "del dist",
         "lint": "eslint . --ext .ts",
         "test": "mocha -r ts-node/register src/**/*.spec.ts src/*.spec.ts"
     },
