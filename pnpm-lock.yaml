@@ -3,6 +3,7 @@ lockfileVersion: 5.3
 specifiers:
   '@types/assert': ^1.4.7
   '@types/chai': ^4.2.11
+  '@types/events': ^3.0.0
   '@types/lodash': ^4.14.154
   '@types/mocha': ^5.2.4
   '@vue/cli-plugin-babel': ~4.4.0
@@ -35,6 +36,7 @@ dependencies:
 devDependencies:
   '@types/assert': 1.5.4
   '@types/chai': 4.2.18
+  '@types/events': 3.0.0
   '@types/lodash': 4.14.169
   '@types/mocha': 5.2.7
   '@vue/cli-plugin-babel': 4.4.6_a17f8753fefa6d1bd7cb7a980cc59ef3
@@ -1223,6 +1225,10 @@ packages:
 
   /@types/chai/4.2.18:
     resolution: {integrity: sha512-rS27+EkB/RE1Iz3u0XtVL5q36MGDWbgYe7zWiodyKNUnthxY0rukK5V36eiUCtCisB7NN8zKYH6DO2M37qxFEQ==}
+    dev: true
+
+  /@types/events/3.0.0:
+    resolution: {integrity: sha512-EaObqwIvayI5a8dCzhFrjKzVwKLxjoG9T6Ppd5CEo07LRKfQ8Yokw54r5+Wq7FaBQ+yXRvQAYPrHwya1/UFt9g==}
     dev: true
 
   /@types/glob/7.1.3:

@@ -20,6 +20,7 @@
     "devDependencies": {
         "@types/assert": "^1.4.7",
         "@types/chai": "^4.2.11",
+        "@types/events": "^3.0.0",
         "@types/lodash": "^4.14.154",
         "@types/mocha": "^5.2.4",
         "@vue/cli-plugin-babel": "~4.4.0",

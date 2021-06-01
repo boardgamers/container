@@ -1,20 +1,49 @@
-import type Card from '../components/Card.vue';
-import type Placeholder from '../components/Placeholder.vue';
+import { ContainerPiece } from 'container-engine/src/gamestate';
 
 export interface UIData {
-    cards: { [key: number]: Card };
-    placeholders: {
-        rows: Placeholder[][];
-        players: Placeholder[];
-    };
     dragged?: Vue | null;
     waitingAnimations: number;
 }
 
 export interface Piece {
-    id: number;
+    id: string;
     x: number;
     y: number;
+    owner?: number;
     color?: string;
     rotate?: number;
+    state?: string;
+}
+
+export interface ShipType extends Piece {
+    containers: ContainerPiece[];
+}
+
+export enum PieceType {
+    Warehouse = "warehouse",
+    Factory = "factory",
+    Container = "container",
+    Ship = "ship",
+    Loan = "loan"
+}
+
+export enum DropZoneType {
+    Ship = "ship",
+    PlayerHarbour = "playerHarbor",
+    Factory = "factory",
+    FactoryStore = "factoryStore",
+    Warehouse = "warehouse",
+    WarehouseStore = "warehouseStore",
+    OpenSea = "openSea",
+    IslandHarbor = "islandHarbor",
+    GetLoan = "getLoan",
+    PayLoan = "payLoan"
+}
+
+export enum ContainerState {
+    OnBoard = "onBoard",
+    OnFactoryStore = "onFactoryStore",
+    OnWarehouseStore = "onWarehouseStore",
+    OnShip = "onShip",
+    OnIsland = "onIsland"
 }
