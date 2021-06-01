@@ -25,7 +25,7 @@ export interface PointCard {
 }
 
 export interface ContainerOnStore {
-    containerColor: ContainerColor;
+    piece: ContainerPiece;
     price: number;
 }
 
@@ -40,20 +40,21 @@ export enum ShipPosition {
 }
 
 export interface Ship {
+    piece: ShipPiece;
     shipPosition: ShipPosition;
-    containers: ContainerColor[];
+    containers: ContainerPiece[];
 }
 
 export interface Player {
     id: number;
     pointCard: PointCard | null;
-    factories: ContainerColor[];
-    warehouses: number;
+    factories: FactoryPiece[];
+    warehouses: WarehousePiece[];
     ship: Ship;
     containersOnFactoryStore: ContainerOnStore[];
     containersOnWarehouseStore: ContainerOnStore[];
     money: number;
-    loans: number;
+    loans: LoanPiece[];
     produced: ContainerColor[];
     name?: string;
     availableMoves: AvailableMoves | null;
@@ -62,22 +63,48 @@ export interface Player {
     isDropped: boolean;
     bid: number;
     additionalBid: number;
-    containersOnIsland: ContainerColor[];
+    showBid: boolean;
+    showAdditionalBid: boolean;
+    containersOnIsland: ContainerPiece[];
 }
 
 export enum Phase {
     Move = "move",
     Bid = "bid",
-    AcceptDecline = "acceptDecline"
+    AcceptDecline = "acceptDecline",
+    Setup = "setup"
+}
+
+export interface ContainerPiece {
+    id: string;
+    color: ContainerColor;
+}
+
+export interface FactoryPiece {
+    id: string;
+    color: ContainerColor;
+}
+
+export interface WarehousePiece {
+    id: string;
+}
+
+export interface LoanPiece {
+    id: string;
+}
+
+export interface ShipPiece {
+    id: string;
 }
 
 export interface GameState {
     players: Player[];
-    currentPlayer: number;
-    containersLeft: ContainerColor[];
-    factoriesLeft: ContainerColor[];
-    warehousesLeft: number;
-    auctioningPlayer: number;
+    currentPlayer: number | undefined;
+    containersLeft: ContainerPiece[];
+    factoriesLeft: FactoryPiece[];
+    warehousesLeft: WarehousePiece[];
+    loansLeft: LoanPiece[];
+    auctioningPlayer: number | undefined;
     highestBidders: number[];
     phase: Phase;
     options: GameOptions;

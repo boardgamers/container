@@ -33,9 +33,16 @@ export async function move(G: GameState, move: Move, player: number) {
 export { ended, scores } from './src/engine';
 
 export function rankings(G: GameState) {
-    const sortedPoints = G.players.map(pl => pl.money).sort((a, b) => a - b);
+    const sortedPlayers = G.players
+        .sort((p1, p2) => {
+            if (p1.money == p2.money) {
+                return p1.containersOnIsland.length - p2.containersOnIsland.length;
+            } else {
+                return p1.money - p2.money;
+            }
+        }).map(pl => pl.id);
 
-    return G.players.map(pl => sortedPoints.indexOf(pl.money) + 1);
+    return G.players.map(pl => sortedPlayers.indexOf(pl.id) + 1);
 }
 
 export function replay(G: GameState) {
@@ -69,7 +76,7 @@ export async function dropPlayer(G: GameState, player: number) {
 }
 
 export function currentPlayer(G: GameState) {
-    return G.players.map((pl, i) => pl.availableMoves ? i : -1).filter(i => i !== -1);
+    return G.currentPlayer;
 }
 
 export { stripSecret } from './src/engine';

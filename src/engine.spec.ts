@@ -4,11 +4,6 @@ import { setup, move as execMove, ended } from './engine';
 import { ContainerColor, ShipPosition } from "./gamestate";
 import { Move } from './move';
 
-/*
-    Current player: 2,
-    Factories: blue, white, red,
-    Point Cards: rybwu, ybwur, urybw
-*/
 describe("Engine", () => {
     it("should play full game", () => {
         let G = setup(5, { beginner: false }, "test");

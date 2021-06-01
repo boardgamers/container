@@ -1,31 +1,30 @@
 import assert from "assert";
 import seedrandom from "seedrandom";
-import { GameOptions, Phase, GameState, Player, ContainerColor, ShipPosition } from "./gamestate";
+import { GameOptions, Phase, GameState, Player, ContainerColor, ShipPosition, FactoryPiece, ContainerPiece } from "./gamestate";
 import { availableMoves } from "./available-moves";
 import { Move, MoveName, Moves } from "./move";
 import { asserts, shuffle } from "./utils";
 import { GameEventName, LogItem } from "./log";
 import pointCards from "./cards";
-import { cloneDeep, isEqual } from "lodash";
+import { cloneDeep, groupBy, isEqual } from "lodash";
 
 export function setup(numPlayers: number, { beginner = true }: GameOptions, seed?: string): GameState {
     const rng = seedrandom(seed || Math.random().toString());
 
     const cards = shuffle(pointCards, rng() + '');
-    const factories = shuffle([ContainerColor.Black, ContainerColor.Orange, ContainerColor.Tan, ContainerColor.White, ContainerColor.Brown], rng() + '');
 
     let id = 0;
     const players: Player[] = new Array(numPlayers).fill(0).map(() => ({
         id: id++,
         pointCard: cards.shift()!,
-        factories: [factories[0]],
-        warehouses: 1,
-        ship: { containers: [], shipPosition: ShipPosition.OpenSea },
-        containersOnFactoryStore: [{ containerColor: factories.shift()!, price: 2 }],
+        factories: [],
+        warehouses: [],
+        ship: { piece: { id: 'S' + id }, containers: [], shipPosition: ShipPosition.OpenSea },
+        containersOnFactoryStore: [],
         containersOnWarehouseStore: [],
         containersOnIsland: [],
         money: 20,
-        loans: 0,
+        loans: [],
         produced: [],
         availableMoves: null,
         lastMove: null,
@@ -33,29 +32,30 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         isDropped: false,
         bid: 0,
         additionalBid: 0,
+        showBid: false,
+        showAdditionalBid: false,
+        finalScore: 0
     }));
 
-    const totalContainers = players.length * 4 - 1;
-    const containersLeft: ContainerColor[] = [];
-    containersLeft.push(...new Array(totalContainers).fill(ContainerColor.Brown));
-    containersLeft.push(...new Array(totalContainers).fill(ContainerColor.White));
-    containersLeft.push(...new Array(totalContainers).fill(ContainerColor.Black));
-    containersLeft.push(...new Array(totalContainers).fill(ContainerColor.Orange));
-    containersLeft.push(...new Array(totalContainers).fill(ContainerColor.Tan));
+    id = 0;
+    const totalContainers = players.length * 4;
+    const containersLeft: ContainerPiece[] = [];
+    containersLeft.push(...new Array(totalContainers).fill(0).map(_ => ({ id: 'C' + id++, color: ContainerColor.Brown })));
+    containersLeft.push(...new Array(totalContainers).fill(0).map(_ => ({ id: 'C' + id++, color: ContainerColor.White })));
+    containersLeft.push(...new Array(totalContainers).fill(0).map(_ => ({ id: 'C' + id++, color: ContainerColor.Black })));
+    containersLeft.push(...new Array(totalContainers).fill(0).map(_ => ({ id: 'C' + id++, color: ContainerColor.Orange })));
+    containersLeft.push(...new Array(totalContainers).fill(0).map(_ => ({ id: 'C' + id++, color: ContainerColor.Tan })));
 
-    const factoriesLeft: ContainerColor[] = [];
-    factoriesLeft.push(...new Array(4).fill(ContainerColor.Brown));
-    factoriesLeft.push(...new Array(4).fill(ContainerColor.White));
-    factoriesLeft.push(...new Array(4).fill(ContainerColor.Black));
-    factoriesLeft.push(...new Array(4).fill(ContainerColor.Orange));
-    factoriesLeft.push(...new Array(4).fill(ContainerColor.Tan));
+    id = 0;
+    const factoriesLeft: FactoryPiece[] = [];
+    factoriesLeft.push(...new Array(5).fill(0).map(_ => ({ id: 'F' + id++, color: ContainerColor.Brown })));
+    factoriesLeft.push(...new Array(5).fill(0).map(_ => ({ id: 'F' + id++, color: ContainerColor.White })));
+    factoriesLeft.push(...new Array(5).fill(0).map(_ => ({ id: 'F' + id++, color: ContainerColor.Black })));
+    factoriesLeft.push(...new Array(5).fill(0).map(_ => ({ id: 'F' + id++, color: ContainerColor.Orange })));
+    factoriesLeft.push(...new Array(5).fill(0).map(_ => ({ id: 'F' + id++, color: ContainerColor.Tan })));
 
-    factories.forEach(f => {
-        containersLeft.push(f);
-        factoriesLeft.push(f);
-    });
-
-    const warehousesLeft = players.length * 4;
+    const warehousesLeft = new Array(players.length * 5).fill(0).map((_, i) => ({ id: 'W' + i }));
+    const loansLeft = new Array(players.length * 2).fill(0).map((_, i) => ({ id: 'L' + i }));
 
     const G: GameState = {
         players,
@@ -63,6 +63,7 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         containersLeft,
         factoriesLeft,
         warehousesLeft,
+        loansLeft,
         auctioningPlayer: -1,
         highestBidders: [],
         phase: Phase.Move,
@@ -72,24 +73,29 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         round: 1
     } as GameState;
 
-    G.players[G.currentPlayer].actions = 2;
-    G.players[G.currentPlayer].availableMoves = availableMoves(G, G.players[G.currentPlayer]);
+    const colors = shuffle([ContainerColor.Black, ContainerColor.Orange, ContainerColor.Tan, ContainerColor.White, ContainerColor.Brown], rng() + '');
+
+    G.players.forEach((player, i) => {
+        const color = colors[i];
+        let index = G.factoriesLeft.findIndex(f => f.color == color);
+        const factory = G.factoriesLeft.splice(index, 1)[0];
+        player.factories.push(factory);
+
+        index = G.containersLeft.findIndex(c => c.color == color);
+        const container = G.containersLeft.splice(index, 1)[0];
+        player.containersOnFactoryStore.push({ piece: container, price: 2 });
+
+        player.warehouses.push(G.warehousesLeft.pop()!);
+    });
+
+    G.log.push({ type: "phase", phase: Phase.Setup });
+
+    G.players[G.currentPlayer!].actions = 2;
+    G.players[G.currentPlayer!].availableMoves = availableMoves(G, G.players[G.currentPlayer!]);
 
     G.log.push({ type: "event", event: { name: GameEventName.GameStart } });
 
-    addRoundStart(G);
-
     return G;
-}
-
-function addRoundStart(G: GameState) {
-    G.log.push({
-        type: "event",
-        event: {
-            name: GameEventName.RoundStart,
-            round: G.round
-        }
-    });
 }
 
 export function stripSecret(G: GameState, player?: number): GameState {
@@ -103,7 +109,10 @@ export function stripSecret(G: GameState, player?: number): GameState {
                 return {
                     ...pl,
                     pointCard: null,
-                    availableMoves: pl.availableMoves ? {} : null
+                    availableMoves: pl.availableMoves ? {} : null,
+                    money: ended(G) ? pl.money : 0,
+                    bid: pl.showBid ? pl.bid : 0,
+                    additionalBid: pl.showAdditionalBid ? pl.additionalBid : 0,
                 };
             }
         }),
@@ -112,89 +121,94 @@ export function stripSecret(G: GameState, player?: number): GameState {
 }
 
 export function currentPlayers(G: GameState): number[] {
-    switch (G.phase) {
-        case Phase.Move:
-        default: {
-            return [G.currentPlayer];
-        }
-    }
+    return [G.currentPlayer!];
 }
 
 export function move(G: GameState, move: Move, playerNumber: number): GameState {
     const player = G.players[playerNumber];
     const available = player.availableMoves?.[move.name];
 
-    // eslint-disable-next-line no-useless-catch
-    try {
-        assert(G.currentPlayer === playerNumber, "It is not your turn!");
-        assert(available, "You are not allowed to run the command " + move.name);
-        assert(available.some(x => isEqual(x, move.data)), "Wrong argument for the command " + move.name);
-    } catch (e) {
-        throw e;
-    }
+    assert(G.currentPlayer === playerNumber, "It is not your turn!");
+    assert(available, "You are not allowed to run the command " + move.name);
+    assert(available.some(x => isEqual(x, move.data)), "Wrong argument for the command " + move.name);
+    assert(move.name != MoveName.Bid || move.extraData.price <= player.money, "Can't bid more money than you have!");
 
     G.log.push({ type: "move", player: playerNumber, move });
 
     switch (move.name) {
         case MoveName.BuyFactory: {
             asserts<Moves.MoveBuyFactory>(move);
-            remove(G.factoriesLeft, move.data);
-            player.factories.push(move.data);
+            remove(G.factoriesLeft, move.extraData);
+            player.factories.push(move.extraData);
             player.money -= player.factories.length * 3;
-
-            player.lastMove = move;
             player.actions--;
-
             break;
         }
 
         case MoveName.BuyWarehouse: {
             asserts<Moves.MoveBuyWarehouse>(move);
-            G.warehousesLeft -= 1;
-            player.warehouses += 1;
-            player.money -= player.warehouses + 2;
+            remove(G.warehousesLeft, move.extraData);
+            player.warehouses.push(move.extraData);
+            player.money -= player.warehouses.length + 2;
+            player.actions--;
             break;
         }
 
         case MoveName.BuyFromFactory: {
             asserts<Moves.MoveBuyFromFactory>(move);
             const otherPlayer = G.players[move.data.player];
-            remove(otherPlayer.containersOnFactoryStore, move.data.container);
-            player.containersOnWarehouseStore.push({ containerColor: move.data.container.containerColor, price: move.extraData.price });
-            player.money -= move.data.container.price;
-            otherPlayer.money += move.data.container.price;
+            const aux = otherPlayer.containersOnFactoryStore.find(x => isEqual(x.piece, move.data.piece))!;
+            otherPlayer.containersOnFactoryStore.splice(otherPlayer.containersOnFactoryStore.indexOf(aux), 1);
+            player.containersOnWarehouseStore.push({ piece: move.data.piece, price: move.extraData.price });
+
+            player.money -= aux.price;
+            otherPlayer.money += aux.price;
+
+            if (player.lastMove?.name !== MoveName.BuyFromFactory || player.lastMove?.data.player !== move.data.player) {
+                player.actions -= 1;
+            }
+
             break;
         }
 
         case MoveName.BuyFromWarehouse: {
             asserts<Moves.MoveBuyFromWarehouse>(move);
             const otherPlayer = G.players[move.data.player];
-            remove(otherPlayer.containersOnWarehouseStore, move.data.container);
-            player.ship.containers.push(move.data.container.containerColor);
-            player.money -= move.data.container.price;
-            otherPlayer.money += move.data.container.price;
+            const aux = otherPlayer.containersOnWarehouseStore.find(x => isEqual(x.piece, move.data.piece))!;
+            otherPlayer.containersOnWarehouseStore.splice(otherPlayer.containersOnWarehouseStore.indexOf(aux), 1);
+            player.ship.containers.push(move.data.piece);
+
+            player.money -= aux.price;
+            otherPlayer.money += aux.price;
+
+            if ((player.lastMove?.name !== MoveName.BuyFromWarehouse || player.lastMove?.data.player !== move.data.player) && player.lastMove?.name !== MoveName.Sail) {
+                player.actions -= 1;
+            }
+
             break;
         }
 
         case MoveName.GetLoan: {
             asserts<Moves.MoveGetLoan>(move);
-            player.loans += 1;
+            player.loans.push(G.loansLeft.pop()!);
             player.money += 10;
             break;
         }
 
         case MoveName.PayLoan: {
             asserts<Moves.MovePayLoan>(move);
-            player.loans -= 1;
+            G.loansLeft.push(player.loans.splice(player.loans.length - 1, 1)[0]);
             player.money -= 10;
             break;
         }
 
         case MoveName.Produce: {
             asserts<Moves.MoveProduce>(move);
-            remove(G.containersLeft, move.data);
-            player.containersOnFactoryStore.push({ containerColor: move.data, price: move.extraData.price });
+            remove(G.containersLeft, move.extraData.piece);
+            player.containersOnFactoryStore.push({ piece: move.extraData.piece, price: move.extraData.price });
+            player.produced.push(move.extraData.piece.color);
             if (player.lastMove?.name !== MoveName.Produce) {
+                player.actions -= 1;
                 player.money -= 1;
                 playerBefore(player, G).money += 1;
             }
@@ -209,7 +223,9 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
                 player.actions = 0;
                 G.auctioningPlayer = G.currentPlayer;
                 G.phase = Phase.Bid;
-                nextPlayer(G);
+                nextPlayer(G, false);
+            } else {
+                player.actions--;
             }
 
             break;
@@ -217,15 +233,27 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
 
         case MoveName.ArrangeFactory: {
             asserts<Moves.MoveArrangeFactory>(move);
-            remove(player.containersOnFactoryStore, move.data);
-            player.containersOnFactoryStore.push({ containerColor: move.data.containerColor, price: move.extraData.price });
+            const aux = player.containersOnFactoryStore.find(x => isEqual(x.piece, move.data))!;
+            player.containersOnFactoryStore.splice(player.containersOnFactoryStore.indexOf(aux), 1);
+            player.containersOnFactoryStore.push({ piece: move.data, price: move.extraData.price });
+
+            if (player.lastMove?.name !== MoveName.Produce && player.lastMove?.name !== MoveName.ArrangeFactory) {
+                player.actions--;
+            }
+
             break;
         }
 
         case MoveName.ArrangeWarehouse: {
             asserts<Moves.MoveArrangeWarehouse>(move);
-            remove(player.containersOnWarehouseStore, move.data);
-            player.containersOnWarehouseStore.push({ containerColor: move.data.containerColor, price: move.extraData.price });
+            const aux = player.containersOnWarehouseStore.find(x => isEqual(x.piece, move.data))!;
+            player.containersOnWarehouseStore.splice(player.containersOnWarehouseStore.indexOf(aux), 1);
+            player.containersOnWarehouseStore.push({ piece: move.data, price: move.extraData.price });
+
+            if (player.lastMove?.name !== MoveName.BuyFromFactory && player.lastMove?.name !== MoveName.ArrangeWarehouse) {
+                player.actions--;
+            }
+
             break;
         }
 
@@ -234,26 +262,28 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
 
             if (G.highestBidders.length === 0) {
                 player.bid = move.extraData.price;
-                nextPlayer(G);
+                nextPlayer(G, false);
             } else {
                 player.additionalBid = move.extraData.price;
-                while (G.highestBidders.indexOf(G.currentPlayer) === -1 && G.auctioningPlayer === G.currentPlayer) { nextPlayer(G); }
+                do { nextPlayer(G, false); } while (G.highestBidders.indexOf(G.currentPlayer) === -1 && G.auctioningPlayer !== G.currentPlayer);
             }
 
             if (G.auctioningPlayer === G.currentPlayer) {
                 if (G.highestBidders.length === 0) {
+                    G.players.filter(p => p.id !== G.currentPlayer).forEach(p => { p.showBid = true; });
                     const highestBid = Math.max(...G.players.map(p => p.bid));
-                    const highestBidders = G.players.filter(p => p.bid === highestBid).map(p => p.id);
+                    const highestBidders = G.players.filter(p => p.id != G.currentPlayer && p.bid === highestBid).map(p => p.id);
                     G.highestBidders = highestBidders;
                     if (highestBidders.length > 1) {
-                        while (highestBidders.indexOf(G.currentPlayer) === -1) { nextPlayer(G); }
+                        while (highestBidders.indexOf(G.currentPlayer) === -1) { nextPlayer(G, false); }
                     } else {
                         G.phase = Phase.AcceptDecline;
                     }
                 } else {
                     const highestBid = Math.max(...G.players.map(p => p.bid + p.additionalBid));
-                    const highestBidders = G.players.filter(p => p.bid + p.additionalBid === highestBid).map(p => p.id);
+                    const highestBidders = G.players.filter(p => p.id != G.currentPlayer && p.bid + p.additionalBid === highestBid).map(p => p.id);
                     G.highestBidders = highestBidders;
+                    G.players.forEach(p => { p.showAdditionalBid = true; });
                     G.phase = Phase.AcceptDecline;
                 }
             }
@@ -268,17 +298,15 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
             otherPlayer.money -= otherPlayer.bid + otherPlayer.additionalBid;
             player.money += (otherPlayer.bid + otherPlayer.additionalBid) * 2;
             G.players.forEach(p => { p.bid = p.additionalBid = 0; });
-            G.auctioningPlayer = -1;
+            G.players.forEach(p => { p.showBid = p.showAdditionalBid = false; });
+            G.auctioningPlayer = undefined;
             G.highestBidders = [];
             G.phase = Phase.Move;
 
             if (!ended(G)) {
-                nextPlayer(G);
-                G.players[G.currentPlayer].money -= G.players[G.currentPlayer].loans;
-                G.players[G.currentPlayer].actions = 2;
+                nextPlayer(G, true);
             } else {
-                G.currentPlayer = -1;
-                // TODO: calculate scores
+                G.currentPlayer = undefined;
             }
 
             break;
@@ -290,17 +318,15 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
             const bid = G.players[G.highestBidders[0]].bid + G.players[G.highestBidders[0]].additionalBid;
             player.money -= bid;
             G.players.forEach(p => { p.bid = p.additionalBid = 0; });
-            G.auctioningPlayer = -1;
+            G.players.forEach(p => { p.showBid = p.showAdditionalBid = false; });
+            G.auctioningPlayer = undefined;
             G.highestBidders = [];
             G.phase = Phase.Move;
 
             if (!ended(G)) {
-                nextPlayer(G);
-                G.players[G.currentPlayer].money -= G.players[G.currentPlayer].loans;
-                G.players[G.currentPlayer].actions = 2;
+                nextPlayer(G, true);
             } else {
-                G.currentPlayer = -1;
-                // TODO: calculate scores
+                G.currentPlayer = undefined;
             }
 
             break;
@@ -309,65 +335,78 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
         case MoveName.Pass: {
             asserts<Moves.MovePass>(move);
             if (!ended(G)) {
-                nextPlayer(G);
-                G.players[G.currentPlayer].money -= G.players[G.currentPlayer].loans;
-                G.players[G.currentPlayer].actions = 2;
+                nextPlayer(G, true);
             } else {
-                G.currentPlayer = -1;
-                // TODO: calculate scores
+                G.currentPlayer = undefined;
             }
 
             break;
         }
 
-        // case MoveName.ChooseCard: {
-        //     // Should not be needed, typescript should make the distinction itself
-        //     asserts<Moves.MoveChooseCard>(move);
-        //     player.faceDownCard = move.data;
-        //     player.hand.splice(player.hand.findIndex(c => isEqual(c, move.data)), 1);
-        //     delete player.availableMoves;
+        case MoveName.Undo: {
+            asserts<Moves.MoveUndo>(move);
+            G.log.pop();
 
-        //     if (G.players.every(pl => pl.faceDownCard)) {
-        //         G.phase = Phase.PlaceCard;
+            const lastLog = G.log[G.log.length - 1];
+            if (lastLog.type == "move" && lastLog.player == G.currentPlayer)
+                G.log.pop();
 
-        //         G.log.push({ type: "event", event: { name: GameEventName.RevealCards, cards: G.players.map(pl => pl.faceDownCard!) } });
-
-        //         G = switchToNextPlayer(G);
-        //     }
-
-        //     return G;
-        // }
-
-        // case MoveName.PlaceCard: {
-        //     delete player.availableMoves;
-
-        //     if (move.data.replace) {
-        //         player.discard.push(...G.rows[move.data.row]);
-        //         player.points = sumBy(player.discard, "points");
-        //         G.rows[move.data.row] = [player.faceDownCard!];
-        //     } else {
-        //         G.rows[move.data.row].push(player.faceDownCard!);
-        //     }
-
-        //     delete player.faceDownCard;
-
-        //     return switchToNextPlayer(G);
-        // }
+            break;
+        }
     }
 
-    player.lastMove = move;
+    if (move.name != MoveName.GetLoan && move.name != MoveName.PayLoan)
+        player.lastMove = move;
 
-    G.players[G.currentPlayer].availableMoves = availableMoves(G, G.players[G.currentPlayer]);
+    if (G.currentPlayer !== undefined)
+        G.players[G.currentPlayer].availableMoves = availableMoves(G, G.players[G.currentPlayer]);
 
     return G;
 }
 
 export function ended(G: GameState): boolean {
-    return G.containersLeft.filter((c, i) => G.containersLeft.indexOf(c) !== i).length <= 3;
+    return [...new Set(G.containersLeft.map(c => c.color))].length <= 3;
 }
 
 export function scores(G: GameState): number[] {
-    return G.players.map(pl => pl.money);
+    if (ended(G)) {
+        return G.players.map(player => {
+            const hasOneOfEach = [...new Set(player.containersOnIsland.map(c => c.color))].length == 5;
+
+            const grouped = groupBy(player.containersOnIsland, piece => piece.color);
+            const most = Object.keys(grouped).reduce((a, b) => {
+                if (grouped[a].length == grouped[b].length) {
+                    if (a == player.pointCard!.containerValues[1].containerColor) {
+                        return a;
+                    } else if (b == player.pointCard!.containerValues[1].containerColor) {
+                        return b;
+                    } else {
+                        const aValue = player.pointCard!.containerValues.find(cv => cv.containerColor == a)!.baseValue;
+                        const bValue = player.pointCard!.containerValues.find(cv => cv.containerColor == b)!.baseValue;
+                        return aValue > bValue ? b : a;
+                    }
+                }
+
+                return grouped[a].length > grouped[b].length ? a : b;
+            });
+
+            const points = player.pointCard!.containerValues.map(cv => {
+                if (grouped[cv.containerColor] && cv.containerColor != most)
+                    return grouped[cv.containerColor].length * (hasOneOfEach ? cv.specialValue : cv.baseValue);
+
+                return 0;
+            });
+
+            player.money += points.reduce((a, b) => a + b, 0);
+            player.money += player.containersOnWarehouseStore.length * 2;
+            player.money += player.ship.containers.length * 3;
+            player.money += player.loans.length * -11;
+
+            return player.money;
+        });
+    } else {
+        return G.players.map(p => p.money);
+    }
 }
 
 export function reconstructState(initialState: GameState, log: LogItem[]): GameState {
@@ -378,38 +417,6 @@ export function reconstructState(initialState: GameState, log: LogItem[]): GameS
 
         switch (item.type) {
             case "event": {
-                // switch (item.event.name) {
-                //     case GameEventName.GameStart: {
-                //         break;
-                //     }
-
-                //     case GameEventName.GameEnd: {
-                //         break;
-                //     }
-
-                //     case GameEventName.RevealCards: {
-                //         let i = 0;
-                //         for (const pl of G.players) {
-                //             pl.faceDownCard = item.event.cards[i];
-                //             i++;
-                //         }
-
-                //         break;
-                //     }
-
-                //     case GameEventName.RoundStart: {
-                //         G.round = item.event.round;
-
-                //         G.rows = item.event.cards.board.map(card => [card]) as [Card[], Card[], Card[], Card[]];
-
-                //         for (let i = 0; i < item.event.cards.players.length; i++) {
-                //             G.players[i].hand = item.event.cards.players[i];
-                //         }
-
-                //         break;
-                //     }
-                // }
-
                 break;
             }
 
@@ -419,24 +426,7 @@ export function reconstructState(initialState: GameState, log: LogItem[]): GameS
             }
 
             case "move": {
-                // switch (item.move.name) {
-                //     case MoveName.ChooseCard: {
-                //         G.players[item.player].faceDownCard = item.move.data;
-                //         break;
-                //     }
-
-                //     case MoveName.PlaceCard: {
-                //         if (item.move.data.replace) {
-                //             G.players[item.player].points += sumBy(G.rows[item.move.data.row], "points");
-                //             G.players[item.player].discard.push(...(G.rows[item.move.data.row]));
-                //             G.rows[item.move.data.row] = [];
-                //         }
-
-                //         G.rows[item.move.data.row].push(G.players[item.player].faceDownCard!);
-                //         G.players[item.player].faceDownCard = null;
-                //         break;
-                //     }
-                // }
+                break;
             }
         }
     }
@@ -445,18 +435,54 @@ export function reconstructState(initialState: GameState, log: LogItem[]): GameS
 }
 
 function playerBefore(player: Player, G: GameState) {
-    if (player.id === 0) {
-        return G.players[G.players.length - 1];
-    } else {
-        return G.players[player.id - 1];
-    }
+    return player.id === 0 ? G.players[G.players.length - 1] : G.players[player.id - 1];
 }
 
-function nextPlayer(G: GameState) {
-    G.currentPlayer = (G.currentPlayer + 1) % G.players.length;
+function nextPlayer(G: GameState, doUpkeep: boolean) {
+    G.currentPlayer = (G.currentPlayer! + 1) % G.players.length;
+
+    const player = G.players[G.currentPlayer];
+    if (doUpkeep) {
+        const loanCount = player.loans.length;
+        for (let i = 0; i < loanCount; i++) {
+            if (player.money > 0) {
+                player.money--;
+            } else if (player.containersOnIsland.length > 0) {
+                removeRandom(player.containersOnIsland);
+            } else if (player.containersOnWarehouseStore.length + player.containersOnFactoryStore.length > 0) {
+                if (player.containersOnWarehouseStore.length >= 2) {
+                    removeRandom(player.containersOnWarehouseStore);
+                    removeRandom(player.containersOnWarehouseStore);
+                } else if (player.containersOnWarehouseStore.length == 1) {
+                    removeRandom(player.containersOnWarehouseStore);
+                    if (player.containersOnFactoryStore.length >= 1) {
+                        removeRandom(player.containersOnFactoryStore);
+                    }
+                } else {
+                    removeRandom(player.containersOnFactoryStore);
+                    if (player.containersOnFactoryStore.length >= 1) {
+                        removeRandom(player.containersOnFactoryStore);
+                    }
+                }
+            } else if (player.warehouses.length > 2) {
+                player.warehouses.pop();
+                player.loans.pop();
+            } else if (player.factories.length > 2) {
+                player.factories.pop();
+                player.loans.pop();
+            }
+        }
+
+        G.players[G.currentPlayer].actions = 2;
+        G.players[G.currentPlayer].produced = [];
+    }
 }
 
 function remove(array, value) {
     const aux = array.find(x => isEqual(x, value));
-    array.splice(array.indexOf(aux), 1);
+    return array.splice(array.indexOf(aux), 1);
+}
+
+function removeRandom(array) {
+    array.splice(Math.floor(Math.random() * array.length), 1);
 }

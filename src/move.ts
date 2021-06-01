@@ -1,11 +1,11 @@
-import { ContainerColor, ContainerOnStore, ShipPosition } from "./gamestate";
+import { ContainerColor, ContainerPiece, FactoryPiece, ShipPosition, WarehousePiece } from "./gamestate";
 
 export declare namespace Moves {
     export interface MoveBuyFromFactory {
         name: MoveName.BuyFromFactory;
         data: {
             player: number;
-            container: ContainerOnStore;
+            piece: ContainerPiece;
         };
         extraData: { price: number };
     }
@@ -14,18 +14,20 @@ export declare namespace Moves {
         name: MoveName.BuyFromWarehouse;
         data: {
             player: number;
-            container: ContainerOnStore;
+            piece: ContainerPiece;
         };
     }
 
     export interface MoveBuyFactory {
         name: MoveName.BuyFactory;
         data: ContainerColor;
+        extraData: FactoryPiece;
     }
 
     export interface MoveBuyWarehouse {
         name: MoveName.BuyWarehouse;
         data: boolean;
+        extraData: WarehousePiece;
     }
 
     export interface MoveGetLoan {
@@ -41,7 +43,7 @@ export declare namespace Moves {
     export interface MoveProduce {
         name: MoveName.Produce;
         data: ContainerColor;
-        extraData: { price: number };
+        extraData: { piece: ContainerPiece; price: number };
     }
 
     export interface MoveSail {
@@ -51,13 +53,13 @@ export declare namespace Moves {
 
     export interface MoveArrangeFactory {
         name: MoveName.ArrangeFactory;
-        data: ContainerOnStore;
+        data: ContainerPiece;
         extraData: { price: number };
     }
 
     export interface MoveArrangeWarehouse {
         name: MoveName.ArrangeWarehouse;
-        data: ContainerOnStore;
+        data: ContainerPiece;
         extraData: { price: number };
     }
 

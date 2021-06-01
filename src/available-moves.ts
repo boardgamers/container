@@ -1,17 +1,17 @@
-import { ContainerColor, ContainerOnStore, GameState, Phase, Player, ShipPosition } from "./gamestate";
+import { ContainerColor, ContainerOnStore, ContainerPiece, GameState, Phase, Player, ShipPosition } from "./gamestate";
 import { MoveName } from "./move";
 
 export interface AvailableMoves {
-    [MoveName.BuyFromFactory]?: Array<{ player: number; container: ContainerOnStore }>;
-    [MoveName.BuyFromWarehouse]?: Array<{ player: number; container: ContainerOnStore }>;
+    [MoveName.BuyFromFactory]?: Array<{ player: number; piece: ContainerPiece }>;
+    [MoveName.BuyFromWarehouse]?: Array<{ player: number; piece: ContainerPiece }>;
     [MoveName.BuyFactory]?: ContainerColor[];
     [MoveName.BuyWarehouse]?: boolean[];
     [MoveName.GetLoan]?: boolean[];
     [MoveName.PayLoan]?: boolean[];
     [MoveName.Produce]?: ContainerColor[];
     [MoveName.Sail]?: ShipPosition[];
-    [MoveName.ArrangeFactory]?: ContainerOnStore[];
-    [MoveName.ArrangeWarehouse]?: ContainerOnStore[];
+    [MoveName.ArrangeFactory]?: ContainerPiece[];
+    [MoveName.ArrangeWarehouse]?: ContainerPiece[];
     [MoveName.Bid]?: boolean[];
     [MoveName.Accept]?: number[];
     [MoveName.Decline]?: boolean[];
@@ -22,11 +22,23 @@ export interface AvailableMoves {
 export function availableMoves(G: GameState, player: Player): AvailableMoves {
     switch (G.phase) {
         case Phase.Bid: {
-            return { [MoveName.GetLoan]: [true], [MoveName.Bid]: [true] };
+            return {
+                [MoveName.GetLoan]: [true],
+                [MoveName.Bid]: [true]
+            };
         }
 
         case Phase.AcceptDecline: {
-            return { [MoveName.GetLoan]: [true], [MoveName.Accept]: G.highestBidders, [MoveName.Decline]: [true] };
+            const moves: AvailableMoves = {
+                [MoveName.GetLoan]: [true],
+                [MoveName.Accept]: G.highestBidders,
+            };
+
+            const highestBidder = G.players[G.highestBidders[0]];
+            if (player.money >= highestBidder.bid + highestBidder.additionalBid)
+                moves[MoveName.Decline] = [true];
+
+            return moves;
         }
 
         case Phase.Move: {
@@ -34,26 +46,23 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
 
             // BuyFromFactory
             if (player.actions > 0 || player.lastMove?.name === MoveName.BuyFromFactory) {
-                if (player.containersOnWarehouseStore.length < player.warehouses) {
+                if (player.containersOnWarehouseStore.length < player.warehouses.length) {
                     const containersAvailable: { player: number; container: ContainerOnStore }[] = [];
                     const playersToBuy: Player[] = player.actions === 0 && player.lastMove?.name === MoveName.BuyFromFactory ?
                         [G.players[player.lastMove.data.player]] : G.players.filter(p => p.id !== player.id);
                     playersToBuy.forEach(p => {
                         containersAvailable.push(...p.containersOnFactoryStore.map(c => ({ player: p.id, container: c })));
                     });
-                    moves[MoveName.BuyFromFactory] = containersAvailable.filter(c => c.container.price <= player.money);
-                }
-            }
 
-            // ArrangeWarehouse
-            if (player.actions > 0 || player.lastMove?.name === MoveName.BuyFromFactory) {
-                if (player.containersOnWarehouseStore.length > 0) {
-                    moves[MoveName.ArrangeWarehouse] = player.containersOnWarehouseStore;
+                    const buyable = containersAvailable.filter(c => c.container.price <= player.money).map(c => ({ player: c.player, piece: c.container.piece }));
+
+                    if (buyable.length > 0)
+                        moves[MoveName.BuyFromFactory] = buyable;
                 }
             }
 
             // BuyFromWarehouse
-            if (player.actions > 0 || player.lastMove?.name === MoveName.Sail) {
+            if (player.actions > 0 || player.lastMove?.name === MoveName.Sail || player.lastMove?.name === MoveName.BuyFromWarehouse) {
                 if (player.ship.shipPosition !== ShipPosition.Island && player.ship.shipPosition !== ShipPosition.OpenSea) {
                     let otherPlayer: Player;
                     switch (player.ship.shipPosition) {
@@ -65,26 +74,25 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
                     }
 
                     if (otherPlayer.containersOnWarehouseStore.length > 0) {
-                        const buyable: { player: number; container: ContainerOnStore }[] = [];
+                        const buyable: { player: number; piece: ContainerPiece }[] = [];
                         otherPlayer.containersOnWarehouseStore.forEach(c => {
                             if (c.price <= player.money)
-                                buyable.push({ player: otherPlayer.id, container: c });
+                                buyable.push({ player: otherPlayer.id, piece: c.piece });
                         });
-                        moves[MoveName.BuyFromWarehouse] = buyable;
+
+                        if (buyable.length > 0)
+                            moves[MoveName.BuyFromWarehouse] = buyable;
                     }
                 }
             }
 
             // BuyFactory
-            if (player.actions > 0) {
+            if (player.actions > 0 && player.money >= (player.factories.length + 1) * 3) {
                 const factoriesLeft: ContainerColor[] = [];
                 Object.values(ContainerColor).forEach(color => {
-                    if (G.factoriesLeft.filter(f => f.toString() === color).length > 0)
+                    if (G.factoriesLeft.filter(f => f.color.toString() === color).length > 0 && player.factories.map(f => f.color).indexOf(color) == -1)
                         factoriesLeft.push(color);
                 });
-                // G.factoriesLeft.forEach((v, k) => {
-                //     if (v > 0 && player.factories.indexOf(k) === -1) factoriesLeft.push(k);
-                // });
 
                 if (factoriesLeft.length > 0)
                     moves[MoveName.BuyFactory] = factoriesLeft;
@@ -92,38 +100,35 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
 
             // BuyWarehouse
             if (player.actions > 0) {
-                if (player.warehouses < 5 && player.money >= player.warehouses + 3)
+                if (player.warehouses.length < 5 && player.money >= player.warehouses.length + 3)
                     moves[MoveName.BuyWarehouse] = [true];
             }
 
             // GetLoan
-            if (player.loans < 2)
+            if (player.loans.length < 2)
                 moves[MoveName.GetLoan] = [true];
 
             // PayLoan
-            if (player.money >= 10)
+            if (player.loans.length > 0 && player.money >= 10)
                 moves[MoveName.PayLoan] = [true];
 
             // Produce
             const containersLeft: ContainerColor[] = [];
-            // G.containersLeft.forEach((v, k) => {
-            //     if (v > 0) containersLeft.push(k);
-            // });
             Object.keys(ContainerColor).forEach(key => {
-                if (G.containersLeft.filter(f => f.toString() === key).length > 0)
+                if (G.containersLeft.filter(f => f.color.toString() === ContainerColor[key]).length > 0)
                     containersLeft.push(ContainerColor[key]);
             });
 
-            if ((player.produced.length === 0 && player.money >= 1) || (player.lastMove?.name === MoveName.Produce)) {
-                if (player.containersOnFactoryStore.length < player.factories.length * 2) {
+            if ((player.produced.length === 0 && player.money >= 1 && player.actions > 0) || (player.lastMove?.name === MoveName.Produce)) {
+                if (player.containersOnFactoryStore.length < player.factories.length * 2 && player.produced.length < player.factories.length) {
                     const canProduce: ContainerColor[] = [];
-                    player.factories.forEach(color => {
-                        if (canProduce.indexOf(color) === -1) {
-                            const totalFactories = player.factories.filter(factoryColor => factoryColor === color).length;
-                            const producedContainers = player.produced.filter(producedColor => producedColor === color).length;
+                    player.factories.forEach(factory => {
+                        if (canProduce.indexOf(factory.color) === -1) {
+                            const totalFactories = player.factories.filter(factoryColor => factoryColor === factory).length;
+                            const producedContainers = player.produced.filter(producedColor => producedColor === factory.color).length;
 
-                            if (totalFactories > producedContainers)
-                                canProduce.push(color);
+                            if (totalFactories > producedContainers && containersLeft.indexOf(factory.color) !== -1)
+                                canProduce.push(factory.color);
                         }
                     });
 
@@ -133,25 +138,34 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
             }
 
             // ArrangeFactory
-            if (player.actions > 0 || player.lastMove?.name === MoveName.Produce) {
+            if (player.actions > 0 || player.lastMove?.name === MoveName.Produce || player.lastMove?.name === MoveName.ArrangeFactory) {
                 if (player.containersOnFactoryStore.length > 0) {
-                    moves[MoveName.ArrangeFactory] = player.containersOnFactoryStore;
+                    moves[MoveName.ArrangeFactory] = player.containersOnFactoryStore.map(c => c.piece);
+                }
+            }
+
+            // ArrangeWarehouse
+            if (player.actions > 0 || player.lastMove?.name === MoveName.BuyFromFactory) {
+                if (player.containersOnWarehouseStore.length > 0) {
+                    moves[MoveName.ArrangeWarehouse] = player.containersOnWarehouseStore.map(c => c.piece);
                 }
             }
 
             // Sail
-            const positions: ShipPosition[] = [];
-            if (player.ship.shipPosition === ShipPosition.OpenSea) {
-                positions.push(...G.players.filter(p => p !== player).map(p => ShipPosition["Player" + p.id as keyof ShipPosition]));
+            if (player.actions > 0) {
+                const positions: ShipPosition[] = [];
+                if (player.ship.shipPosition === ShipPosition.OpenSea) {
+                    positions.push(...G.players.filter(p => p !== player).map(p => ShipPosition["Player" + p.id as keyof ShipPosition]));
 
-                if (player.ship.containers.length > 0) {
-                    positions.push(ShipPosition.Island);
+                    if (player.ship.containers.length > 0) {
+                        positions.push(ShipPosition.Island);
+                    }
+                } else {
+                    positions.push(ShipPosition.OpenSea);
                 }
-            } else {
-                positions.push(ShipPosition.OpenSea);
-            }
 
-            moves[MoveName.Sail] = positions;
+                moves[MoveName.Sail] = positions;
+            }
 
             moves[MoveName.Pass] = [true];
             moves[MoveName.Undo] = [true];
