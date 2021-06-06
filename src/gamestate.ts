@@ -66,13 +66,16 @@ export interface Player {
     showBid: boolean;
     showAdditionalBid: boolean;
     containersOnIsland: ContainerPiece[];
+    isAI: boolean;
 }
+
 
 export enum Phase {
     Move = "move",
     Bid = "bid",
     AcceptDecline = "acceptDecline",
-    Setup = "setup"
+    Setup = "setup",
+    GameEnd = "gameEnd"
 }
 
 export interface ContainerPiece {
@@ -99,6 +102,7 @@ export interface ShipPiece {
 
 export interface GameState {
     players: Player[];
+    startingPlayer: number;
     currentPlayer: number | undefined;
     containersLeft: ContainerPiece[];
     factoriesLeft: FactoryPiece[];

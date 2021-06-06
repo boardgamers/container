@@ -18,6 +18,11 @@ export declare namespace Moves {
         };
     }
 
+    export interface MoveDomesticSale {
+        name: MoveName.DomesticSale;
+        data: ContainerPiece;
+    }
+
     export interface MoveBuyFactory {
         name: MoveName.BuyFactory;
         data: ContainerColor;
@@ -97,9 +102,10 @@ export type Move =
     Moves.MoveProduce | Moves.MoveSail |
     Moves.MoveArrangeFactory | Moves.MoveArrangeWarehouse |
     Moves.MoveBid | Moves.MoveAccept | Moves.MoveDecline |
-    Moves.MovePass | Moves.MoveUndo;
+    Moves.MovePass | Moves.MoveUndo | Moves.MoveDomesticSale;
 
 export enum MoveName {
+    DomesticSale = "domesticSale",
     BuyWarehouse = "buyWarehouse",
     BuyFactory = "buyFactory",
     BuyFromFactory = "buyFromFactory",

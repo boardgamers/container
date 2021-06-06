@@ -2,6 +2,7 @@ import { ContainerColor, ContainerOnStore, ContainerPiece, GameState, Phase, Pla
 import { MoveName } from "./move";
 
 export interface AvailableMoves {
+    [MoveName.DomesticSale]?: ContainerPiece[];
     [MoveName.BuyFromFactory]?: Array<{ player: number; piece: ContainerPiece }>;
     [MoveName.BuyFromWarehouse]?: Array<{ player: number; piece: ContainerPiece }>;
     [MoveName.BuyFactory]?: ContainerColor[];
@@ -22,10 +23,17 @@ export interface AvailableMoves {
 export function availableMoves(G: GameState, player: Player): AvailableMoves {
     switch (G.phase) {
         case Phase.Bid: {
-            return {
+            const moves = {
                 [MoveName.GetLoan]: [true],
                 [MoveName.Bid]: [true]
             };
+
+            // Undo
+            const lastLog = G.log[G.log.length - 1];
+            if (lastLog.type == "move" && lastLog.player == G.currentPlayer)
+                moves[MoveName.Undo] = [true];
+
+            return moves;
         }
 
         case Phase.AcceptDecline: {
@@ -38,11 +46,25 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
             if (player.money >= highestBidder.bid + highestBidder.additionalBid)
                 moves[MoveName.Decline] = [true];
 
+            // Undo
+            const lastLog = G.log[G.log.length - 1];
+            if (lastLog.type == "move" && lastLog.player == G.currentPlayer)
+                moves[MoveName.Undo] = [true];
+
             return moves;
         }
 
         case Phase.Move: {
-            const moves: AvailableMoves = {};
+            let moves: AvailableMoves = {};
+
+            // DomesticSale
+            if (player.actions > 0 && G.round > 1) {
+                if (player.containersOnFactoryStore.length > 0) {
+                    moves[MoveName.DomesticSale] = player.containersOnFactoryStore.map(c => c.piece);
+                } else if (player.containersOnWarehouseStore.length > 0) {
+                    moves[MoveName.DomesticSale] = player.containersOnWarehouseStore.map(c => c.piece);
+                }
+            }
 
             // BuyFromFactory
             if (player.actions > 0 || player.lastMove?.name === MoveName.BuyFromFactory) {
@@ -63,7 +85,7 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
 
             // BuyFromWarehouse
             if (player.actions > 0 || player.lastMove?.name === MoveName.Sail || player.lastMove?.name === MoveName.BuyFromWarehouse) {
-                if (player.ship.shipPosition !== ShipPosition.Island && player.ship.shipPosition !== ShipPosition.OpenSea) {
+                if (player.ship.shipPosition !== ShipPosition.Island && player.ship.shipPosition !== ShipPosition.OpenSea && player.ship.containers.length < 5) {
                     let otherPlayer: Player;
                     switch (player.ship.shipPosition) {
                         case ShipPosition.Player0: otherPlayer = G.players[0]; break;
@@ -112,31 +134,6 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
             if (player.loans.length > 0 && player.money >= 10)
                 moves[MoveName.PayLoan] = [true];
 
-            // Produce
-            const containersLeft: ContainerColor[] = [];
-            Object.keys(ContainerColor).forEach(key => {
-                if (G.containersLeft.filter(f => f.color.toString() === ContainerColor[key]).length > 0)
-                    containersLeft.push(ContainerColor[key]);
-            });
-
-            if ((player.produced.length === 0 && player.money >= 1 && player.actions > 0) || (player.lastMove?.name === MoveName.Produce)) {
-                if (player.containersOnFactoryStore.length < player.factories.length * 2 && player.produced.length < player.factories.length) {
-                    const canProduce: ContainerColor[] = [];
-                    player.factories.forEach(factory => {
-                        if (canProduce.indexOf(factory.color) === -1) {
-                            const totalFactories = player.factories.filter(factoryColor => factoryColor === factory).length;
-                            const producedContainers = player.produced.filter(producedColor => producedColor === factory.color).length;
-
-                            if (totalFactories > producedContainers && containersLeft.indexOf(factory.color) !== -1)
-                                canProduce.push(factory.color);
-                        }
-                    });
-
-                    if (canProduce.length > 0)
-                        moves[MoveName.Produce] = canProduce;
-                }
-            }
-
             // ArrangeFactory
             if (player.actions > 0 || player.lastMove?.name === MoveName.Produce || player.lastMove?.name === MoveName.ArrangeFactory) {
                 if (player.containersOnFactoryStore.length > 0) {
@@ -168,7 +165,40 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
             }
 
             moves[MoveName.Pass] = [true];
-            moves[MoveName.Undo] = [true];
+
+            // Produce
+            const containersLeft: ContainerColor[] = [];
+            Object.keys(ContainerColor).forEach(key => {
+                if (G.containersLeft.filter(f => f.color.toString() === ContainerColor[key]).length > 0)
+                    containersLeft.push(ContainerColor[key]);
+            });
+
+            if ((player.produced.length === 0 && player.money >= 1 && player.actions > 0) || (player.lastMove?.name === MoveName.Produce)) {
+                if (player.containersOnFactoryStore.length < player.factories.length * 2 && player.produced.length < player.factories.length) {
+                    const canProduce: ContainerColor[] = [];
+                    player.factories.forEach(factory => {
+                        if (canProduce.indexOf(factory.color) === -1) {
+                            const totalFactories = player.factories.filter(factoryColor => factoryColor === factory).length;
+                            const producedContainers = player.produced.filter(producedColor => producedColor === factory.color).length;
+
+                            if (totalFactories > producedContainers && containersLeft.indexOf(factory.color) !== -1)
+                                canProduce.push(factory.color);
+                        }
+                    });
+
+                    if (canProduce.length > 0) {
+                        if (player.lastMove?.name === MoveName.Produce)
+                            moves = {};
+
+                        moves[MoveName.Produce] = canProduce;
+                    }
+                }
+            }
+
+            // Undo
+            const lastLog = G.log[G.log.length - 1];
+            if (lastLog.type == "move" && lastLog.player == G.currentPlayer)
+                moves[MoveName.Undo] = [true];
 
             return moves;
         }

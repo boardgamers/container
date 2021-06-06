@@ -9,7 +9,8 @@ import pointCards from "./cards";
 import { cloneDeep, groupBy, isEqual } from "lodash";
 
 export function setup(numPlayers: number, { beginner = true }: GameOptions, seed?: string): GameState {
-    const rng = seedrandom(seed || Math.random().toString());
+    seed = seed || Math.random().toString();
+    const rng = seedrandom(seed);
 
     const cards = shuffle(pointCards, rng() + '');
 
@@ -34,7 +35,8 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         additionalBid: 0,
         showBid: false,
         showAdditionalBid: false,
-        finalScore: 0
+        finalScore: 0,
+        isAI: false
     }));
 
     id = 0;
@@ -57,9 +59,11 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
     const warehousesLeft = new Array(players.length * 5).fill(0).map((_, i) => ({ id: 'W' + i }));
     const loansLeft = new Array(players.length * 2).fill(0).map((_, i) => ({ id: 'L' + i }));
 
+    const startingPlayer = Math.abs(rng.int32()) % players.length;
     const G: GameState = {
         players,
-        currentPlayer: Math.abs(rng.int32()) % players.length,
+        startingPlayer,
+        currentPlayer: startingPlayer,
         containersLeft,
         factoriesLeft,
         warehousesLeft,
@@ -131,11 +135,28 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
     assert(G.currentPlayer === playerNumber, "It is not your turn!");
     assert(available, "You are not allowed to run the command " + move.name);
     assert(available.some(x => isEqual(x, move.data)), "Wrong argument for the command " + move.name);
-    assert(move.name != MoveName.Bid || move.extraData.price <= player.money, "Can't bid more money than you have!");
+    assert(move.name != MoveName.Bid || move.extraData.price + player.bid <= player.money, "Can't bid more money than you have!");
 
     G.log.push({ type: "move", player: playerNumber, move });
 
     switch (move.name) {
+        case MoveName.DomesticSale: {
+            asserts<Moves.MoveDomesticSale>(move);
+            if (player.containersOnFactoryStore.length > 0) {
+                const aux = player.containersOnFactoryStore.find(x => isEqual(x.piece, move.data))!;
+                player.containersOnFactoryStore.splice(player.containersOnFactoryStore.indexOf(aux), 1);
+            } else {
+                const aux = player.containersOnWarehouseStore.find(x => isEqual(x.piece, move.data))!;
+                player.containersOnWarehouseStore.splice(player.containersOnWarehouseStore.indexOf(aux), 1);
+            }
+
+            G.containersLeft.push(move.data);
+
+            player.money += 2;
+            player.actions--;
+            break;
+        }
+
         case MoveName.BuyFactory: {
             asserts<Moves.MoveBuyFactory>(move);
             remove(G.factoriesLeft, move.extraData);
@@ -190,14 +211,24 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
 
         case MoveName.GetLoan: {
             asserts<Moves.MoveGetLoan>(move);
-            player.loans.push(G.loansLeft.pop()!);
+            const loan = G.loansLeft.shift()!;
+            if (!loan) {
+                console.error("Erro loan", G);
+            }
+
+            player.loans.push(loan);
             player.money += 10;
             break;
         }
 
         case MoveName.PayLoan: {
             asserts<Moves.MovePayLoan>(move);
-            G.loansLeft.push(player.loans.splice(player.loans.length - 1, 1)[0]);
+            const loan = player.loans.splice(player.loans.length - 1, 1)[0];
+            if (!loan) {
+                console.error("Erro loan", G);
+            }
+
+            G.loansLeft.push(loan);
             player.money -= 10;
             break;
         }
@@ -303,10 +334,12 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
             G.highestBidders = [];
             G.phase = Phase.Move;
 
-            if (!ended(G)) {
+            if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
                 nextPlayer(G, true);
             } else {
+                G.phase = Phase.GameEnd;
                 G.currentPlayer = undefined;
+                calculateEndScore(G);
             }
 
             break;
@@ -323,10 +356,12 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
             G.highestBidders = [];
             G.phase = Phase.Move;
 
-            if (!ended(G)) {
+            if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
                 nextPlayer(G, true);
             } else {
+                G.phase = Phase.GameEnd;
                 G.currentPlayer = undefined;
+                calculateEndScore(G);
             }
 
             break;
@@ -334,10 +369,12 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
 
         case MoveName.Pass: {
             asserts<Moves.MovePass>(move);
-            if (!ended(G)) {
+            if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
                 nextPlayer(G, true);
             } else {
+                G.phase = Phase.GameEnd;
                 G.currentPlayer = undefined;
+                calculateEndScore(G);
             }
 
             break;
@@ -348,12 +385,16 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
             G.log.pop();
 
             const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == "move" && lastLog.player == G.currentPlayer)
+            if (lastLog.type == "move" && lastLog.player == G.currentPlayer) {
                 G.log.pop();
+                G = reconstructState(getBaseState(G), G.log);
+            }
 
-            break;
+            return G;
         }
     }
+
+    player.availableMoves = null;
 
     if (move.name != MoveName.GetLoan && move.name != MoveName.PayLoan)
         player.lastMove = move;
@@ -364,13 +405,147 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
     return G;
 }
 
-export function ended(G: GameState): boolean {
-    return [...new Set(G.containersLeft.map(c => c.color))].length <= 3;
+export function moveAI(G: GameState, playerNumber: number): GameState {
+    const player = G.players[playerNumber];
+    let moveName, data;
+    do {
+        if (player.actions > 0 && player.money < 5 && player.loans.length < 2 && player.availableMoves!.getLoan) {
+            moveName = MoveName.GetLoan;
+            const dataArr = player.availableMoves![moveName];
+            data = dataArr[Math.floor(Math.random() * dataArr.length)];
+        } else if (player.money > 15 && player.loans.length > 0 && player.availableMoves!.payLoan) {
+            moveName = MoveName.PayLoan;
+            const dataArr = player.availableMoves![moveName];
+            data = dataArr[Math.floor(Math.random() * dataArr.length)];
+        } else if (player.actions > 0 && player.ship.containers.length > 0 && player.lastMove?.name != MoveName.BuyFromWarehouse) {
+            moveName = MoveName.Sail;
+            data = player.ship.shipPosition == ShipPosition.OpenSea ? ShipPosition.Island : ShipPosition.OpenSea;
+        } else {
+            const moves = Object.keys(player.availableMoves!);
+
+            if (player.lastMove?.name == MoveName.Sail && player.ship.containers.length < 5 &&
+                ((player.lastMove?.data == ShipPosition.Player0 && G.players[0].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data == ShipPosition.Player1 && G.players[1].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data == ShipPosition.Player2 && G.players[2].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data == ShipPosition.Player3 && G.players[3].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data == ShipPosition.Player4 && G.players[4].containersOnWarehouseStore.length > 0))) {
+                moveName = MoveName.BuyFromWarehouse;
+            } else {
+                moveName = moves[Math.floor(Math.random() * moves.length)];
+            }
+
+            let dataArr = player.availableMoves![moveName];
+            if (!dataArr) {
+                moveName = moves[Math.floor(Math.random() * moves.length)];
+                dataArr = player.availableMoves![moveName];
+            }
+
+            data = dataArr[Math.floor(Math.random() * dataArr.length)];
+
+            if (moveName == MoveName.Undo || moveName == MoveName.GetLoan || moveName == MoveName.PayLoan) {
+                moveName = null;
+            } else if (moveName == MoveName.Sail) {
+                if (data == ShipPosition.Island) {
+                    if (player.ship.containers.length == 0)
+                        moveName = null;
+                } else if (data == ShipPosition.Player0) {
+                    if (G.players[0].containersOnWarehouseStore.length == 0)
+                        moveName = null;
+                } else if (data == ShipPosition.Player1) {
+                    if (G.players[1].containersOnWarehouseStore.length == 0)
+                        moveName = null;
+                } else if (data == ShipPosition.Player2) {
+                    if (G.players[2].containersOnWarehouseStore.length == 0)
+                        moveName = null;
+                } else if (data == ShipPosition.Player3) {
+                    if (G.players[3].containersOnWarehouseStore.length == 0)
+                        moveName = null;
+                } else if (data == ShipPosition.Player4) {
+                    if (G.players[4].containersOnWarehouseStore.length == 0)
+                        moveName = null;
+                }
+            } else if (moveName == MoveName.ArrangeFactory) {
+                if (player.lastMove?.name != MoveName.Produce)
+                    moveName = null;
+            } else if (moveName == MoveName.ArrangeWarehouse) {
+                if (player.lastMove?.name != MoveName.BuyFromFactory)
+                    moveName = null;
+            } else if (moveName == MoveName.GetLoan) {
+                moveName = null;
+            } else if (moveName == MoveName.Produce) {
+                if (player.factories.length < 2) {
+                    moveName = null;
+                }
+            } else if (moveName == MoveName.BuyFromFactory) {
+                if (player.warehouses.length < 2) {
+                    moveName = null;
+                }
+            } else if (moveName == MoveName.Pass) {
+                if (player.actions > 0 && Object.keys(player.availableMoves!).length > 3) {
+                    moveName = null;
+                }
+            } else if (moveName == MoveName.BuyFactory) {
+                if (player.factories.length == 3)
+                    moveName = null;
+            } else if (moveName == MoveName.BuyWarehouse) {
+                if (player.warehouses.length == 3)
+                    moveName = null;
+            } else if (moveName == MoveName.DomesticSale) {
+                if (player.money > 5)
+                    moveName = null;
+            }
+        }
+    } while (!moveName);
+
+    let playerMove: Move;
+    switch (moveName) {
+        case MoveName.BuyFromFactory:
+            playerMove = { name: moveName, data, extraData: { price: Math.floor(Math.random() * 3) + 2 } };
+            break;
+
+        case MoveName.BuyFactory:
+            playerMove = { name: moveName, data, extraData: G.factoriesLeft.find(p => p.color == data) };
+            break;
+
+        case MoveName.BuyWarehouse:
+            playerMove = { name: moveName, data, extraData: G.warehousesLeft[0] };
+            break;
+
+        case MoveName.Produce:
+            playerMove = { name: moveName, data, extraData: { piece: G.containersLeft.find(p => p.color == data), price: Math.floor(Math.random() * 3) + 1 } };
+            break;
+
+        case MoveName.ArrangeFactory:
+            playerMove = { name: moveName, data, extraData: { price: Math.floor(Math.random() * 3) + 1 } };
+            break;
+
+        case MoveName.ArrangeWarehouse:
+            playerMove = { name: moveName, data, extraData: { price: Math.floor(Math.random() * 3) + 2 } };
+            break;
+
+        case MoveName.Bid: {
+            const bid = Math.floor(Math.random() * (player.money - player.bid));
+            playerMove = { name: moveName, data, extraData: { price: bid > 10 ? Math.ceil(bid / 2) : bid } };
+            break;
+        }
+
+        default:
+            playerMove = { name: moveName, data };
+            break;
+    }
+
+    console.log(playerMove);
+
+    return move(G, playerMove, playerNumber);
 }
 
-export function scores(G: GameState): number[] {
-    if (ended(G)) {
-        return G.players.map(player => {
+export function ended(G: GameState): boolean {
+    return G.phase == Phase.GameEnd;
+}
+
+function calculateEndScore(G: GameState) {
+    G.players.forEach(player => {
+        if (player.containersOnIsland.length > 0) {
             const hasOneOfEach = [...new Set(player.containersOnIsland.map(c => c.color))].length == 5;
 
             const grouped = groupBy(player.containersOnIsland, piece => piece.color);
@@ -398,34 +573,33 @@ export function scores(G: GameState): number[] {
             });
 
             player.money += points.reduce((a, b) => a + b, 0);
-            player.money += player.containersOnWarehouseStore.length * 2;
-            player.money += player.ship.containers.length * 3;
-            player.money += player.loans.length * -11;
+        }
 
-            return player.money;
-        });
-    } else {
-        return G.players.map(p => p.money);
-    }
+        player.money += player.containersOnWarehouseStore.length * 2;
+        player.money += player.ship.containers.length * 3;
+        player.money += player.loans.length * -11;
+    });
+}
+
+export function scores(G: GameState): number[] {
+    return G.players.map(p => p.money);
 }
 
 export function reconstructState(initialState: GameState, log: LogItem[]): GameState {
     const G = cloneDeep(initialState);
 
     for (const item of log) {
-        G.log.push(item);
-
         switch (item.type) {
             case "event": {
                 break;
             }
 
             case "phase": {
-                G.phase = item.phase;
                 break;
             }
 
             case "move": {
+                move(G, item.move, item.player);
                 break;
             }
         }
@@ -475,6 +649,10 @@ function nextPlayer(G: GameState, doUpkeep: boolean) {
 
         G.players[G.currentPlayer].actions = 2;
         G.players[G.currentPlayer].produced = [];
+
+        if (G.currentPlayer == G.startingPlayer) {
+            G.round++;
+        }
     }
 }
 
@@ -485,4 +663,13 @@ function remove(array, value) {
 
 function removeRandom(array) {
     array.splice(Math.floor(Math.random() * array.length), 1);
+}
+
+function getBaseState(G: GameState): GameState {
+    const baseState = setup(G.players.length, G.options, G.seed);
+    baseState.players.forEach((player, i) => {
+        player.name = G.players[i].name;
+    });
+
+    return baseState;
 }
