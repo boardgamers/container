@@ -5,9 +5,9 @@
 </template>
 <script lang="ts">
 import { Vue, Component, Prop, Watch, Inject } from "vue-property-decorator";
-import { DropZoneType, UIData } from '../types/ui-data';
+import { UIData } from '../types/ui-data';
 import { EventEmitter, Listener } from 'events';
-import Piece from "./Piece.vue";
+import Piece from "./pieces/Piece.vue";
 
 @Component
 export default class DropZone extends Vue {
@@ -39,10 +39,7 @@ export default class DropZone extends Vue {
         if (!this.enabled || !this.ui.dragged) {
             if (this.overlapping && this.enabled && !this.ui.dragged) {
                 if (this.accepts?.indexOf(piece.pieceType) != -1) {
-                    console.log("emit pieceDrop", piece);
                     this.communicator.emit("pieceDrop", piece, this.data);
-                } else {
-                    console.log("not accepted", piece.pieceType, this.accepts);
                 }
             }
 
@@ -64,6 +61,10 @@ export default class DropZone extends Vue {
         }
 
         if (this.enabled) {
+            if (this.communicator.listenerCount("draggedPosChanged") + 1 > this.communicator.getMaxListeners()) {
+                this.communicator.setMaxListeners(this.communicator.getMaxListeners() + 10);
+            }
+
             this.communicator.on("draggedPosChanged", this.listener!);
         } else {
             this.communicator.off("draggedPosChanged", this.listener!);

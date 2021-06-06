@@ -32,7 +32,7 @@ import { Vue, Component, Prop } from "vue-property-decorator";
 })
 export default class Draggable extends Vue {
     @Prop()
-    canDrag;
+    canDrag!: boolean;
 
     dragging = false;
     _offset = { x: 0, y: 0 };
@@ -57,8 +57,7 @@ export default class Draggable extends Vue {
         // Get all the transforms currently on this element
         const transforms: SVGTransformList = this.htmlElement.transform.baseVal;
         // Ensure the first transform is a translate transform
-        if (transforms.numberOfItems === 0 ||
-            transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+        if (transforms.numberOfItems === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
             // Create an transform that translates by (0, 0)
             const translate = this.svgElement.createSVGTransform();
             translate.setTranslate(0, 0);

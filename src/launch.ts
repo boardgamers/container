@@ -21,7 +21,7 @@ function launch(selector: string) {
     params.emitter.on("replay:info", (info: { start: number, current: number, end: number }) => item.emit("replay:info", info));
 
     item.addListener("state", data => {
-        console.log("updating state to", data);
+        // console.log("updating state to", data);
         params.state = data;
         app.$forceUpdate();
         app.$nextTick().then(() => item.emit('ready'))
@@ -50,7 +50,7 @@ function launch(selector: string) {
             return;
         }
 
-        console.log("receiving log data", logData);
+        // console.log("receiving log data", logData);
         params.emitter.emit("addLog", { start: logData.start, log: logData.data.log, availableMoves: logData.data.availableMoves });
     });
 

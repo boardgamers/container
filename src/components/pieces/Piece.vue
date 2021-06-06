@@ -113,7 +113,7 @@ export default class Piece extends Draggable {
     }
 
     onTransitionEnd() {
-        console.log("on transition end", this.transitioning);
+        // console.log("on transition end", this.transitioning);
         if (this.transitioning) {
             this.transitioning = false;
             this.ui.waitingAnimations = Math.max(this.ui.waitingAnimations - 1, 0);

@@ -17,7 +17,7 @@ import { ContainerPiece } from "container-engine/src/gamestate";
 import { Component, Mixins, Prop } from "vue-property-decorator";
 import Piece from "./Piece.vue";
 import Container from "./Container.vue";
-import DropZone from "./DropZone.vue";
+import DropZone from "../DropZone.vue";
 
 @Component({
     created(this: Ship) {

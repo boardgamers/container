@@ -1,5 +1,5 @@
 <template>
-    <g :class="['loan', {dragging}, {canDrag}]" :id="elId" :transform="`translate(${currentX}, ${currentY})`" @fastClick="onClick">
+    <g :class="['loan', {dragging}, {canDrag}]" :id="elId" :transform="`translate(${currentX}, ${currentY})`">
         <rect width="30" height="60" fill="royalblue" stroke="white" stroke-width="2" rx="2"></rect>
         <g transform="translate(33, -10) rotate(280, 15, 30)">
             <text text-anchor="middle" fill="white">Loan</text>
@@ -22,15 +22,6 @@ export default class LoanCard extends Mixins(Piece) {
 
     @Prop()
     player?: number;
-
-    onClick() {
-        console.log("click", this.owner);
-        if (this.owner == -1) {
-            this.$emit('click', 'getLoan');
-        } else if (this.owner == this.player) {
-            this.$emit('click', 'payLoan');
-        }
-    }
 }
 
 </script>

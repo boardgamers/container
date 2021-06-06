@@ -37,7 +37,8 @@ export enum DropZoneType {
     OpenSea = "openSea",
     IslandHarbor = "islandHarbor",
     GetLoan = "getLoan",
-    PayLoan = "payLoan"
+    PayLoan = "payLoan",
+    Supply = "supply"
 }
 
 export enum ContainerState {

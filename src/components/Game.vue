@@ -1,26 +1,31 @@
 <template>
     <div class="game">
-        <svg viewBox="0 0 1250 650" height="700" id="scene">
-            <defs>
-                <filter id="shadow">
-                    <feGaussianBlur stdDeviation="0.5 0.5" result="shadow" />
-                    <feOffset dx="1" dy="1" />
-                </filter>
-            </defs>
-
+        <div class="statusBar">
+            {{ getStatusMessage() }}
+        </div>
+        <svg viewBox="0 0 1250 650" height="650" id="scene">
             <rect width="100%" height="100%" x="0" y="0" fill="lightblue"></rect>
             <rect width="100%" height="100" x="0" y="0" fill="gray"></rect>
             <rect width="390" height="220" x="860" y="430" fill="gray"></rect>
 
-            <PassButton transform="translate(1130, 15)" @click="pass()" />
-            <UndoButton transform="translate(1130, 55)" @click="undo()" />
+            <template v-if="G && G.currentPlayer == player">
+                <PassButton transform="translate(1130, 15)" @click="pass()" />
+                <UndoButton transform="translate(1130, 55)" @click="undo()" />
+            </template>
+
+            <DropZone transform="translate(5, 5)" :width="600" :height="90" :enabled="true" :accepts="'container'" :data="{ type: 'supply' }" />
 
             <template v-if="G">
                 <template v-for="(player, i) in G.players">
-                    <PlayerBoard :key="'B' + i" :player="player" :color="['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'][i]"
-                        :transform="`translate(${250 * i}, 100)`" :owner="i" :currentPlayer="G.currentPlayer == i"
-                        :ended="gameEnded(G)" @pieceDrop="onPieceDrop" />
-                    <rect :key="'I' + i" width="390" height="41" x="860" :y="430 + i * 44" fill="none" stroke-width="3" :stroke="['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'][i]"></rect>
+                    <PlayerBoard :key="'B' + i"
+                        :player="player"
+                        :color="playerColors[i]"
+                        :transform="`translate(${250 * i}, 100)`"
+                        :owner="i"
+                        :currentPlayer="G.currentPlayer == i"
+                        :ended="gameEnded(G)"
+                        @pieceDrop="onPieceDrop" />
+                    <rect :key="'I' + i" width="390" height="41" x="860" :y="430 + i * 44" fill="none" stroke-width="3" :stroke="playerColors[i]"></rect>
                 </template>
             </template>
 
@@ -44,21 +49,27 @@
             </template>
 
             <template v-for="factory in factories">
-                <Factory :key="factory.id" :pieceId="factory.id" :targetState="{ x: factory.x, y: factory.y}" :canDrag="canDragFactory(factory)" :color="factory.color" />
-            </template>
-            <template v-for="factory in factoriesBuilt">
-                <Factory :key="factory.id" :pieceId="factory.id" :targetState="{ x: factory.x, y: factory.y}" :canDrag="false" :color="factory.color" />
+                <Factory :key="factory.id"
+                    :pieceId="factory.id"
+                    :targetState="{ x: factory.x, y: factory.y}"
+                    :color="factory.color"
+                    :canDrag="canDragFactory(factory)" />
             </template>
 
             <template v-for="warehouse in warehouses">
-                <Warehouse :key="warehouse.id" :pieceId="warehouse.id" :targetState="{ x: warehouse.x, y: warehouse.y}" :canDrag="canDragWarehouse()" />
-            </template>
-            <template v-for="warehouse in warehousesBuilt">
-                <Warehouse :key="warehouse.id" :pieceId="warehouse.id" :targetState="{ x: warehouse.x, y: warehouse.y}" :canDrag="false" />
+                <Warehouse :key="warehouse.id"
+                    :pieceId="warehouse.id"
+                    :targetState="{ x: warehouse.x, y: warehouse.y}"
+                    :canDrag="canDragWarehouse(warehouse)" />
             </template>
 
             <template v-for="loanCard in loanCards">
-                <LoanCard :key="loanCard.id" :targetState="{ x: loanCard.x, y: loanCard.y }" :owner="loanCard.owner" :player="player" :canDrag="canDragLoan(loanCard)"  @fastClick="loan($event)" />
+                <LoanCard :key="loanCard.id"
+                    :targetState="{ x: loanCard.x, y: loanCard.y }"
+                    :owner="loanCard.owner"
+                    :player="player"
+                    :canDrag="canDragLoan(loanCard)"
+                    @fastClick="loan($event)" />
             </template>
 
             <template v-if="G">
@@ -66,14 +77,14 @@
                 <text x="20" y="620">Money: ${{ G.players[player].money }}</text>
             </template>
 
-            <DropZone :transform="`translate(300, 425)`" :width="400" :height="225" :enabled="true" :accepts="'ship'" :data="{ type: 'openSea' }" />
-            <DropZone :transform="`translate(800, 425)`" :width="450" :height="225" :enabled="true" :accepts="'ship'" :data="{ type: 'islandHarbor' }" />
+            <DropZone :transform="`translate(280, 425)`" :width="400" :height="225" :enabled="true" :accepts="'ship'" :data="{ type: 'openSea' }" />
+            <DropZone :transform="`translate(770, 425)`" :width="480" :height="225" :enabled="true" :accepts="'ship'" :data="{ type: 'islandHarbor' }" />
 
             <DropZone :transform="`translate(1045, 10)`" :width="40" :height="70" :enabled="true" :accepts="'loan'" :data="{ type: 'payLoan' }" />
 
             <template v-if="G">
                 <Calculator v-if="G.phase == 'bid'" transform="translate(140, 430)" @bid="bid($event)" />
-                <template v-if="G.currentPlayer == G.auctioningPlayer">
+                <template v-if="G.currentPlayer != undefined && G.currentPlayer == G.auctioningPlayer">
                     <template v-for="(bidder, i) in G.highestBidders">
                         <Button :key="bidder" :transform="`translate(140, ${450 + 40 * i})`" :width="130" :text="'Accept ' + G.players[bidder].name" @click="accept(bidder)" />
                     </template>
@@ -96,16 +107,16 @@ import { ContainerState, DropZoneType, Piece, PieceType, ShipType, UIData } from
 import { logToText } from "../utils/log-to-text";
 import { ContainerColor, ShipPosition } from "container-engine/src/gamestate";
 import PlayerBoard from "./PlayerBoard.vue";
-import Container from "./Container.vue";
-import Factory from "./Factory.vue";
-import Warehouse from "./Warehouse.vue";
-import LoanCard from "./LoanCard.vue";
+import Container from "./pieces/Container.vue";
+import Factory from "./pieces/Factory.vue";
+import Warehouse from "./pieces/Warehouse.vue";
+import LoanCard from "./pieces/LoanCard.vue";
 import PointCard from "./PointCard.vue";
-import Ship from "./Ship.vue";
-import Button from "./Buttons/Button.vue";
-import PassButton from "./Buttons/PassButton.vue";
-import UndoButton from "./Buttons/UndoButton.vue";
-import PieceComponent from "./Piece.vue";
+import Ship from "./pieces/Ship.vue";
+import Button from "./buttons/Button.vue";
+import PassButton from "./buttons/PassButton.vue";
+import UndoButton from "./buttons/UndoButton.vue";
+import PieceComponent from "./pieces/Piece.vue";
 import DropZone from "./DropZone.vue";
 import Calculator from "./Calculator.vue";
 
@@ -123,6 +134,7 @@ import Calculator from "./Calculator.vue";
         });
 
         this.emitter.on("replayTo", (to: number) => {
+            console.log("replayTo", to);
             if (to < this.G!.log.length) {
                 const baseState = {
                     players: this.G!.players.map((player, i) => ({
@@ -145,7 +157,9 @@ import Calculator from "./Calculator.vue";
                         additionalBid: 0,
                         showBid: false,
                         showAdditionalBid: false,
+                        isAI: false
                     })),
+                    startingPlayer: this.G!.startingPlayer,
                     currentPlayer: this.G!.currentPlayer,
                     containersLeft: this.G!.containersLeft,
                     factoriesLeft: this.G!.factoriesLeft,
@@ -226,7 +240,6 @@ export default class Game extends Vue {
 
     containers: Piece[] = [];
     factories: Piece[] = [];
-    factoriesBuilt: Piece[] = [];
     warehouses: Piece[] = [];
     warehousesBuilt: Piece[] = [];
     loanCards: Piece[] = [];
@@ -234,8 +247,10 @@ export default class Game extends Vue {
 
     currentMove = 0;
 
+    playerColors = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'];
+
     addLog({ log, availableMoves, start }: { log: LogItem[]; start: number; availableMoves: AvailableMoves[] }) {
-        console.log("adding log...");
+        // console.log("adding log...");
 
         this._pendingAvailableMoves = null;
         if (start > this._futureState!.log.length) {
@@ -273,7 +288,7 @@ export default class Game extends Vue {
     }
 
     replaceState(state: GameState, replaceFuture = true) {
-        console.log("replace state", state, replaceFuture);
+        // console.log("replace state", state, replaceFuture);
         if (replaceFuture) {
             this._futureState = state;
         }
@@ -338,7 +353,7 @@ export default class Game extends Vue {
                     rotate: 90,
                     color: container.color.toString(),
                     owner: pi,
-                        state: ContainerState.OnIsland
+                    state: ContainerState.OnIsland
                 });
 
                 lastColor = container.color;
@@ -346,38 +361,35 @@ export default class Game extends Vue {
         });
 
         if (this.G?.containersLeft) {
-            let c = 0;
-            let lastColor;
+            let c = {};
             this.G?.containersLeft.sort().forEach(container => {
-                if (lastColor !== container.color) {
-                    c = 0;
+                if (!c[container.color]) {
+                    c[container.color] = 0;
                 }
 
                 const offset = 120 * Object.values(ContainerColor).indexOf(container.color);
                 this.containers.push({
                     id: container.id,
-                    x: 10 + offset + 22 * (c % 5),
-                    y: 40 + Math.floor(c / 5) * 12,
+                    x: 10 + offset + 22 * (c[container.color] % 5),
+                    y: 40 + Math.floor(c[container.color] / 5) * 12,
                     rotate: 0,
                     color: container.color.toString(),
                     owner: -1,
                     state: ContainerState.OnBoard
                 });
 
-                lastColor = container.color;
-                c++
+                c[container.color]++
             });
         }
 
         // Factories
-        this.factoriesBuilt = [];
+        this.factories = [];
         this.G?.players.forEach((player, pi) => {
             player.factories.forEach((factory, i) => {
-                this.factoriesBuilt.push({ id: factory.id, x: 28 + pi * 250 + i * 48, y: 140, color: factory.color.toString() });
+                this.factories.push({ id: factory.id, x: 28 + pi * 250 + i * 48, y: 140, owner: player.id, color: factory.color.toString() });
             });
         });
 
-        this.factories = [];
         if (this.G?.factoriesLeft) {
             let c = 0;
             let lastColor;
@@ -387,37 +399,36 @@ export default class Game extends Vue {
                 }
 
                 const offset = 120 * Object.values(ContainerColor).indexOf(factory.color);
-                this.factories.push({ id: factory.id, x: 20 + offset + 22 * (c % 5), y: 20 + Math.floor(c / 5) * 12, color: factory.color.toString() });
+                this.factories.push({ id: factory.id, x: 20 + offset + 22 * (c % 5), y: 20 + Math.floor(c / 5) * 12, owner: -1, color: factory.color.toString() });
                 lastColor = factory.color;
                 c++
             });
         }
 
         // Warehouses
-        this.warehousesBuilt = [];
+        this.warehouses = [];
         this.G?.players.forEach((player, pi) => {
             for (let c = 0; c < player.warehouses.length; c++) {
-                this.warehousesBuilt.push({ id: player.warehouses[c].id, x: 13 + pi * 250 + c * 48, y: 210 });
+                this.warehouses.push({ id: player.warehouses[c].id, x: 13 + pi * 250 + c * 48, y: 210, owner: player.id });
             }
         });
 
-        this.warehouses = [];
         if (this.G?.warehousesLeft) {
             for (let c = 0; c < this.G.warehousesLeft.length; c++) {
-                this.warehouses.push({ id: this.G.warehousesLeft[c].id, x: 620 + 32 * (c % 13), y: 15 + Math.floor(c / 13) * 32 });
+                this.warehouses.push({ id: this.G.warehousesLeft[c].id, x: 620 + 32 * (c % 13), y: 15 + Math.floor(c / 13) * 32, owner: -1 });
             }
         }
 
         // Loan Cards
         this.loanCards = [];
+        this.G?.loansLeft.forEach(loan => {
+            this.loanCards.push({ id: loan.id, x: 1050, y: 15, owner: -1 });
+        });
+
         this.G?.players.forEach((player, pi) => {
             player.loans.forEach((loan, c) => {
                 this.loanCards.push({ id: loan.id, x: 205 + pi * 250 + c * 7, y: 135 - c * 7, owner: player.id });
             });
-        });
-
-        this.G?.loansLeft.forEach(loan => {
-            this.loanCards.push({ id: loan.id, x: 1050, y: 15, owner: -1 });
         });
 
         // Ships
@@ -426,7 +437,7 @@ export default class Game extends Vue {
             const color = ["dodgerblue", "red", "yellow", "limegreen", "mediumorchid"][pi];
             switch (player.ship.shipPosition) {
                 case ShipPosition.OpenSea:
-                    this.ships.push({ id: player.ship.piece.id, x: 500, y: 410 + pi * 44, rotate: 90, color, containers: player.ship.containers, owner: pi });
+                    this.ships.push({ id: player.ship.piece.id, x: 380 + pi * 44, y: 480, rotate: 0, color, containers: player.ship.containers, owner: pi });
                     break;
 
                 case ShipPosition.Island:
@@ -503,13 +514,13 @@ export default class Game extends Vue {
         }
 
         if (this._pendingAvailableMoves && this._pendingAvailableMoves.index === this.G!.log.length) {
-            console.log("loading available moves", JSON.stringify(this._pendingAvailableMoves));
+            // console.log("loading available moves", JSON.stringify(this._pendingAvailableMoves));
             this.loadAvailableMoves(this._pendingAvailableMoves.availableMoves);
         }
     }
 
     advanceLog() {
-        console.log("advancing log", this.G!.log.length, this._futureState!.log.length);
+        // console.log("advancing log", this.G!.log.length, this._futureState!.log.length);
         const logItem = this._futureState!.log[this.G!.log.length];
         this.G!.log.push(logItem);
         this.emitter.emit("uplink:addLog", logToText(this.G!, logItem));
@@ -519,11 +530,10 @@ export default class Game extends Vue {
         switch (logItem.type) {
             case "phase": {
                 const { phase } = logItem;
-                console.log("phase", phase);
+                // console.log("phase", phase);
                 switch (phase) {
                     case Phase.Setup: {
                         this.queueAnimation(() => {
-                            console.log("delaying");
                             this.delay(200);
                         });
 
@@ -544,7 +554,7 @@ export default class Game extends Vue {
 
             case "move": {
                 const { player, move } = logItem;
-                console.log("move", player, move);
+                // console.log("move", player, move);
 
                 switch (move.name) {
                     default:
@@ -554,7 +564,7 @@ export default class Game extends Vue {
 
             case "event": {
                 const { event } = logItem;
-                console.log("event", event);
+                // console.log("event", event);
                 switch (event.name) {
                     default:
                         return;
@@ -566,11 +576,6 @@ export default class Game extends Vue {
     delay(ms: number) {
         this.ui.waitingAnimations += 1;
         setTimeout(() => { this.ui.waitingAnimations = Math.max(this.ui.waitingAnimations - 1, 0); }, ms);
-    }
-
-    @Watch("ui.waitingAnimations")
-    onAnimationNumberChanged() {
-        console.log("waiting animations", this.ui.waitingAnimations, this._futureState!.log.length, this.state!.log.length);
     }
 
     queueAnimation(anim: Function) {
@@ -623,18 +628,24 @@ export default class Game extends Vue {
             case PieceType.Container:
                 const container = e as Container;
                 if (container.state == ContainerState.OnBoard) {
-                    this.sendMove({ name: MoveName.Produce, data: container.color, extraData: { piece: { id: container.pieceId, color: container.color }, price: d.price } });
+                    if (d.type == DropZoneType.FactoryStore) {
+                        this.sendMove({ name: MoveName.Produce, data: container.color, extraData: { piece: { id: container.pieceId, color: container.color }, price: d.price } });
+                    }
                 } else if (container.state == ContainerState.OnFactoryStore) {
                     if (d.type == DropZoneType.FactoryStore) {
                         this.sendMove({ name: MoveName.ArrangeFactory, data: { id: container.pieceId, color: container.color }, extraData: { price: d.price } });
                     } else if (d.type == DropZoneType.WarehouseStore) {
                         this.sendMove({ name: MoveName.BuyFromFactory, data: { player: container.owner, piece: { id: container.pieceId, color: container.color } }, extraData: { price: d.price } });
+                    } else if (d.type == DropZoneType.Supply) {
+                        this.sendMove({ name: MoveName.DomesticSale, data: { id: container.pieceId, color: container.color } });
                     }
                 } else if (container.state == ContainerState.OnWarehouseStore) {
                     if (d.type == DropZoneType.WarehouseStore) {
                         this.sendMove({ name: MoveName.ArrangeWarehouse, data: { id: container.pieceId, color: container.color }, extraData: { price: d.price } });
                     } else if (d.type == DropZoneType.Ship) {
                         this.sendMove({ name: MoveName.BuyFromWarehouse, data: { player: container.owner, piece: { id: container.pieceId, color: container.color } } });
+                    } else if (d.type == DropZoneType.Supply) {
+                        this.sendMove({ name: MoveName.DomesticSale, data: { id: container.pieceId, color: container.color } });
                     }
                 }
 
@@ -694,7 +705,7 @@ export default class Game extends Vue {
 
             case ContainerState.OnFactoryStore: {
                 if (container.owner == currentPlayer.id) {
-                    return availableMoves[MoveName.ArrangeFactory] != undefined;
+                    return availableMoves[MoveName.ArrangeFactory] != undefined || availableMoves[MoveName.DomesticSale] != undefined;
                 } else {
                     const available = availableMoves[MoveName.BuyFromFactory];
                     return available && available.find(a => a.piece.id == container.id);
@@ -703,7 +714,7 @@ export default class Game extends Vue {
 
             case ContainerState.OnWarehouseStore: {
                 if (container.owner == currentPlayer.id) {
-                    return availableMoves[MoveName.ArrangeWarehouse] != undefined;
+                    return availableMoves[MoveName.ArrangeWarehouse] != undefined || availableMoves[MoveName.DomesticSale] != undefined;
                 } else {
                     const available = availableMoves[MoveName.BuyFromWarehouse];
                     return available && available.find(a => a.piece.id == container.id);
@@ -721,6 +732,9 @@ export default class Game extends Vue {
         if (this.G?.currentPlayer == undefined)
             return false;
 
+        if (factory.owner !== -1)
+            return false;
+
         const currentPlayer = this.G.players[this.G.currentPlayer];
         if (!currentPlayer)
             return false;
@@ -733,8 +747,11 @@ export default class Game extends Vue {
         return available && available.find(a => a == factory.color);
     }
 
-    canDragWarehouse() {
+    canDragWarehouse(warehouse: Piece) {
         if (this.G?.currentPlayer == undefined)
+            return false;
+
+        if (warehouse.owner !== -1)
             return false;
 
         const currentPlayer = this.G.players[this.G.currentPlayer];
@@ -768,16 +785,36 @@ export default class Game extends Vue {
 
         return false;
     }
+
+    getStatusMessage() {
+        if (this.G?.currentPlayer == undefined) {
+            return "Game ended!";
+        } else if (this.G?.currentPlayer == this.player) {
+            return "It's your turn!";
+        } else {
+            return `Waiting for ${this.G?.players[this.G!.currentPlayer!].name} to play...`;
+        }
+    }
 }
 
 </script>
 <style lang="scss">
 .game {
-    height: 100%;;
+    height: 100%;
     background-color: lightblue;
     display: flex;
     align-items: center;
     flex-direction: column;
+}
+
+.statusBar {
+    height: 40px;
+    width: 100%;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    line-height: 40px;
+    font-size: 20px;
 }
 
 #scene {

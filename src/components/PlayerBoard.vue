@@ -5,7 +5,7 @@
 
         <rect width="250" height="180" x="0" y="20" fill="gray"></rect>
 
-        <DropZone :transform="`translate(60, 200)`" :width="149" :height="80" :accepts="'ship'" :data="{ type: 'playerHarbor', owner: owner }" />
+        <DropZone :transform="`translate(35, 200)`" :width="199" :height="80" :accepts="'ship'" :data="{ type: 'playerHarbor', owner: owner }" />
         <rect width="20" height="80" x="0" y="200" fill="gray"></rect>
         <rect width="20" height="80" x="62" y="200" fill="gray"></rect>
         <rect width="20" height="80" x="124" y="200" fill="gray"></rect>
@@ -104,7 +104,11 @@ export default class PlayerBoard extends Vue {
         name += this.player.name;
 
         if (this.player.showBid) {
-            name += ' (Bid: $' + (this.player.bid + this.player.additionalBid) + ')';
+            if (this.player.showAdditionalBid) {
+                name += ' (Bid: $' + (this.player.bid + this.player.additionalBid) + ')';
+            } else {
+                name += ' (Bid: $' + this.player.bid + ')';
+            }
         } else if (this.ended) {
             name += ' (Score: $' + (this.player.money) + ')';
         }
