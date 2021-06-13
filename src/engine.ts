@@ -105,7 +105,7 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
 export function stripSecret(G: GameState, player?: number): GameState {
     return {
         ...G,
-        seed: "secret",
+        // seed: "secret",
         players: G.players.map((pl, i) => {
             if (player === i) {
                 return pl;
@@ -128,7 +128,7 @@ export function currentPlayers(G: GameState): number[] {
     return [G.currentPlayer!];
 }
 
-export function move(G: GameState, move: Move, playerNumber: number): GameState {
+export function move(G: GameState, move: Move, playerNumber: number, fake?: boolean): GameState {
     const player = G.players[playerNumber];
     const available = player.availableMoves?.[move.name];
 
@@ -213,7 +213,7 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
             asserts<Moves.MoveGetLoan>(move);
             const loan = G.loansLeft.shift()!;
             if (!loan) {
-                console.error("Erro loan", G);
+                console.error("Error loan", G);
             }
 
             player.loans.push(loan);
@@ -225,7 +225,7 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
             asserts<Moves.MovePayLoan>(move);
             const loan = player.loans.splice(player.loans.length - 1, 1)[0];
             if (!loan) {
-                console.error("Erro loan", G);
+                console.error("Error loan", G);
             }
 
             G.loansLeft.push(loan);
@@ -334,12 +334,14 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
             G.highestBidders = [];
             G.phase = Phase.Move;
 
-            if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
-                nextPlayer(G, true);
-            } else {
-                G.phase = Phase.GameEnd;
-                G.currentPlayer = undefined;
-                calculateEndScore(G);
+            if (!fake) {
+                if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
+                    nextPlayer(G, true);
+                } else {
+                    G.phase = Phase.GameEnd;
+                    G.currentPlayer = undefined;
+                    calculateEndScore(G);
+                }
             }
 
             break;
@@ -356,12 +358,14 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
             G.highestBidders = [];
             G.phase = Phase.Move;
 
-            if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
-                nextPlayer(G, true);
-            } else {
-                G.phase = Phase.GameEnd;
-                G.currentPlayer = undefined;
-                calculateEndScore(G);
+            if (!fake) {
+                if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
+                    nextPlayer(G, true);
+                } else {
+                    G.phase = Phase.GameEnd;
+                    G.currentPlayer = undefined;
+                    calculateEndScore(G);
+                }
             }
 
             break;
@@ -369,12 +373,15 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
 
         case MoveName.Pass: {
             asserts<Moves.MovePass>(move);
-            if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
-                nextPlayer(G, true);
-            } else {
-                G.phase = Phase.GameEnd;
-                G.currentPlayer = undefined;
-                calculateEndScore(G);
+
+            if (!fake) {
+                if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
+                    nextPlayer(G, true);
+                } else {
+                    G.phase = Phase.GameEnd;
+                    G.currentPlayer = undefined;
+                    calculateEndScore(G);
+                }
             }
 
             break;
@@ -385,7 +392,7 @@ export function move(G: GameState, move: Move, playerNumber: number): GameState 
             G.log.pop();
 
             const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == "move" && lastLog.player == G.currentPlayer) {
+            if (lastLog.type == "move" && lastLog.player == G.currentPlayer && !fake) {
                 G.log.pop();
                 G = reconstructState(getBaseState(G), G.log);
             }
@@ -485,10 +492,10 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
                     moveName = null;
                 }
             } else if (moveName == MoveName.BuyFactory) {
-                if (player.factories.length == 3)
+                if (player.factories.length == 3 || player.money < 15)
                     moveName = null;
             } else if (moveName == MoveName.BuyWarehouse) {
-                if (player.warehouses.length == 3)
+                if (player.warehouses.length == 3 || player.money < 17)
                     moveName = null;
             } else if (moveName == MoveName.DomesticSale) {
                 if (player.money > 5)
@@ -533,8 +540,6 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
             playerMove = { name: moveName, data };
             break;
     }
-
-    console.log(playerMove);
 
     return move(G, playerMove, playerNumber);
 }
@@ -582,7 +587,7 @@ function calculateEndScore(G: GameState) {
 }
 
 export function scores(G: GameState): number[] {
-    return G.players.map(p => p.money);
+    return G.players.map(_ => 0);
 }
 
 export function reconstructState(initialState: GameState, log: LogItem[]): GameState {
@@ -669,6 +674,7 @@ function getBaseState(G: GameState): GameState {
     const baseState = setup(G.players.length, G.options, G.seed);
     baseState.players.forEach((player, i) => {
         player.name = G.players[i].name;
+        player.isAI = G.players[i].isAI;
     });
 
     return baseState;

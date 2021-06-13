@@ -142,7 +142,7 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
             }
 
             // ArrangeWarehouse
-            if (player.actions > 0 || player.lastMove?.name === MoveName.BuyFromFactory) {
+            if (player.actions > 0 || player.lastMove?.name === MoveName.BuyFromFactory || player.lastMove?.name === MoveName.ArrangeWarehouse) {
                 if (player.containersOnWarehouseStore.length > 0) {
                     moves[MoveName.ArrangeWarehouse] = player.containersOnWarehouseStore.map(c => c.piece);
                 }
