@@ -4,10 +4,10 @@
     </g>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch, Inject } from "vue-property-decorator";
+import { Vue, Component, Prop, Watch, Inject } from 'vue-property-decorator';
 import { UIData } from '../types/ui-data';
 import { EventEmitter, Listener } from 'events';
-import Piece from "./pieces/Piece.vue";
+import Piece from './pieces/Piece.vue';
 
 @Component
 export default class DropZone extends Vue {
@@ -39,7 +39,7 @@ export default class DropZone extends Vue {
         if (!this.enabled || !this.ui.dragged) {
             if (this.overlapping && this.enabled && !this.ui.dragged) {
                 if (this.accepts?.indexOf(piece.pieceType) != -1) {
-                    this.communicator.emit("pieceDrop", piece, this.data);
+                    this.communicator.emit('pieceDrop', piece, this.data);
                 }
             }
 
@@ -53,21 +53,21 @@ export default class DropZone extends Vue {
         this.overlapping = rect1.bottom >= rect2.top && rect1.right >= rect2.left && rect1.top <= rect2.bottom && rect1.left <= rect2.right;
     }
 
-    @Watch("enabled", { immediate: true })
+    @Watch('enabled', { immediate: true })
     onEnabledChanged() {
         if (!this.listener) {
             this.listener = (piece) => this.updateOverlapping(piece);
-            this.$on("hook:beforeDestroy", () => this.communicator.off("draggedPosChanged", this.listener!));
+            this.$on('hook:beforeDestroy', () => this.communicator.off('draggedPosChanged', this.listener!));
         }
 
         if (this.enabled) {
-            if (this.communicator.listenerCount("draggedPosChanged") + 1 > this.communicator.getMaxListeners()) {
+            if (this.communicator.listenerCount('draggedPosChanged') + 1 > this.communicator.getMaxListeners()) {
                 this.communicator.setMaxListeners(this.communicator.getMaxListeners() + 10);
             }
 
-            this.communicator.on("draggedPosChanged", this.listener!);
+            this.communicator.on('draggedPosChanged', this.listener!);
         } else {
-            this.communicator.off("draggedPosChanged", this.listener!);
+            this.communicator.off('draggedPosChanged', this.listener!);
         }
     }
 }
@@ -84,5 +84,4 @@ g.placeholder {
         cursor: pointer;
     }
 }
-
 </style>

@@ -1,7 +1,8 @@
 import { ContainerPiece } from 'container-engine/src/gamestate';
+import PieceComponent from '../components/pieces/Piece.vue';
 
 export interface UIData {
-    dragged?: Vue | null;
+    dragged?: PieceComponent | null;
     waitingAnimations: number;
 }
 
@@ -20,31 +21,31 @@ export interface ShipType extends Piece {
 }
 
 export enum PieceType {
-    Warehouse = "warehouse",
-    Factory = "factory",
-    Container = "container",
-    Ship = "ship",
-    Loan = "loan"
+    Warehouse = 'warehouse',
+    Factory = 'factory',
+    Container = 'container',
+    Ship = 'ship',
+    Loan = 'loan'
 }
 
 export enum DropZoneType {
-    Ship = "ship",
-    PlayerHarbour = "playerHarbor",
-    Factory = "factory",
-    FactoryStore = "factoryStore",
-    Warehouse = "warehouse",
-    WarehouseStore = "warehouseStore",
-    OpenSea = "openSea",
-    IslandHarbor = "islandHarbor",
-    GetLoan = "getLoan",
-    PayLoan = "payLoan",
-    Supply = "supply"
+    Ship = 'ship',
+    PlayerHarbour = 'playerHarbor',
+    Factory = 'factory',
+    FactoryStore = 'factoryStore',
+    Warehouse = 'warehouse',
+    WarehouseStore = 'warehouseStore',
+    OpenSea = 'openSea',
+    IslandHarbor = 'islandHarbor',
+    GetLoan = 'getLoan',
+    PayLoan = 'payLoan',
+    Supply = 'supply'
 }
 
 export enum ContainerState {
-    OnBoard = "onBoard",
-    OnFactoryStore = "onFactoryStore",
-    OnWarehouseStore = "onWarehouseStore",
-    OnShip = "onShip",
-    OnIsland = "onIsland"
+    OnBoard = 'onBoard',
+    OnFactoryStore = 'onFactoryStore',
+    OnWarehouseStore = 'onWarehouseStore',
+    OnShip = 'onShip',
+    OnIsland = 'onIsland'
 }

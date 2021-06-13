@@ -1,16 +1,16 @@
 <script lang="ts">
-import { Component, Inject, Prop, Watch } from "vue-property-decorator";
-import Draggable from "./Draggable.vue";
+import { Component, Inject, Prop, Watch } from 'vue-property-decorator';
+import Draggable from './Draggable.vue';
 import { EventEmitter } from 'events';
-import { PieceType, UIData } from "@/types/ui-data";
+import { PieceType, UIData } from '@/types/ui-data';
 
 @Component({
     created(this: Piece) {
-        this.$on("draggedTo", (coords: { x: number, y: number }) => {
+        this.$on('draggedTo', (coords: { x: number, y: number }) => {
             [this.currentX, this.currentY] = [coords.x, coords.y];
 
             this.$nextTick(() => {
-                this.communicator.emit("draggedPosChanged", this);
+                this.communicator.emit('draggedPosChanged', this);
             });
         });
     },
@@ -30,7 +30,7 @@ export default class Piece extends Draggable {
     };
 
     @Prop()
-    pieceId!: number;
+    pieceId!: string;
 
     @Inject()
     readonly communicator!: EventEmitter;
@@ -68,8 +68,8 @@ export default class Piece extends Draggable {
         }, 1000);
     }
 
-    @Watch("dragging")
-    @Watch("targetState", { immediate: true })
+    @Watch('dragging')
+    @Watch('targetState', { immediate: true })
     onTargetChanged(newVal: boolean, oldVal: boolean) {
         if (this.dragging) {
             return;
@@ -102,13 +102,13 @@ export default class Piece extends Draggable {
         }
     }
 
-    @Watch("dragging")
+    @Watch('dragging')
     onDraggingChanged() {
         if (this.dragging) {
             this.ui.dragged = this;
         } else {
             this.ui.dragged = null;
-            this.communicator.emit("draggedPosChanged", this);
+            this.communicator.emit('draggedPosChanged', this);
         }
     }
 

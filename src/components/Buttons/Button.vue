@@ -1,11 +1,11 @@
 <template>
     <g class="button" @click="$emit('click')">
-        <rect :width="width" height="30" fill="gainsboro" stroke="black" rx="2"></rect>
+        <rect :width="width" height="30" fill="gainsboro" stroke="black" rx="2" />
         <text text-anchor="middle" fill="black" :x="width / 2" y="16">{{ text }}</text>
     </g>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop } from "vue-property-decorator";
+import { Vue, Component, Prop } from 'vue-property-decorator';
 
 @Component
 export default class Button extends Vue {

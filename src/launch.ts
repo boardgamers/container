@@ -1,7 +1,6 @@
-import type { Move, GameState } from "container-engine";
-import Vue from "vue";
+import type { GameState, Move } from 'container-engine';
 import { EventEmitter } from 'events';
-
+import Vue from 'vue';
 import Game from './components/Game.vue';
 
 function launch(selector: string) {
@@ -12,47 +11,20 @@ function launch(selector: string) {
     }).$mount(selector);
 
     const item: EventEmitter = new EventEmitter();
-    let replaying = false;
 
-    params.emitter.on("move", (move: Move) => item.emit("move", move));
-    params.emitter.on("fetchState", () => item.emit("fetchState"));
-    params.emitter.on("uplink:addLog", (data: string[]) => item.emit("addLog", data));
-    params.emitter.on("uplink:replaceLog", (data: string[]) => item.emit("replaceLog", data));
-    params.emitter.on("replay:info", (info: { start: number, current: number, end: number }) => item.emit("replay:info", info));
+    params.emitter.on('move', (move: Move) => item.emit('move', move));
 
-    item.addListener("state", data => {
-        // console.log("updating state to", data);
+    item.addListener('state', data => {
         params.state = data;
         app.$forceUpdate();
-        app.$nextTick().then(() => item.emit('ready'))
+        app.$nextTick().then(() => item.emit('ready'));
     });
-    item.addListener("state:updated", () => item.emit("fetchLog", { start: params.state?.log.length }));
-    item.addListener("player", data => {
+    item.addListener('state:updated', () => item.emit('fetchState'));
+    item.addListener('player', data => {
         params.player = data.index;
         app.$forceUpdate();
     });
-    item.addListener("replay:start", () => {
-        params.emitter.emit("replayStart");
-        replaying = true;
-    });
-    item.addListener("replay:to", (info) => {
-        params.emitter.emit("replayTo", info);
-        // Todo: change log ?
-        // item.emit("replaceLog", (store.state as any).gaiaViewer.data.moveHistory);
-    })
-    item.addListener("replay:end", () => {
-        params.emitter.emit("replayEnd");
-        replaying = false;
-        item.emit("fetchState");
-    });
-    item.addListener("gamelog", logData => {
-        if (replaying) {
-            return;
-        }
-
-        // console.log("receiving log data", logData);
-        params.emitter.emit("addLog", { start: logData.start, log: logData.data.log, availableMoves: logData.data.availableMoves });
-    });
+    item.addListener('gamelog', _ => item.emit('fetchState'));
 
     return item;
 }

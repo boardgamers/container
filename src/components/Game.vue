@@ -3,12 +3,12 @@
         <div class="statusBar">
             {{ getStatusMessage() }}
         </div>
-        <svg viewBox="0 0 1250 650" height="650" id="scene">
-            <rect width="100%" height="100%" x="0" y="0" fill="lightblue"></rect>
-            <rect width="100%" height="100" x="0" y="0" fill="gray"></rect>
-            <rect width="390" height="220" x="860" y="430" fill="gray"></rect>
+        <svg id="scene" viewBox="0 0 1250 650" height="650">
+            <rect width="100%" height="100%" x="0" y="0" fill="lightblue" />
+            <rect width="100%" height="100" x="0" y="0" fill="gray" />
+            <rect width="390" height="220" x="860" y="430" fill="gray" />
 
-            <template v-if="G && G.currentPlayer == player">
+            <template v-if="isCurrentPlayer(player)">
                 <PassButton transform="translate(1130, 15)" @click="pass()" />
                 <UndoButton transform="translate(1130, 55)" @click="undo()" />
             </template>
@@ -16,16 +16,16 @@
             <DropZone transform="translate(5, 5)" :width="600" :height="90" :enabled="true" :accepts="'container'" :data="{ type: 'supply' }" />
 
             <template v-if="G">
-                <template v-for="(player, i) in G.players">
+                <template v-for="(p, i) in G.players">
                     <PlayerBoard :key="'B' + i"
-                        :player="player"
+                        :player="p"
                         :color="playerColors[i]"
                         :transform="`translate(${250 * i}, 100)`"
                         :owner="i"
-                        :currentPlayer="G.currentPlayer == i"
+                        :currentPlayer="isCurrentPlayer(i)"
                         :ended="gameEnded(G)"
                         @pieceDrop="onPieceDrop" />
-                    <rect :key="'I' + i" width="390" height="41" x="860" :y="430 + i * 44" fill="none" stroke-width="3" :stroke="playerColors[i]"></rect>
+                    <rect :key="'I' + i" width="390" height="41" x="860" :y="430 + i * 44" fill="none" stroke-width="3" :stroke="playerColors[i]" />
                 </template>
             </template>
 
@@ -33,7 +33,7 @@
                 <Ship :key="ship.id"
                     :pieceId="ship.id"
                     :targetState="{ x: ship.x, y: ship.y, rotate: ship.rotate }"
-                    :canDrag="ship.owner == G.currentPlayer"
+                    :canDrag="canDragShip(ship)"
                     :containers="ship.containers"
                     :color="ship.color" />
             </template>
@@ -82,11 +82,11 @@
 
             <DropZone :transform="`translate(1045, 10)`" :width="40" :height="70" :enabled="true" :accepts="'loan'" :data="{ type: 'payLoan' }" />
 
-            <template v-if="G">
+            <template v-if="isCurrentPlayer(player)">
                 <Calculator v-if="G.phase == 'bid'" transform="translate(140, 430)" @bid="bid($event)" />
-                <template v-if="G.currentPlayer != undefined && G.currentPlayer == G.auctioningPlayer">
+                <template v-if="player == G.auctioningPlayer">
                     <template v-for="(bidder, i) in G.highestBidders">
-                        <Button :key="bidder" :transform="`translate(140, ${450 + 40 * i})`" :width="130" :text="'Accept ' + G.players[bidder].name" @click="accept(bidder)" />
+                        <Button :key="bidder" :transform="`translate(140, ${450 + 40 * i})`" :width="130" :text="'Accept ' + getName(bidder)" @click="accept(bidder)" />
                     </template>
                     <Button :transform="`translate(140, ${450 + 40 * G.highestBidders.length})`" :width="130" :text="'Decline'" @click="decline()" />
                 </template>
@@ -98,105 +98,31 @@
     </div>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch, Provide, ProvideReactive, } from "vue-property-decorator";
-import { LogItem, AvailableMoves, Phase, reconstructState, MoveName, ended } from "container-engine";
-import type { GameState } from "container-engine";
-import { EventEmitter } from "events";
-import { range, isEqual, groupBy } from "lodash";
-import { ContainerState, DropZoneType, Piece, PieceType, ShipType, UIData } from "../types/ui-data";
-import { logToText } from "../utils/log-to-text";
-import { ContainerColor, ShipPosition } from "container-engine/src/gamestate";
-import PlayerBoard from "./PlayerBoard.vue";
-import Container from "./pieces/Container.vue";
-import Factory from "./pieces/Factory.vue";
-import Warehouse from "./pieces/Warehouse.vue";
-import LoanCard from "./pieces/LoanCard.vue";
-import PointCard from "./PointCard.vue";
-import Ship from "./pieces/Ship.vue";
-import Button from "./buttons/Button.vue";
-import PassButton from "./buttons/PassButton.vue";
-import UndoButton from "./buttons/UndoButton.vue";
-import PieceComponent from "./pieces/Piece.vue";
-import DropZone from "./DropZone.vue";
-import Calculator from "./Calculator.vue";
+import { Vue, Component, Prop, Watch, Provide, ProvideReactive, } from 'vue-property-decorator';
+import { MoveName, ended, move as engineMove } from 'container-engine';
+import type { GameState } from 'container-engine';
+import { EventEmitter } from 'events';
+import { groupBy } from 'lodash';
+import { ContainerState, DropZoneType, Piece, PieceType, ShipType, UIData } from '../types/ui-data';
+import { ContainerColor, ShipPosition } from 'container-engine/src/gamestate';
+import PlayerBoard from './PlayerBoard.vue';
+import Container from './pieces/Container.vue';
+import Factory from './pieces/Factory.vue';
+import Warehouse from './pieces/Warehouse.vue';
+import LoanCard from './pieces/LoanCard.vue';
+import PointCard from './PointCard.vue';
+import Ship from './pieces/Ship.vue';
+import Button from './buttons/Button.vue';
+import PassButton from './buttons/PassButton.vue';
+import UndoButton from './buttons/UndoButton.vue';
+import PieceComponent from './pieces/Piece.vue';
+import DropZone from './DropZone.vue';
+import Calculator from './Calculator.vue';
 
 @Component({
     created(this: Game) {
-        this.emitter.on("addLog", this.addLog.bind(this));
-
-        this.emitter.on("replayStart", () => {
-            this.emitter.emit("replay:info", {
-                start: 1,
-                current: this.G!.log.length,
-                end: this._futureState!.log.length,
-            });
-            this.paused = true;
-        });
-
-        this.emitter.on("replayTo", (to: number) => {
-            console.log("replayTo", to);
-            if (to < this.G!.log.length) {
-                const baseState = {
-                    players: this.G!.players.map((player, i) => ({
-                        id: i,
-                        pointCard: player.pointCard,
-                        factories: player.factories,
-                        warehouses: player.warehouses,
-                        ship: { piece: { id: '' }, containers: [], shipPosition: ShipPosition.OpenSea },
-                        containersOnFactoryStore: player.containersOnFactoryStore,
-                        containersOnWarehouseStore: [],
-                        containersOnIsland: [],
-                        money: 20,
-                        loans: [],
-                        produced: [],
-                        availableMoves: null,
-                        lastMove: null,
-                        actions: 0,
-                        isDropped: false,
-                        bid: 0,
-                        additionalBid: 0,
-                        showBid: false,
-                        showAdditionalBid: false,
-                        isAI: false
-                    })),
-                    startingPlayer: this.G!.startingPlayer,
-                    currentPlayer: this.G!.currentPlayer,
-                    containersLeft: this.G!.containersLeft,
-                    factoriesLeft: this.G!.factoriesLeft,
-                    warehousesLeft: this.G!.warehousesLeft,
-                    loansLeft: this.G!.loansLeft,
-                    auctioningPlayer: -1,
-                    highestBidders: [],
-                    phase: Phase.Move,
-                    options: this.G!.options,
-                    log: [],
-                    seed: "",
-                    round: 1
-                };
-
-                this.replaceState(reconstructState(baseState, this._futureState!.log.slice(0, to)), false);
-            }
-
-            if (this.G!.log.length + 1 === to) {
-                this.advanceLog();
-            } else if (this.G!.log.length + 1 < to) {
-                this.replaceState(reconstructState(this.G!, this._futureState!.log.slice(this.G!.log.length, to)), false);
-            }
-
-            this.emitter.emit("replay:info", {
-                start: 1,
-                current: this.G!.log.length,
-                end: this._futureState!.log.length,
-            });
-        });
-
-        this.emitter.on("replayEnd", () => {
-            this.paused = false;
-            this.emitter.emit("fetchState");
-        });
-
-        this.communicator.on("pieceDrop", this.onPieceDrop);
-        this.$on("hook:beforeDestroy", () => this.communicator.off("pieceDrop", this.onPieceDrop));
+        this.communicator.on('pieceDrop', this.onPieceDrop);
+        this.$on('hook:beforeDestroy', () => this.communicator.off('pieceDrop', this.onPieceDrop));
     },
     components: {
         PlayerBoard,
@@ -236,8 +162,8 @@ export default class Game extends Vue {
 
     @ProvideReactive()
     G?: GameState | null = null;
-    _futureState?: GameState;
 
+    // Pieces
     containers: Piece[] = [];
     factories: Piece[] = [];
     warehouses: Piece[] = [];
@@ -245,65 +171,19 @@ export default class Game extends Vue {
     loanCards: Piece[] = [];
     ships: ShipType[] = [];
 
-    currentMove = 0;
-
     playerColors = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'];
 
-    addLog({ log, availableMoves, start }: { log: LogItem[]; start: number; availableMoves: AvailableMoves[] }) {
-        // console.log("adding log...");
+    animationQueue: Array<Function> = [];
 
-        this._pendingAvailableMoves = null;
-        if (start > this._futureState!.log.length) {
-            this.emitter.emit("fetchState");
-            return;
-        }
-
-        if (log.length === 0) {
-            this.loadAvailableMoves(availableMoves);
-            return;
-        }
-
-        // edge case when we do a move and another player just did a move
-        if (start === this._futureState!.log.length && start > 0 && isEqual(log[0], this._futureState!.log.slice(-1)[0])) {
-            this.emitter.emit("fetchState");
-            return;
-        }
-
-        this._futureState!.log = [
-            ...this._futureState!.log.slice(0, start),
-            ...log,
-        ];
-
-        this._pendingAvailableMoves = {
-            index: start + log.length,
-            availableMoves: availableMoves,
-        };
-
-        this.updateUI();
-    }
-
-    @Watch("state", { immediate: true })
+    @Watch('state', { immediate: true })
     onStateChanged(state: GameState) {
         this.replaceState(state);
     }
 
-    replaceState(state: GameState, replaceFuture = true) {
-        // console.log("replace state", state, replaceFuture);
-        if (replaceFuture) {
-            this._futureState = state;
-        }
-
+    replaceState(state: GameState) {
         this.G = JSON.parse(JSON.stringify(state));
 
-        if (this.G)
-            this.emitter.emit("uplink:replaceLog", [...this.G!.log.map((x: LogItem) => logToText(this.G!, x))].flat(1));
-
         this.createPieces();
-
-        // if (this.G?.phase === Phase.Setup) {
-        //     this._futureState?.log.push({ type: "phase", phase: Phase.Setup });
-        //     this.advanceLog();
-        // }
     }
 
     createPieces() {
@@ -434,7 +314,7 @@ export default class Game extends Vue {
         // Ships
         this.ships = [];
         this.G?.players.forEach((player, pi) => {
-            const color = ["dodgerblue", "red", "yellow", "limegreen", "mediumorchid"][pi];
+            const color = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'][pi];
             switch (player.ship.shipPosition) {
                 case ShipPosition.OpenSea:
                     this.ships.push({ id: player.ship.piece.id, x: 380 + pi * 44, y: 480, rotate: 0, color, containers: player.ship.containers, owner: pi });
@@ -467,31 +347,7 @@ export default class Game extends Vue {
         });
     }
 
-    get round() {
-        return this.G?.round;
-    }
-
-    get otherPlayers() {
-        if (!this.G) {
-            return [];
-        }
-
-        return range(0, this.G.players.length).filter(pl => pl !== (this.player || 0));
-    }
-
-    canPlayerMove(player: number) {
-        return !!this.G?.players[player]?.availableMoves;
-    }
-
-    loadAvailableMoves(availableMoves: AvailableMoves[]) {
-        for (let i = 0; i < availableMoves.length; i++) {
-            this.G!.players[i].availableMoves = availableMoves[i];
-        }
-
-        this._pendingAvailableMoves = null;
-    }
-
-    @Watch("ui.waitingAnimations")
+    @Watch('ui.waitingAnimations')
     updateUI() {
         if (this.ui.waitingAnimations > 0) {
             return;
@@ -502,116 +358,6 @@ export default class Game extends Vue {
             setTimeout(() => this.updateUI());
             return;
         }
-
-        if (this.paused) {
-            return;
-        }
-
-        if (this.G!.log.length < this._futureState!.log.length) {
-            this.advanceLog();
-            setTimeout(() => this.updateUI());
-            return;
-        }
-
-        if (this._pendingAvailableMoves && this._pendingAvailableMoves.index === this.G!.log.length) {
-            // console.log("loading available moves", JSON.stringify(this._pendingAvailableMoves));
-            this.loadAvailableMoves(this._pendingAvailableMoves.availableMoves);
-        }
-    }
-
-    advanceLog() {
-        // console.log("advancing log", this.G!.log.length, this._futureState!.log.length);
-        const logItem = this._futureState!.log[this.G!.log.length];
-        this.G!.log.push(logItem);
-        this.emitter.emit("uplink:addLog", logToText(this.G!, logItem));
-
-        this.delay(1);
-
-        switch (logItem.type) {
-            case "phase": {
-                const { phase } = logItem;
-                // console.log("phase", phase);
-                switch (phase) {
-                    case Phase.Setup: {
-                        this.queueAnimation(() => {
-                            this.delay(200);
-                        });
-
-                        for (let i = 0; i < this.G!.players.length; i++) {
-                            this.queueAnimation(() => {
-                                this.G?.players[i].warehouses.push(this.G?.warehousesLeft.pop()!);
-                                this.createPieces();
-                            });
-                        }
-
-                        return;
-                    }
-
-                    default:
-                        return;
-                }
-            }
-
-            case "move": {
-                const { player, move } = logItem;
-                // console.log("move", player, move);
-
-                switch (move.name) {
-                    default:
-                        return;
-                }
-            }
-
-            case "event": {
-                const { event } = logItem;
-                // console.log("event", event);
-                switch (event.name) {
-                    default:
-                        return;
-                }
-            }
-        }
-    }
-
-    delay(ms: number) {
-        this.ui.waitingAnimations += 1;
-        setTimeout(() => { this.ui.waitingAnimations = Math.max(this.ui.waitingAnimations - 1, 0); }, ms);
-    }
-
-    queueAnimation(anim: Function) {
-        this.animationQueue.push(anim);
-    }
-
-    _pendingAvailableMoves: { index: number; availableMoves: AvailableMoves[]; } | null = null;
-    animationQueue: Array<Function> = [];
-
-    pass() {
-        this.emitter.emit("move", { name: MoveName.Pass, data: true });
-    }
-
-    undo() {
-        this.emitter.emit("move", { name: MoveName.Undo, data: true });
-    }
-
-    loan(event) {
-        const loan = event as LoanCard;
-        if (loan.owner == -1) {
-            this.emitter.emit("move", { name: MoveName.GetLoan, data: true });
-        } else if (loan.owner == this.G?.currentPlayer) {
-            this.emitter.emit("move", { name: MoveName.PayLoan, data: true });
-        }
-    }
-
-    bid(event) {
-        this.emitter.emit("move", { name: MoveName.Bid, data: true, extraData: { price: event } });
-    }
-
-    accept(bidder) {
-        this.emitter.emit("move", { name: MoveName.Accept, data: bidder });
-    }
-
-    decline() {
-        this.emitter.emit("move", { name: MoveName.Decline, data: true });
     }
 
     onPieceDrop(e: PieceComponent, d: any) {
@@ -633,7 +379,9 @@ export default class Game extends Vue {
                     }
                 } else if (container.state == ContainerState.OnFactoryStore) {
                     if (d.type == DropZoneType.FactoryStore) {
-                        this.sendMove({ name: MoveName.ArrangeFactory, data: { id: container.pieceId, color: container.color }, extraData: { price: d.price } });
+                        const player = this.G!.players[this.G!.currentPlayer!];
+                        if (player.containersOnFactoryStore.find(c => c.piece.id == e.pieceId)!.price !== d.price)
+                            this.sendMove({ name: MoveName.ArrangeFactory, data: { id: container.pieceId, color: container.color }, extraData: { price: d.price } });
                     } else if (d.type == DropZoneType.WarehouseStore) {
                         this.sendMove({ name: MoveName.BuyFromFactory, data: { player: container.owner, piece: { id: container.pieceId, color: container.color } }, extraData: { price: d.price } });
                     } else if (d.type == DropZoneType.Supply) {
@@ -652,12 +400,16 @@ export default class Game extends Vue {
                 break;
 
             case PieceType.Ship:
+                const player = this.G!.players[this.G!.currentPlayer!];
                 if (d.type === DropZoneType.PlayerHarbour) {
-                    this.sendMove({ name: MoveName.Sail, data: "player" + d.owner });
+                    if (player.ship.shipPosition !== 'player' + d.owner)
+                        this.sendMove({ name: MoveName.Sail, data: 'player' + d.owner });
                 } else if (d.type === DropZoneType.OpenSea) {
-                    this.sendMove({ name: MoveName.Sail, data: ShipPosition.OpenSea });
+                    if (player.ship.shipPosition !== ShipPosition.OpenSea)
+                        this.sendMove({ name: MoveName.Sail, data: ShipPosition.OpenSea });
                 } else if (d.type === DropZoneType.IslandHarbor) {
-                    this.sendMove({ name: MoveName.Sail, data: ShipPosition.Island });
+                    if (player.ship.shipPosition !== ShipPosition.Island)
+                        this.sendMove({ name: MoveName.Sail, data: ShipPosition.Island });
                 }
 
                 break;
@@ -676,26 +428,59 @@ export default class Game extends Vue {
         this.updateUI();
     }
 
+    getName(bidder) {
+        return this.G!.players[bidder].name!.length > 8 ? this.G!.players[bidder].name?.substring(0, 5).concat('...') : this.G!.players[bidder].name;
+    }
+
+    pass() {
+        this.sendMove({ name: MoveName.Pass, data: true });
+    }
+
+    undo() {
+        this.sendMove({ name: MoveName.Undo, data: true });
+    }
+
+    loan(event) {
+        const loan = event as LoanCard;
+        if (loan.owner == -1) {
+            this.sendMove({ name: MoveName.GetLoan, data: true });
+        } else if (loan.owner == this.G?.currentPlayer) {
+            this.sendMove({ name: MoveName.PayLoan, data: true });
+        }
+    }
+
+    bid(event) {
+        this.sendMove({ name: MoveName.Bid, data: true, extraData: { price: event } });
+    }
+
+    accept(bidder) {
+        this.sendMove({ name: MoveName.Accept, data: bidder });
+    }
+
+    decline() {
+        this.sendMove({ name: MoveName.Decline, data: true });
+    }
+
     sendMove(move) {
-        console.log("send move", move);
-        this.emitter.emit("move", move);
+        this.emitter.emit('move', move);
+
+        this.replaceState(engineMove(this.G!, move, this.player!, true));
     }
 
     gameEnded(G: GameState) {
         return ended(G);
     }
 
+    canDrag() {
+        return this.G?.currentPlayer == this.player! && this.G.players[this.player!] && this.G.players[this.player!].availableMoves;
+    }
+
     canDragContainer(container: Piece) {
-        if (this.G?.currentPlayer == undefined)
+        if (!this.canDrag())
             return false;
 
-        const currentPlayer = this.G.players[this.G.currentPlayer];
-        if (!currentPlayer)
-            return false;
-
-        const availableMoves = currentPlayer.availableMoves;
-        if (!availableMoves)
-            return false;
+        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const availableMoves = currentPlayer.availableMoves!;
 
         switch (container.state) {
             case ContainerState.OnBoard: {
@@ -729,18 +514,13 @@ export default class Game extends Vue {
     }
 
     canDragFactory(factory: Piece) {
-        if (this.G?.currentPlayer == undefined)
+        if (!this.canDrag())
             return false;
+
+        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const availableMoves = currentPlayer.availableMoves!;
 
         if (factory.owner !== -1)
-            return false;
-
-        const currentPlayer = this.G.players[this.G.currentPlayer];
-        if (!currentPlayer)
-            return false;
-
-        const availableMoves = currentPlayer.availableMoves;
-        if (!availableMoves)
             return false;
 
         const available = availableMoves[MoveName.BuyFactory];
@@ -748,34 +528,24 @@ export default class Game extends Vue {
     }
 
     canDragWarehouse(warehouse: Piece) {
-        if (this.G?.currentPlayer == undefined)
+        if (!this.canDrag())
             return false;
+
+        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const availableMoves = currentPlayer.availableMoves!;
 
         if (warehouse.owner !== -1)
-            return false;
-
-        const currentPlayer = this.G.players[this.G.currentPlayer];
-        if (!currentPlayer)
-            return false;
-
-        const availableMoves = currentPlayer.availableMoves;
-        if (!availableMoves)
             return false;
 
         return availableMoves[MoveName.BuyWarehouse] != undefined;
     }
 
     canDragLoan(loanCard: Piece) {
-        if (this.G?.currentPlayer == undefined)
+        if (!this.canDrag())
             return false;
 
-        const currentPlayer = this.G.players[this.G.currentPlayer];
-        if (!currentPlayer)
-            return false;
-
-        const availableMoves = currentPlayer.availableMoves;
-        if (!availableMoves)
-            return false;
+        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const availableMoves = currentPlayer.availableMoves!;
 
         if (loanCard.owner == -1) {
             return availableMoves[MoveName.GetLoan] != undefined;
@@ -786,14 +556,28 @@ export default class Game extends Vue {
         return false;
     }
 
+    canDragShip(ship: Piece) {
+        if (!this.canDrag())
+            return false;
+
+        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const availableMoves = currentPlayer.availableMoves!;
+
+        return availableMoves[MoveName.Sail] && this.isCurrentPlayer(ship.owner);
+    }
+
     getStatusMessage() {
         if (this.G?.currentPlayer == undefined) {
-            return "Game ended!";
+            return 'Game ended!';
         } else if (this.G?.currentPlayer == this.player) {
-            return "It's your turn!";
+            return 'It\'s your turn!';
         } else {
-            return `Waiting for ${this.G?.players[this.G!.currentPlayer!].name} to play...`;
+            return `Waiting for ${this.G?.players[this.G!.currentPlayer].name} to play...`;
         }
+    }
+
+    isCurrentPlayer(player) {
+        return this.G && this.G.currentPlayer === player;
     }
 }
 
@@ -841,4 +625,21 @@ text {
     user-select: none;
 }
 
+.piece {
+    &:not(.dragging) {
+        transition: transform 0.8s ease-in-out;
+    }
+
+    &.canDrag {
+        cursor: pointer;
+
+        & > circle,
+        & > rect,
+        & > path {
+            &:hover {
+                stroke: white;
+            }
+        }
+    }
+}
 </style>

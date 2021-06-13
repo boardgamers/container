@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Vue, Component, Prop } from "vue-property-decorator";
+import { Vue, Component, Prop } from 'vue-property-decorator';
 
 @Component({
     mounted(this: Draggable) {
@@ -7,7 +7,7 @@ import { Vue, Component, Prop } from "vue-property-decorator";
             const endDrag = () => this.endDrag();
             const drag = (event: MouseEvent | TouchEvent) => this.drag(event);
 
-            this.htmlElement.addEventListener("mousedown", event => this.startDrag(event));
+            this.htmlElement.addEventListener('mousedown', event => this.startDrag(event));
             this.htmlElement.addEventListener('touchstart', event => this.startDrag(event));
 
             this.svgElement.addEventListener('touchmove', drag);
@@ -15,18 +15,18 @@ import { Vue, Component, Prop } from "vue-property-decorator";
             this.svgElement.addEventListener('touchleave', endDrag);
             this.svgElement.addEventListener('touchcancel', endDrag);
 
-            this.$on("hook:beforeDestroy", () => this.svgElement.removeEventListener("touchmove", drag));
-            this.$on("hook:beforeDestroy", () => this.svgElement.removeEventListener("touchend", endDrag));
-            this.$on("hook:beforeDestroy", () => this.svgElement.removeEventListener("touchleave", endDrag));
-            this.$on("hook:beforeDestroy", () => this.svgElement.removeEventListener("touchcancel", endDrag));
+            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('touchmove', drag));
+            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('touchend', endDrag));
+            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('touchleave', endDrag));
+            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('touchcancel', endDrag));
 
-            this.svgElement.addEventListener("mouseleave", endDrag);
-            this.svgElement.addEventListener("mouseup", endDrag);
-            this.svgElement.addEventListener("mousemove", drag);
+            this.svgElement.addEventListener('mouseleave', endDrag);
+            this.svgElement.addEventListener('mouseup', endDrag);
+            this.svgElement.addEventListener('mousemove', drag);
 
-            this.$on("hook:beforeDestroy", () => this.svgElement.removeEventListener("mouseleave", endDrag));
-            this.$on("hook:beforeDestroy", () => this.svgElement.removeEventListener("mouseup", endDrag));
-            this.$on("hook:beforeDestroy", () => this.svgElement.removeEventListener("mousemove", drag));
+            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('mouseleave', endDrag));
+            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('mouseup', endDrag));
+            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('mousemove', drag));
         });
     }
 })
@@ -40,7 +40,7 @@ export default class Draggable extends Vue {
     _dragStart?: number;
 
     get svgElement() {
-        return document.querySelector("#scene") as SVGSVGElement;
+        return document.querySelector('#scene') as SVGSVGElement;
     }
 
     get htmlElement() {
@@ -81,13 +81,13 @@ export default class Draggable extends Vue {
         const coord = this.getMousePosition(evt);
         this._transform!.setTranslate(coord.x - this._offset.x, coord.y - this._offset.y);
 
-        this.$emit("draggedTo", { x: coord.x - this._offset.x, y: coord.y - this._offset.y });
+        this.$emit('draggedTo', { x: coord.x - this._offset.x, y: coord.y - this._offset.y });
     }
 
     endDrag() {
         this.dragging = false;
         if (Date.now() - this._dragStart! < 100) {
-            this.$nextTick(() => { this.$emit("fastClick", this); });
+            this.$nextTick(() => { this.$emit('fastClick', this); });
         }
     }
 

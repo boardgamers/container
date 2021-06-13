@@ -1,15 +1,15 @@
 <template>
-    <g :class="['loan', {dragging}, {canDrag}]" :id="elId" :transform="`translate(${currentX}, ${currentY})`">
-        <rect width="30" height="60" fill="royalblue" stroke="white" stroke-width="2" rx="2"></rect>
+    <g :id="elId" :class="['loan', {dragging}, {canDrag}]" :transform="`translate(${currentX}, ${currentY})`">
+        <rect width="30" height="60" fill="royalblue" stroke="white" stroke-width="2" rx="2" />
         <g transform="translate(33, -10) rotate(280, 15, 30)">
             <text text-anchor="middle" fill="white">Loan</text>
         </g>
     </g>
 </template>
 <script lang="ts">
-import { PieceType } from "@/types/ui-data";
-import { Component, Mixins, Prop } from "vue-property-decorator";
-import Piece from "./Piece.vue";
+import { PieceType } from '@/types/ui-data';
+import { Component, Mixins, Prop } from 'vue-property-decorator';
+import Piece from './Piece.vue';
 
 @Component({
     created(this: LoanCard) {
@@ -43,5 +43,4 @@ export default class LoanCard extends Mixins(Piece) {
         }
     }
 }
-
 </style>
