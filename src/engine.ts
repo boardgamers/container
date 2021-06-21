@@ -1,12 +1,12 @@
 import assert from "assert";
+import { cloneDeep, groupBy, isEqual } from "lodash";
 import seedrandom from "seedrandom";
-import { GameOptions, Phase, GameState, Player, ContainerColor, ShipPosition, FactoryPiece, ContainerPiece } from "./gamestate";
 import { availableMoves } from "./available-moves";
+import pointCards from "./cards";
+import { ContainerColor, ContainerPiece, FactoryPiece, GameOptions, GameState, Phase, Player, ShipPosition } from "./gamestate";
+import { GameEventName, LogItem } from "./log";
 import { Move, MoveName, Moves } from "./move";
 import { asserts, shuffle } from "./utils";
-import { GameEventName, LogItem } from "./log";
-import pointCards from "./cards";
-import { cloneDeep, groupBy, isEqual } from "lodash";
 
 export function setup(numPlayers: number, { beginner = true }: GameOptions, seed?: string): GameState {
     seed = seed || Math.random().toString();
@@ -211,7 +211,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
         case MoveName.GetLoan: {
             asserts<Moves.MoveGetLoan>(move);
-            const loan = G.loansLeft.shift()!;
+            const loan = G.loansLeft.pop()!;
             if (!loan) {
                 console.error("Error loan", G);
             }
@@ -254,7 +254,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 player.actions = 0;
                 G.auctioningPlayer = G.currentPlayer;
                 G.phase = Phase.Bid;
-                nextPlayer(G, false);
+                nextPlayer(G);
             } else {
                 player.actions--;
             }
@@ -293,10 +293,10 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
             if (G.highestBidders.length === 0) {
                 player.bid = move.extraData.price;
-                nextPlayer(G, false);
+                nextPlayer(G);
             } else {
                 player.additionalBid = move.extraData.price;
-                do { nextPlayer(G, false); } while (G.highestBidders.indexOf(G.currentPlayer) === -1 && G.auctioningPlayer !== G.currentPlayer);
+                do { nextPlayer(G); } while (G.highestBidders.indexOf(G.currentPlayer) === -1 && G.auctioningPlayer !== G.currentPlayer);
             }
 
             if (G.auctioningPlayer === G.currentPlayer) {
@@ -306,7 +306,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                     const highestBidders = G.players.filter(p => p.id != G.currentPlayer && p.bid === highestBid).map(p => p.id);
                     G.highestBidders = highestBidders;
                     if (highestBidders.length > 1) {
-                        while (highestBidders.indexOf(G.currentPlayer) === -1) { nextPlayer(G, false); }
+                        while (highestBidders.indexOf(G.currentPlayer) === -1) { nextPlayer(G); }
                     } else {
                         G.phase = Phase.AcceptDecline;
                     }
@@ -334,9 +334,10 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             G.highestBidders = [];
             G.phase = Phase.Move;
 
+            nextPlayer(G);
             if (!fake) {
-                if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
-                    nextPlayer(G, true);
+                if ([...new Set(G.containersLeft.map(c => c.color))].length >= 4) {
+                    doUpkeep(G);
                 } else {
                     G.phase = Phase.GameEnd;
                     G.currentPlayer = undefined;
@@ -358,9 +359,10 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             G.highestBidders = [];
             G.phase = Phase.Move;
 
+            nextPlayer(G);
             if (!fake) {
-                if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
-                    nextPlayer(G, true);
+                if ([...new Set(G.containersLeft.map(c => c.color))].length >= 4) {
+                    doUpkeep(G);
                 } else {
                     G.phase = Phase.GameEnd;
                     G.currentPlayer = undefined;
@@ -374,9 +376,10 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
         case MoveName.Pass: {
             asserts<Moves.MovePass>(move);
 
+            nextPlayer(G);
             if (!fake) {
-                if ([...new Set(G.containersLeft.map(c => c.color))].length >= 3) {
-                    nextPlayer(G, true);
+                if ([...new Set(G.containersLeft.map(c => c.color))].length >= 4) {
+                    doUpkeep(G);
                 } else {
                     G.phase = Phase.GameEnd;
                     G.currentPlayer = undefined;
@@ -415,6 +418,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 export function moveAI(G: GameState, playerNumber: number): GameState {
     const player = G.players[playerNumber];
     let moveName, data;
+    let retry = 0;
     do {
         if (player.actions > 0 && player.money < 5 && player.loans.length < 2 && player.availableMoves!.getLoan) {
             moveName = MoveName.GetLoan;
@@ -424,18 +428,18 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
             moveName = MoveName.PayLoan;
             const dataArr = player.availableMoves![moveName];
             data = dataArr[Math.floor(Math.random() * dataArr.length)];
-        } else if (player.actions > 0 && player.ship.containers.length > 0 && player.lastMove?.name != MoveName.BuyFromWarehouse) {
+        } else if (G.phase == Phase.Move && player.actions > 0 && player.ship.containers.length > 0 && player.lastMove?.name != MoveName.BuyFromWarehouse) {
             moveName = MoveName.Sail;
             data = player.ship.shipPosition == ShipPosition.OpenSea ? ShipPosition.Island : ShipPosition.OpenSea;
         } else {
             const moves = Object.keys(player.availableMoves!);
 
             if (player.lastMove?.name == MoveName.Sail && player.ship.containers.length < 5 &&
-                ((player.lastMove?.data == ShipPosition.Player0 && G.players[0].containersOnWarehouseStore.length > 0) ||
-                    (player.lastMove?.data == ShipPosition.Player1 && G.players[1].containersOnWarehouseStore.length > 0) ||
-                    (player.lastMove?.data == ShipPosition.Player2 && G.players[2].containersOnWarehouseStore.length > 0) ||
-                    (player.lastMove?.data == ShipPosition.Player3 && G.players[3].containersOnWarehouseStore.length > 0) ||
-                    (player.lastMove?.data == ShipPosition.Player4 && G.players[4].containersOnWarehouseStore.length > 0))) {
+                ((player.lastMove?.data.startsWith('player0') && G.players[0].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data.startsWith('player1') && G.players[1].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data.startsWith('player2') && G.players[2].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data.startsWith('player3') && G.players[3].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data.startsWith('player4') && G.players[4].containersOnWarehouseStore.length > 0))) {
                 moveName = MoveName.BuyFromWarehouse;
             } else {
                 moveName = moves[Math.floor(Math.random() * moves.length)];
@@ -455,19 +459,19 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
                 if (data == ShipPosition.Island) {
                     if (player.ship.containers.length == 0)
                         moveName = null;
-                } else if (data == ShipPosition.Player0) {
+                } else if (data.startsWith('playerHarbor0')) {
                     if (G.players[0].containersOnWarehouseStore.length == 0)
                         moveName = null;
-                } else if (data == ShipPosition.Player1) {
+                } else if (data.startsWith('playerHarbor1')) {
                     if (G.players[1].containersOnWarehouseStore.length == 0)
                         moveName = null;
-                } else if (data == ShipPosition.Player2) {
+                } else if (data.startsWith('playerHarbor2')) {
                     if (G.players[2].containersOnWarehouseStore.length == 0)
                         moveName = null;
-                } else if (data == ShipPosition.Player3) {
+                } else if (data.startsWith('playerHarbor3')) {
                     if (G.players[3].containersOnWarehouseStore.length == 0)
                         moveName = null;
-                } else if (data == ShipPosition.Player4) {
+                } else if (data.startsWith('playerHarbor4')) {
                     if (G.players[4].containersOnWarehouseStore.length == 0)
                         moveName = null;
                 }
@@ -488,7 +492,7 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
                     moveName = null;
                 }
             } else if (moveName == MoveName.Pass) {
-                if (player.actions > 0 && Object.keys(player.availableMoves!).length > 3) {
+                if (retry < 10 && player.actions > 0 && Object.keys(player.availableMoves!).length > 3) {
                     moveName = null;
                 }
             } else if (moveName == MoveName.BuyFactory) {
@@ -502,6 +506,8 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
                     moveName = null;
             }
         }
+
+        retry++;
     } while (!moveName);
 
     let playerMove: Move;
@@ -617,47 +623,47 @@ function playerBefore(player: Player, G: GameState) {
     return player.id === 0 ? G.players[G.players.length - 1] : G.players[player.id - 1];
 }
 
-function nextPlayer(G: GameState, doUpkeep: boolean) {
+function nextPlayer(G: GameState) {
     G.currentPlayer = (G.currentPlayer! + 1) % G.players.length;
+}
 
-    const player = G.players[G.currentPlayer];
-    if (doUpkeep) {
-        const loanCount = player.loans.length;
-        for (let i = 0; i < loanCount; i++) {
-            if (player.money > 0) {
-                player.money--;
-            } else if (player.containersOnIsland.length > 0) {
-                removeRandom(player.containersOnIsland);
-            } else if (player.containersOnWarehouseStore.length + player.containersOnFactoryStore.length > 0) {
-                if (player.containersOnWarehouseStore.length >= 2) {
-                    removeRandom(player.containersOnWarehouseStore);
-                    removeRandom(player.containersOnWarehouseStore);
-                } else if (player.containersOnWarehouseStore.length == 1) {
-                    removeRandom(player.containersOnWarehouseStore);
-                    if (player.containersOnFactoryStore.length >= 1) {
-                        removeRandom(player.containersOnFactoryStore);
-                    }
-                } else {
+function doUpkeep(G: GameState) {
+    const player = G.players[G.currentPlayer!];
+    const loanCount = player.loans.length;
+    for (let i = 0; i < loanCount; i++) {
+        if (player.money > 0) {
+            player.money--;
+        } else if (player.containersOnIsland.length > 0) {
+            removeRandom(player.containersOnIsland);
+        } else if (player.containersOnWarehouseStore.length + player.containersOnFactoryStore.length > 0) {
+            if (player.containersOnWarehouseStore.length >= 2) {
+                removeRandom(player.containersOnWarehouseStore);
+                removeRandom(player.containersOnWarehouseStore);
+            } else if (player.containersOnWarehouseStore.length == 1) {
+                removeRandom(player.containersOnWarehouseStore);
+                if (player.containersOnFactoryStore.length >= 1) {
                     removeRandom(player.containersOnFactoryStore);
-                    if (player.containersOnFactoryStore.length >= 1) {
-                        removeRandom(player.containersOnFactoryStore);
-                    }
                 }
-            } else if (player.warehouses.length > 2) {
-                player.warehouses.pop();
-                player.loans.pop();
-            } else if (player.factories.length > 2) {
-                player.factories.pop();
-                player.loans.pop();
+            } else {
+                removeRandom(player.containersOnFactoryStore);
+                if (player.containersOnFactoryStore.length >= 1) {
+                    removeRandom(player.containersOnFactoryStore);
+                }
             }
+        } else if (player.warehouses.length > 2) {
+            player.warehouses.pop();
+            player.loans.pop();
+        } else if (player.factories.length > 2) {
+            player.factories.pop();
+            player.loans.pop();
         }
+    }
 
-        G.players[G.currentPlayer].actions = 2;
-        G.players[G.currentPlayer].produced = [];
+    G.players[G.currentPlayer!].actions = 2;
+    G.players[G.currentPlayer!].produced = [];
 
-        if (G.currentPlayer == G.startingPlayer) {
-            G.round++;
-        }
+    if (G.currentPlayer == G.startingPlayer) {
+        G.round++;
     }
 }
 

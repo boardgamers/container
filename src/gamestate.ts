@@ -1,17 +1,17 @@
-import { AvailableMoves } from "./available-moves";
-import { LogItem } from "./log";
-import { Move } from "./move";
+import { AvailableMoves } from './available-moves';
+import { LogItem } from './log';
+import { Move } from './move';
 
 export interface GameOptions {
     beginner?: boolean;
 }
 
 export enum ContainerColor {
-    Orange = "orange",
-    Brown = "brown",
-    White = "white",
-    Black = "darkslategray",
-    Tan = "tan"
+    Orange = 'orange',
+    Brown = 'brown',
+    White = 'white',
+    Black = 'darkslategray',
+    Tan = 'tan'
 }
 
 export interface ContainerValue {
@@ -30,13 +30,28 @@ export interface ContainerOnStore {
 }
 
 export enum ShipPosition {
-    OpenSea = "sea",
-    Player0 = "player0",
-    Player1 = "player1",
-    Player2 = "player2",
-    Player3 = "player3",
-    Player4 = "player4",
-    Island = "island"
+    OpenSea = 'sea',
+    PlayerHarbor01 = 'playerHarbor01',
+    PlayerHarbor02 = 'playerHarbor02',
+    PlayerHarbor03 = 'playerHarbor03',
+    PlayerHarbor04 = 'playerHarbor04',
+    PlayerHarbor11 = 'playerHarbor11',
+    PlayerHarbor12 = 'playerHarbor12',
+    PlayerHarbor13 = 'playerHarbor13',
+    PlayerHarbor14 = 'playerHarbor14',
+    PlayerHarbor21 = 'playerHarbor21',
+    PlayerHarbor22 = 'playerHarbor22',
+    PlayerHarbor23 = 'playerHarbor23',
+    PlayerHarbor24 = 'playerHarbor24',
+    PlayerHarbor31 = 'playerHarbor31',
+    PlayerHarbor32 = 'playerHarbor32',
+    PlayerHarbor33 = 'playerHarbor33',
+    PlayerHarbor34 = 'playerHarbor34',
+    PlayerHarbor41 = 'playerHarbor41',
+    PlayerHarbor42 = 'playerHarbor42',
+    PlayerHarbor43 = 'playerHarbor43',
+    PlayerHarbor44 = 'playerHarbor44',
+    Island = 'island'
 }
 
 export interface Ship {
@@ -69,13 +84,12 @@ export interface Player {
     isAI: boolean;
 }
 
-
 export enum Phase {
-    Move = "move",
-    Bid = "bid",
-    AcceptDecline = "acceptDecline",
-    Setup = "setup",
-    GameEnd = "gameEnd"
+    Move = 'move',
+    Bid = 'bid',
+    AcceptDecline = 'acceptDecline',
+    Setup = 'setup',
+    GameEnd = 'gameEnd'
 }
 
 export interface ContainerPiece {

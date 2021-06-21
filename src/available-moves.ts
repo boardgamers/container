@@ -1,5 +1,6 @@
-import { ContainerColor, ContainerOnStore, ContainerPiece, GameState, Phase, Player, ShipPosition } from "./gamestate";
-import { MoveName } from "./move";
+import { remove } from 'lodash';
+import { ContainerColor, ContainerOnStore, ContainerPiece, GameState, Phase, Player, ShipPosition } from './gamestate';
+import { MoveName } from './move';
 
 export interface AvailableMoves {
     [MoveName.DomesticSale]?: ContainerPiece[];
@@ -30,7 +31,7 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
 
             // Undo
             const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == "move" && lastLog.player == G.currentPlayer)
+            if (lastLog.type == 'move' && lastLog.player == G.currentPlayer)
                 moves[MoveName.Undo] = [true];
 
             return moves;
@@ -48,7 +49,7 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
 
             // Undo
             const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == "move" && lastLog.player == G.currentPlayer)
+            if (lastLog.type == 'move' && lastLog.player == G.currentPlayer)
                 moves[MoveName.Undo] = [true];
 
             return moves;
@@ -88,11 +89,40 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
                 if (player.ship.shipPosition !== ShipPosition.Island && player.ship.shipPosition !== ShipPosition.OpenSea && player.ship.containers.length < 5) {
                     let otherPlayer: Player;
                     switch (player.ship.shipPosition) {
-                        case ShipPosition.Player0: otherPlayer = G.players[0]; break;
-                        case ShipPosition.Player1: otherPlayer = G.players[1]; break;
-                        case ShipPosition.Player2: otherPlayer = G.players[2]; break;
-                        case ShipPosition.Player3: otherPlayer = G.players[3]; break;
-                        case ShipPosition.Player4: otherPlayer = G.players[4]; break;
+                        case ShipPosition.PlayerHarbor01:
+                        case ShipPosition.PlayerHarbor02:
+                        case ShipPosition.PlayerHarbor03:
+                        case ShipPosition.PlayerHarbor04:
+                            otherPlayer = G.players[0];
+                            break;
+
+                        case ShipPosition.PlayerHarbor11:
+                        case ShipPosition.PlayerHarbor12:
+                        case ShipPosition.PlayerHarbor13:
+                        case ShipPosition.PlayerHarbor14:
+                            otherPlayer = G.players[1];
+                            break;
+
+                        case ShipPosition.PlayerHarbor21:
+                        case ShipPosition.PlayerHarbor22:
+                        case ShipPosition.PlayerHarbor23:
+                        case ShipPosition.PlayerHarbor24:
+                            otherPlayer = G.players[2];
+                            break;
+
+                        case ShipPosition.PlayerHarbor31:
+                        case ShipPosition.PlayerHarbor32:
+                        case ShipPosition.PlayerHarbor33:
+                        case ShipPosition.PlayerHarbor34:
+                            otherPlayer = G.players[3];
+                            break;
+
+                        case ShipPosition.PlayerHarbor41:
+                        case ShipPosition.PlayerHarbor42:
+                        case ShipPosition.PlayerHarbor43:
+                        case ShipPosition.PlayerHarbor44:
+                            otherPlayer = G.players[4];
+                            break;
                     }
 
                     if (otherPlayer.containersOnWarehouseStore.length > 0) {
@@ -152,7 +182,12 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
             if (player.actions > 0) {
                 const positions: ShipPosition[] = [];
                 if (player.ship.shipPosition === ShipPosition.OpenSea) {
-                    positions.push(...G.players.filter(p => p !== player).map(p => ShipPosition["Player" + p.id as keyof ShipPosition]));
+                    positions.push(...G.players.filter(p => p !== player).map(p => ShipPosition['PlayerHarbor' + p.id + '1' as keyof ShipPosition]));
+                    positions.push(...G.players.filter(p => p !== player).map(p => ShipPosition['PlayerHarbor' + p.id + '2' as keyof ShipPosition]));
+                    positions.push(...G.players.filter(p => p !== player).map(p => ShipPosition['PlayerHarbor' + p.id + '3' as keyof ShipPosition]));
+                    positions.push(...G.players.filter(p => p !== player).map(p => ShipPosition['PlayerHarbor' + p.id + '4' as keyof ShipPosition]));
+
+                    remove(positions, pos => G.players.map(p => p.ship.shipPosition).indexOf(pos) != -1);
 
                     if (player.ship.containers.length > 0) {
                         positions.push(ShipPosition.Island);
@@ -197,7 +232,7 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
 
             // Undo
             const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == "move" && lastLog.player == G.currentPlayer)
+            if (lastLog.type == 'move' && lastLog.player == G.currentPlayer)
                 moves[MoveName.Undo] = [true];
 
             return moves;
