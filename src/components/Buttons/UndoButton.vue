@@ -1,34 +1,17 @@
 <template>
-    <g class="button" @click="$emit('click')">
-        <rect width="70" height="30" fill="gainsboro" stroke="black" rx="2" />
-        <image x="6" y="6" width="16" height="16" href="../../icons/undo.svg" />
-        <text text-anchor="middle" fill="black" x="42" y="16">Undo</text>
+    <g :class="['button', { enabled }]" @click="$emit('click')">
+        <rect width="80" height="26" fill="gainsboro" stroke="black" rx="2" />
+        <image x="11" y="4" width="16" height="16" href="../../icons/undo.svg" />
+        <text text-anchor="middle" fill="black" x="47" y="13">Undo</text>
+        <title>Undo last move</title>
     </g>
 </template>
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { Vue, Component, Prop } from 'vue-property-decorator';
 
 @Component
 export default class UndoButton extends Vue {
+    @Prop()
+    enabled!: boolean;
 }
 </script>
-<style lang="scss">
-.button {
-    cursor: pointer;
-
-    &:hover {
-        rect {
-            fill: silver;
-            stroke: white;
-        }
-
-        path {
-            fill: white;
-        }
-
-        text {
-            fill: white;
-        }
-    }
-}
-</style>

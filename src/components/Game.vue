@@ -3,15 +3,23 @@
         <div class="statusBar">
             {{ getStatusMessage() }}
         </div>
+        <audio id="piece-drop" preload="none">
+            <source src="/audio/piece-drop.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="notification" preload="none">
+            <source src="/audio/notification.mp3" type="audio/mpeg">
+            <source src="/audio/notification.ogg" type="audio/ogg">
+        </audio>
         <svg id="scene" viewBox="0 0 1250 650" height="650">
             <rect width="100%" height="100%" x="0" y="0" fill="lightblue" />
             <rect width="100%" height="100" x="0" y="0" fill="gray" />
             <rect width="390" height="220" x="860" y="430" fill="gray" />
 
-            <template v-if="isCurrentPlayer(player)">
-                <PassButton transform="translate(1130, 15)" @click="pass()" />
-                <UndoButton transform="translate(1130, 55)" @click="undo()" />
-            </template>
+            <PassButton transform="translate(1105, 5)" :enabled="canPass()" @click="pass()" />
+            <UndoButton transform="translate(1105, 36)" :enabled="canUndo()" @click="undo()" />
+            <LogButton transform="translate(1105, 67)" @click="showLog()" />
+            <SoundButton transform="translate(1200, 15)" :isOn="soundOn" @click="toggleSound()" />
+            <HelpButton transform="translate(1200, 55)" :isOn="ui.helpOn" @click="toggleHelp()" />
 
             <DropZone transform="translate(5, 5)" :width="600" :height="90" :enabled="true" :accepts="'container'" :data="{ type: 'supply' }" />
 
@@ -22,12 +30,15 @@
                         :color="playerColors[i]"
                         :transform="`translate(${250 * i}, 100)`"
                         :owner="i"
-                        :currentPlayer="isCurrentPlayer(i)"
+                        :isCurrentPlayer="isCurrentPlayer(i)"
                         :ended="gameEnded(G)"
                         @pieceDrop="onPieceDrop" />
                     <rect :key="'I' + i" width="390" height="41" x="860" :y="430 + i * 44" fill="none" stroke-width="3" :stroke="playerColors[i]" />
                 </template>
             </template>
+
+            <DropZone :transform="`translate(280, 425)`" :width="400" :height="225" :enabled="true" :accepts="'ship'" :data="{ type: 'openSea' }" />
+            <DropZone :transform="`translate(770, 425)`" :width="480" :height="225" :enabled="true" :accepts="'ship'" :data="{ type: 'islandHarbor' }" />
 
             <template v-for="ship in ships">
                 <Ship :key="ship.id"
@@ -35,6 +46,9 @@
                     :targetState="{ x: ship.x, y: ship.y, rotate: ship.rotate }"
                     :canDrag="canDragShip(ship)"
                     :containers="ship.containers"
+                    :owner="ship.owner"
+                    :ownerName="G.players[ship.owner].name"
+                    :position="ship.position"
                     :color="ship.color" />
             </template>
 
@@ -63,6 +77,8 @@
                     :canDrag="canDragWarehouse(warehouse)" />
             </template>
 
+            <DropZone :transform="`translate(1045, 5)`" :width="50" :height="90" :enabled="true" :accepts="'loan'" :data="{ type: 'payLoan' }" />
+
             <template v-for="loanCard in loanCards">
                 <LoanCard :key="loanCard.id"
                     :targetState="{ x: loanCard.x, y: loanCard.y }"
@@ -73,14 +89,9 @@
             </template>
 
             <template v-if="G">
-                <PointCard :pointCard="G.players[player].pointCard" transform="translate(20, 440)" />
-                <text x="20" y="620">Money: ${{ G.players[player].money }}</text>
+                <text x="20" y="440">Money: ${{ G.players[player].money }}</text>
+                <PointCard :pointCard="G.players[player].pointCard" transform="translate(20, 460)" />
             </template>
-
-            <DropZone :transform="`translate(280, 425)`" :width="400" :height="225" :enabled="true" :accepts="'ship'" :data="{ type: 'openSea' }" />
-            <DropZone :transform="`translate(770, 425)`" :width="480" :height="225" :enabled="true" :accepts="'ship'" :data="{ type: 'islandHarbor' }" />
-
-            <DropZone :transform="`translate(1045, 10)`" :width="40" :height="70" :enabled="true" :accepts="'loan'" :data="{ type: 'payLoan' }" />
 
             <template v-if="isCurrentPlayer(player)">
                 <Calculator v-if="G.phase == 'bid'" transform="translate(140, 430)" @bid="bid($event)" />
@@ -89,6 +100,48 @@
                         <Button :key="bidder" :transform="`translate(140, ${450 + 40 * i})`" :width="130" :text="'Accept ' + getName(bidder)" @click="accept(bidder)" />
                     </template>
                     <Button :transform="`translate(140, ${450 + 40 * G.highestBidders.length})`" :width="130" :text="'Decline'" @click="decline()" />
+                </template>
+            </template>
+
+            <template v-if="ui.helpOn">
+                <template v-if="ui.dragged == null">
+                    <rect v-if="canBuyFactory('orange')" x="8" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect v-if="canBuyFactory('brown')" x="128" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect v-if="canBuyFactory('white')" x="248" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect v-if="canBuyFactory('darkslategray')" x="368" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect v-if="canBuyFactory('tan')" x="488" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+
+                    <rect v-if="canBuyWarehouse()" x="615" y="10" width="424" height="72" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+
+                    <rect v-if="canProduce('orange')" x="6" y="36" width="116" height="54" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect v-if="canProduce('brown')" x="126" y="36" width="116" height="54" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect v-if="canProduce('white')" x="246" y="36" width="116" height="54" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect v-if="canProduce('darkslategray')" x="366" y="36" width="116" height="54" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect v-if="canProduce('tan')" x="486" y="36" width="116" height="54" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+
+                    <rect v-if="canGetLoan()" x="1045" y="5" width="50" height="90" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+
+                    <rect v-if="canPass()" x="1104" y="4" width="82" height="28" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+
+                    <rect v-if="canUndo()" x="1104" y="35" width="82" height="28" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+
+                    <rect v-if="canPayLoan()" :x="200 + player * 250" y="123" width="47" height="77" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+
+                    <g v-if="canSail()">
+                        <rect v-if="!ships[player].rotate" :x="ships[player].x - 5" :y="ships[player].y - 5" width="40" height="90" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                        <rect v-else :x="ships[player].x - 30" :y="ships[player].y + 20" width="90" height="40" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    </g>
+
+                    <rect v-if="canArrangeFactory()" :x="6 + player * 250" y="158" width="188" height="44" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+
+                    <rect v-if="canArrangeWarehouse()" :x="6 + player * 250" y="248" width="236" height="44" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+
+                    <template v-if="G">
+                        <template v-for="(p, i) in G.players">
+                            <rect v-if="canBuyFromPlayerFactory(p)" :key="'PHF' + i" :x="6 + i * 250" y="158" width="188" height="44" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                            <rect v-if="canBuyFromPlayerWarehouse(p)" :key="'PHW' + i" :x="6 + i * 250" y="248" width="236" height="44" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                        </template>
+                    </template>
                 </template>
             </template>
 
@@ -105,19 +158,13 @@ import { EventEmitter } from 'events';
 import { groupBy } from 'lodash';
 import { ContainerState, DropZoneType, Piece, PieceType, ShipType, UIData } from '../types/ui-data';
 import { ContainerColor, ShipPosition } from 'container-engine/src/gamestate';
+import { Container, Factory, Warehouse, Ship, LoanCard, Piece as PieceComponent } from './pieces';
+import { Button, PassButton, UndoButton, LogButton, SoundButton, HelpButton } from './buttons';
 import PlayerBoard from './PlayerBoard.vue';
-import Container from './pieces/Container.vue';
-import Factory from './pieces/Factory.vue';
-import Warehouse from './pieces/Warehouse.vue';
-import LoanCard from './pieces/LoanCard.vue';
 import PointCard from './PointCard.vue';
-import Ship from './pieces/Ship.vue';
-import Button from './buttons/Button.vue';
-import PassButton from './buttons/PassButton.vue';
-import UndoButton from './buttons/UndoButton.vue';
-import PieceComponent from './pieces/Piece.vue';
 import DropZone from './DropZone.vue';
 import Calculator from './Calculator.vue';
+import { LogMove } from 'container-engine/src/log';
 
 @Component({
     created(this: Game) {
@@ -134,6 +181,9 @@ import Calculator from './Calculator.vue';
         Ship,
         PassButton,
         UndoButton,
+        LogButton,
+        SoundButton,
+        HelpButton,
         DropZone,
         Calculator,
         Button
@@ -154,7 +204,9 @@ export default class Game extends Vue {
 
     @Provide()
     ui: UIData = {
-        waitingAnimations: 0
+        dragged: null,
+        waitingAnimations: 0,
+        helpOn: true
     };
 
     @Provide()
@@ -175,6 +227,8 @@ export default class Game extends Vue {
 
     animationQueue: Array<Function> = [];
 
+    soundOn = true;
+
     @Watch('state', { immediate: true })
     onStateChanged(state: GameState) {
         this.replaceState(state);
@@ -184,6 +238,21 @@ export default class Game extends Vue {
         this.G = JSON.parse(JSON.stringify(state));
 
         this.createPieces();
+
+        if (this.soundOn && this.G?.log[this.G?.log.length - 1].type == 'move') {
+            const move = (this.G?.log[this.G?.log.length - 1] as LogMove).move;
+            if (move.name == MoveName.Pass && this.G.currentPlayer == this.player) {
+                (document.getElementById('notification')!.cloneNode(true) as HTMLAudioElement).play();
+            } else {
+                if (move.name == MoveName.DomesticSale || move.name == MoveName.BuyWarehouse || move.name == MoveName.ArrangeWarehouse ||
+                    move.name == MoveName.BuyFactory || move.name == MoveName.BuyFromFactory || move.name == MoveName.Produce ||
+                    move.name == MoveName.Sail || move.name == MoveName.ArrangeFactory) {
+                    setTimeout(() => { (document.getElementById('piece-drop')!.cloneNode(true) as HTMLAudioElement).play(); }, 800);
+                } else if (move.name == MoveName.Accept || move.name == MoveName.Decline || move.name == MoveName.BuyFromWarehouse) {
+                    (document.getElementById('piece-drop')!.cloneNode(true) as HTMLAudioElement).play();
+                }
+            }
+        }
     }
 
     createPieces() {
@@ -301,8 +370,8 @@ export default class Game extends Vue {
 
         // Loan Cards
         this.loanCards = [];
-        this.G?.loansLeft.forEach(loan => {
-            this.loanCards.push({ id: loan.id, x: 1050, y: 15, owner: -1 });
+        this.G?.loansLeft.forEach((loan, i) => {
+            this.loanCards.push({ id: loan.id, x: 1050 + i, y: 29 - i * 2, owner: -1 });
         });
 
         this.G?.players.forEach((player, pi) => {
@@ -317,31 +386,17 @@ export default class Game extends Vue {
             const color = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'][pi];
             switch (player.ship.shipPosition) {
                 case ShipPosition.OpenSea:
-                    this.ships.push({ id: player.ship.piece.id, x: 380 + pi * 44, y: 480, rotate: 0, color, containers: player.ship.containers, owner: pi });
+                    this.ships.push({ id: player.ship.piece.id, x: 380 + pi * 44, y: 480, rotate: 0, color, containers: player.ship.containers, owner: pi, position: player.ship.shipPosition });
                     break;
 
                 case ShipPosition.Island:
-                    this.ships.push({ id: player.ship.piece.id, x: 800, y: 410 + pi * 44, rotate: 90, color, containers: player.ship.containers, owner: pi });
+                    this.ships.push({ id: player.ship.piece.id, x: 800, y: 410 + pi * 44, rotate: 90, color, containers: player.ship.containers, owner: pi, position: player.ship.shipPosition });
                     break;
 
-                case ShipPosition.Player0:
-                    this.ships.push({ id: player.ship.piece.id, x: 26 + 62 * (pi - 1), y: 305, rotate: 0, color, containers: player.ship.containers, owner: pi });
-                    break;
-
-                case ShipPosition.Player1:
-                    this.ships.push({ id: player.ship.piece.id, x: 276 + 62 * (pi > 1 ? pi - 1 : pi), y: 305, rotate: 0, color, containers: player.ship.containers, owner: pi });
-                    break;
-
-                case ShipPosition.Player2:
-                    this.ships.push({ id: player.ship.piece.id, x: 526 + 62 * (pi > 2 ? pi - 1 : pi), y: 305, rotate: 0, color, containers: player.ship.containers, owner: pi });
-                    break;
-
-                case ShipPosition.Player3:
-                    this.ships.push({ id: player.ship.piece.id, x: 776 + 62 * (pi > 3 ? pi - 1 : pi), y: 305, rotate: 0, color, containers: player.ship.containers, owner: pi });
-                    break;
-
-                case ShipPosition.Player4:
-                    this.ships.push({ id: player.ship.piece.id, x: 1026 + 62 * (pi > 4 ? pi - 1 : pi), y: 305, rotate: 0, color, containers: player.ship.containers, owner: pi });
+                default:
+                    const otherPlayer = Number.parseInt(player.ship.shipPosition[12]);
+                    const harbor = Number.parseInt(player.ship.shipPosition[13]);
+                    this.ships.push({ id: player.ship.piece.id, x: 26 + 250 * otherPlayer + 62 * (harbor - 1), y: 305, rotate: 0, color, containers: player.ship.containers, owner: pi, position: player.ship.shipPosition });
                     break;
             }
         });
@@ -379,9 +434,11 @@ export default class Game extends Vue {
                     }
                 } else if (container.state == ContainerState.OnFactoryStore) {
                     if (d.type == DropZoneType.FactoryStore) {
-                        const player = this.G!.players[this.G!.currentPlayer!];
-                        if (player.containersOnFactoryStore.find(c => c.piece.id == e.pieceId)!.price !== d.price)
-                            this.sendMove({ name: MoveName.ArrangeFactory, data: { id: container.pieceId, color: container.color }, extraData: { price: d.price } });
+                        if (this.G!.players[this.G!.currentPlayer!].containersOnFactoryStore.find(c => c.piece.id == e.pieceId)!.price === d.price) {
+                            return;
+                        }
+
+                        this.sendMove({ name: MoveName.ArrangeFactory, data: { id: container.pieceId, color: container.color }, extraData: { price: d.price } });
                     } else if (d.type == DropZoneType.WarehouseStore) {
                         this.sendMove({ name: MoveName.BuyFromFactory, data: { player: container.owner, piece: { id: container.pieceId, color: container.color } }, extraData: { price: d.price } });
                     } else if (d.type == DropZoneType.Supply) {
@@ -389,6 +446,10 @@ export default class Game extends Vue {
                     }
                 } else if (container.state == ContainerState.OnWarehouseStore) {
                     if (d.type == DropZoneType.WarehouseStore) {
+                        if (this.G!.players[this.G!.currentPlayer!].containersOnWarehouseStore.find(c => c.piece.id == e.pieceId)!.price === d.price) {
+                            return;
+                        }
+
                         this.sendMove({ name: MoveName.ArrangeWarehouse, data: { id: container.pieceId, color: container.color }, extraData: { price: d.price } });
                     } else if (d.type == DropZoneType.Ship) {
                         this.sendMove({ name: MoveName.BuyFromWarehouse, data: { player: container.owner, piece: { id: container.pieceId, color: container.color } } });
@@ -401,9 +462,9 @@ export default class Game extends Vue {
 
             case PieceType.Ship:
                 const player = this.G!.players[this.G!.currentPlayer!];
-                if (d.type === DropZoneType.PlayerHarbour) {
-                    if (player.ship.shipPosition !== 'player' + d.owner)
-                        this.sendMove({ name: MoveName.Sail, data: 'player' + d.owner });
+                if (d.type.startsWith('playerHarbor')) {
+                    if (!player.ship.shipPosition.startsWith('playerHarbor'))
+                        this.sendMove({ name: MoveName.Sail, data: d.type });
                 } else if (d.type === DropZoneType.OpenSea) {
                     if (player.ship.shipPosition !== ShipPosition.OpenSea)
                         this.sendMove({ name: MoveName.Sail, data: ShipPosition.OpenSea });
@@ -425,11 +486,15 @@ export default class Game extends Vue {
                 break;
         }
 
+        // if (this.soundOn && e.pieceType != PieceType.Loan) {
+        //     (document.getElementById('piece-drop')!.cloneNode(true) as HTMLAudioElement).play();
+        // }
+
         this.updateUI();
     }
 
     getName(bidder) {
-        return this.G!.players[bidder].name!.length > 8 ? this.G!.players[bidder].name?.substring(0, 5).concat('...') : this.G!.players[bidder].name;
+        return this.G!.players[bidder].name;
     }
 
     pass() {
@@ -471,12 +536,12 @@ export default class Game extends Vue {
         return ended(G);
     }
 
-    canDrag() {
-        return this.G?.currentPlayer == this.player! && this.G.players[this.player!] && this.G.players[this.player!].availableMoves;
+    canMove() {
+        return this.G && this.G.currentPlayer == this.player! && this.G.players[this.player!] && this.G.players[this.player!].availableMoves;
     }
 
     canDragContainer(container: Piece) {
-        if (!this.canDrag())
+        if (!this.canMove())
             return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
@@ -514,7 +579,7 @@ export default class Game extends Vue {
     }
 
     canDragFactory(factory: Piece) {
-        if (!this.canDrag())
+        if (!this.canMove())
             return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
@@ -528,7 +593,7 @@ export default class Game extends Vue {
     }
 
     canDragWarehouse(warehouse: Piece) {
-        if (!this.canDrag())
+        if (!this.canMove())
             return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
@@ -541,7 +606,7 @@ export default class Game extends Vue {
     }
 
     canDragLoan(loanCard: Piece) {
-        if (!this.canDrag())
+        if (!this.canMove())
             return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
@@ -557,13 +622,44 @@ export default class Game extends Vue {
     }
 
     canDragShip(ship: Piece) {
-        if (!this.canDrag())
+        if (!this.canMove())
             return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
         const availableMoves = currentPlayer.availableMoves!;
 
         return availableMoves[MoveName.Sail] && this.isCurrentPlayer(ship.owner);
+    }
+
+    canPass() {
+        if (!this.canMove())
+            return false;
+
+        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const availableMoves = currentPlayer.availableMoves!;
+
+        return !!availableMoves[MoveName.Pass];
+    }
+
+    canUndo() {
+        if (!this.canMove())
+            return false;
+
+        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const availableMoves = currentPlayer.availableMoves!;
+
+        return !!availableMoves[MoveName.Undo];
+    }
+
+    toggleSound() {
+        this.soundOn = !this.soundOn;
+    }
+
+    toggleHelp() {
+        this.ui.helpOn = !this.ui.helpOn;
+    }
+
+    showLog() {
     }
 
     getStatusMessage() {
@@ -578,6 +674,118 @@ export default class Game extends Vue {
 
     isCurrentPlayer(player) {
         return this.G && this.G.currentPlayer === player;
+    }
+
+    canBuyFactory(color) {
+        return this.G && this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves &&
+            this.G.players[this.player!].availableMoves![MoveName.BuyFactory] &&
+            this.G.players[this.player!].availableMoves![MoveName.BuyFactory]!.indexOf(color) != -1;
+    }
+
+    canBuyWarehouse() {
+        return this.G && this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves &&
+            this.G.players[this.player!].availableMoves![MoveName.BuyWarehouse];
+    }
+
+    canProduce(color) {
+        return this.G && this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves &&
+            this.G.players[this.player!].availableMoves![MoveName.Produce] &&
+            this.G.players[this.player!].availableMoves![MoveName.Produce]!.indexOf(color) != -1;
+    }
+
+    canGetLoan() {
+        return this.G && this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves &&
+            this.G.players[this.player!].availableMoves![MoveName.GetLoan];
+    }
+
+    canPayLoan() {
+        return this.G && this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves &&
+            this.G.players[this.player!].availableMoves![MoveName.PayLoan];
+    }
+
+    canSail() {
+        return this.G && this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves &&
+            this.G.players[this.player!].availableMoves![MoveName.Sail];
+    }
+
+    canArrangeFactory() {
+        return this.G && this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves &&
+            this.G.players[this.player!].availableMoves![MoveName.ArrangeFactory];
+    }
+
+    canArrangeWarehouse() {
+        return this.G && this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves &&
+            this.G.players[this.player!].availableMoves![MoveName.ArrangeWarehouse];
+    }
+
+    canBuyFromPlayerFactory(otherPlayer) {
+        if (this.G && this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves &&
+            this.G.players[this.player!].availableMoves![MoveName.BuyFromFactory]) {
+            const buyable = this.G.players[this.player!].availableMoves![MoveName.BuyFromFactory]!.map(c => c.piece.id);
+            const playerContainers = otherPlayer.containersOnFactoryStore.map(c => c.piece.id)
+            return buyable.some(id => playerContainers.indexOf(id) !== -1);
+        }
+
+        return false;
+    }
+
+    canBuyFromPlayerWarehouse(otherPlayer) {
+        if (this.G && this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves &&
+            this.G.players[this.player!].availableMoves![MoveName.BuyFromWarehouse]) {
+            const buyable = this.G.players[this.player!].availableMoves![MoveName.BuyFromWarehouse]!.map(c => c.piece.id);
+            const playerContainers = otherPlayer.containersOnWarehouseStore.map(c => c.piece.id)
+            return buyable.some(id => playerContainers.indexOf(id) !== -1);
+        }
+
+        return false;
+    }
+
+    isDragging(pieceType) {
+        return this.ui && this.ui.dragged != null && this.ui.dragged.pieceType == pieceType;
+    }
+
+    draggedContainerType() {
+        if (this.ui && this.ui.dragged != null && this.ui.dragged.pieceType == 'container') {
+            const container = this.ui.dragged as Container;
+
+            if (container.owner == this.player) {
+                if (container.state == ContainerState.OnFactoryStore) {
+                    return 'ownFactoryContainer'
+                } else if (container.state == ContainerState.OnWarehouseStore) {
+                    return 'ownWarehouseContainer'
+                }
+            } else {
+                if (container.state == ContainerState.OnBoard) {
+                    return 'boardContainer'
+                } else if (container.state == ContainerState.OnFactoryStore) {
+                    return 'factoryContainer'
+                } else if (container.state == ContainerState.OnWarehouseStore) {
+                    return 'warehouseContainer'
+                }
+            }
+        }
+
+        return null;
     }
 }
 
@@ -599,11 +807,14 @@ export default class Game extends Vue {
     text-align: center;
     line-height: 40px;
     font-size: 20px;
+    position: fixed;
 }
 
 #scene {
+    margin-top: 40px;
     max-height: 100%;
     flex-grow: 1;
+    margin: 40px auto auto auto;
 }
 
 body,
@@ -633,12 +844,64 @@ text {
     &.canDrag {
         cursor: pointer;
 
-        & > circle,
-        & > rect,
-        & > path {
-            &:hover {
+        &:hover {
+            & > circle,
+            & > rect,
+            & > path {
                 stroke: white;
             }
+        }
+    }
+}
+
+.button {
+    &.enabled {
+        cursor: pointer;
+
+        &:hover {
+            rect {
+                fill: silver;
+                stroke: white;
+            }
+
+            circle {
+                fill: silver;
+                stroke: white;
+            }
+
+            line {
+                stroke: white;
+            }
+
+            image {
+                filter: invert(1);
+            }
+
+            text {
+                fill: white;
+            }
+        }
+    }
+
+    &:not(.enabled) {
+        rect {
+            stroke: silver;
+        }
+
+        circle {
+            stroke: silver;
+        }
+
+        line {
+            stroke: silver;
+        }
+
+        image {
+            filter: invert(0.75);
+        }
+
+        text {
+            fill: silver;
         }
     }
 }

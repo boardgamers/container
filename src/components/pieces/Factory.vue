@@ -1,6 +1,8 @@
 <template>
-    <g :id="elId" :class="['piece', {dragging}, {canDrag}]" :transform="`translate(${currentX}, ${currentY})`">
+    <g :id="elId" :class="['piece', { dragging, canDrag }]" :transform="`translate(${currentX}, ${currentY})`">
         <circle r="10" :fill="color" stroke="black" />
+
+        <title>Factory</title>
     </g>
 </template>
 <script lang="ts">

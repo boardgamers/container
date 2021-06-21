@@ -1,7 +1,8 @@
 <template>
-    <g class="button" @click="$emit('click')">
+    <g class="button enabled" @click="$emit('click')">
         <rect :width="width" height="30" fill="gainsboro" stroke="black" rx="2" />
-        <text text-anchor="middle" fill="black" :x="width / 2" y="16">{{ text }}</text>
+        <text text-anchor="middle" fill="black" :x="width / 2" y="16">{{ getText() }}</text>
+        <title>{{ text }}</title>
     </g>
 </template>
 <script lang="ts">
@@ -14,25 +15,9 @@ export default class Button extends Vue {
 
     @Prop()
     width?: number;
-}
-</script>
-<style lang="scss">
-.button {
-    cursor: pointer;
 
-    &:hover {
-        rect {
-            fill: silver;
-            stroke: white;
-        }
-
-        path {
-            fill: white;
-        }
-
-        text {
-            fill: white;
-        }
+    getText() {
+        return this.text!.length > 15 ? this.text?.substring(0, 5).concat('...') : this.text;
     }
 }
-</style>
+</script>

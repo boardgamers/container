@@ -1,9 +1,11 @@
 <template>
-    <g :id="elId" :class="['loan', {dragging}, {canDrag}]" :transform="`translate(${currentX}, ${currentY})`">
+    <g :id="elId" :class="['loan', { dragging, canDrag }]" :transform="`translate(${currentX}, ${currentY})`">
         <rect width="30" height="60" fill="royalblue" stroke="white" stroke-width="2" rx="2" />
         <g transform="translate(33, -10) rotate(280, 15, 30)">
             <text text-anchor="middle" fill="white">Loan</text>
         </g>
+        <title v-if="owner == -1">Get Loan</title>
+        <title v-else-if="owner == player">Pay Loan</title>
     </g>
 </template>
 <script lang="ts">
