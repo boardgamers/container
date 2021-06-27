@@ -4,11 +4,11 @@
             {{ getStatusMessage() }}
         </div>
         <audio id="piece-drop" preload="none">
-            <source src="/audio/piece-drop.mp3" type="audio/mpeg">
+            <source src="../audio/piece-drop.mp3" type="audio/mpeg">
         </audio>
         <audio id="notification" preload="none">
-            <source src="/audio/notification.mp3" type="audio/mpeg">
-            <source src="/audio/notification.ogg" type="audio/ogg">
+            <source src="../audio/notification.mp3" type="audio/mpeg">
+            <source src="../audio/notification.ogg" type="audio/ogg">
         </audio>
         <svg id="scene" viewBox="0 0 1250 650" height="650">
             <rect width="100%" height="100%" x="0" y="0" fill="lightblue" />
@@ -719,7 +719,7 @@ export default class Game extends Vue {
             if (!this.G.log || this.G.log.length == 0 || this.G.log[this.G.log.length - 1].type != 'move' || (this.G.log[this.G.log.length - 1] as LogMove).move.name == MoveName.Pass)
                 return `Waiting for ${this.G?.players[this.G!.currentPlayer].name} to play...`;
 
-            let log = (this.G.log[this.G.log.length - 1] as LogMove).pretty!;
+            let log = (this.G.log[this.G.log.length - 1] as LogMove).pretty;
             while (log?.indexOf('>') != -1) {
                 log = log?.substr(0, log.indexOf('<')) + log.substr(log.indexOf('>') + 1);
             }
@@ -857,7 +857,7 @@ export default class Game extends Vue {
                         logReversed.push('New event: ' + log.event.name);
                     }
                 } else if (log.type == 'move') {
-                    logReversed.push(log.pretty!.replaceAll('darkslategray', 'dark green'));
+                    logReversed.push(log.pretty.replaceAll('darkslategray', 'dark green'));
                 }
             });
 
