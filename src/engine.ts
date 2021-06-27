@@ -696,27 +696,27 @@ function doUpkeep(G: GameState) {
             interest.push('money');
         } else if (player.containersOnIsland.length > 0) {
             const container = removeRandom(player.containersOnIsland);
-            G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${container.color} from ${playerNameHTML(player)}'s island` } });
+            G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${containerColorHTML(container.color)} container from ${playerNameHTML(player)}'s island` } });
         } else if (player.containersOnWarehouseStore.length + player.containersOnFactoryStore.length > 0) {
             if (player.containersOnWarehouseStore.length >= 2) {
                 const c1 = removeRandom(player.containersOnWarehouseStore);
                 const c2 = removeRandom(player.containersOnWarehouseStore);
-                G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${c1.color} and a ${c2.color} from ${playerNameHTML(player)}'s warehouses` } });
+                G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${containerColorHTML(c1.color)} container and a ${containerColorHTML(c2.color)} container from ${playerNameHTML(player)}'s warehouses` } });
             } else if (player.containersOnWarehouseStore.length == 1) {
                 const c1 = removeRandom(player.containersOnWarehouseStore);
                 if (player.containersOnFactoryStore.length >= 1) {
                     const c2 = removeRandom(player.containersOnFactoryStore);
-                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${c1.color} from ${playerNameHTML(player)}'s warehouses and a ${c2.color} from ${playerNameHTML(player)}'s factory` } });
+                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${containerColorHTML(c1.color)} container from ${playerNameHTML(player)}'s warehouses and a ${c2.color} container from ${playerNameHTML(player)}'s factory` } });
                 } else {
-                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${c1.color} from ${playerNameHTML(player)}'s warehouses` } });
+                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${containerColorHTML(c1.color)} container from ${playerNameHTML(player)}'s warehouses` } });
                 }
             } else {
                 const c1 = removeRandom(player.containersOnFactoryStore);
                 if (player.containersOnFactoryStore.length >= 1) {
                     const c2 = removeRandom(player.containersOnFactoryStore);
-                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${c1.color} and a ${c2.color} from ${playerNameHTML(player)}'s factory` } });
+                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${containerColorHTML(c1.color)} container and a ${containerColorHTML(c2.color)} container from ${playerNameHTML(player)}'s factory` } });
                 } else {
-                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${c1.color} from ${playerNameHTML(player)}'s factory` } });
+                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${containerColorHTML(c1.color)} container from ${playerNameHTML(player)}'s factory` } });
                 }
             }
         } else if (player.warehouses.length > 2) {
