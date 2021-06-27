@@ -1,10 +1,10 @@
-import { Phase } from "./gamestate";
-import { Move } from "./move";
+import { Phase } from './gamestate';
+import { Move } from './move';
 
 export enum GameEventName {
-    GameStart = "start",
-    GameEnd = "end",
-    RoundStart = "round"
+    GameStart = 'Game Start!',
+    GameEnd = 'Game End!',
+    Upkeep = 'Upkeep'
 }
 
 export declare namespace GameEvents {
@@ -16,28 +16,29 @@ export declare namespace GameEvents {
         name: GameEventName.GameEnd;
     }
 
-    export interface RoundStart {
-        name: GameEventName.RoundStart;
-        round: number;
+    export interface Upkeep {
+        name: GameEventName.Upkeep;
+        interest: string;
     }
 }
 
-type GameEvent = GameEvents.GameStart | GameEvents.GameEnd | GameEvents.RoundStart;
+type GameEvent = GameEvents.GameStart | GameEvents.GameEnd | GameEvents.Upkeep;
 
 export type LogPhase = {
-    type: "phase";
+    type: 'phase';
     phase: Phase;
 };
 
 export type LogEvent = {
-    type: "event";
+    type: 'event';
     event: GameEvent;
 }
 
 export type LogMove = {
-    type: "move";
+    type: 'move';
     player: number;
     move: Move;
+    pretty?: string;
 }
 
 export type LogItem = LogPhase | LogEvent | LogMove;

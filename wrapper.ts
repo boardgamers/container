@@ -1,9 +1,8 @@
-import type { GameState } from "./index";
-import { Move } from "./src/move";
-import * as engine from "./src/engine";
-import { GameEventName } from "./src/log";
-import { asserts } from "./src/utils";
-import type { LogEvent, LogMove, GameEvents } from './src/log';
+import type { GameState } from './index';
+import { Move } from './src/move';
+import * as engine from './src/engine';
+import { asserts } from './src/utils';
+import type { LogMove } from './src/log';
 
 export async function init(nbPlayers: number, expansions: string[], options: {}, seed?: string): Promise<GameState> {
     return engine.setup(nbPlayers, options, seed);
@@ -16,16 +15,7 @@ export function setPlayerMetaData(G: GameState, player: number, metaData: { name
 }
 
 export async function move(G: GameState, move: Move, player: number) {
-    const index = G.log.length;
-
     G = engine.move(G, move, player);
-
-    for (const roundEvent of G.log.slice(index).filter(item => item.type === "event" && item.event.name === GameEventName.RoundStart)) {
-        asserts<LogEvent>(roundEvent);
-        const eventData = roundEvent.event;
-        asserts<GameEvents.RoundStart>(eventData);
-        (G as any).messages = [...((G as any).messages || []), `Round ${eventData.round}`];
-    }
 
     return G;
 }
@@ -56,7 +46,7 @@ export function replay(G: GameState) {
         G.players[i].name = oldPlayers[i].name;
     }
 
-    for (const move of oldG.log.filter(event => event.type === "move")) {
+    for (const move of oldG.log.filter(event => event.type === 'move')) {
         asserts<LogMove>(move);
 
         G = engine.move(G, move.move, move.player);

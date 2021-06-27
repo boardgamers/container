@@ -1,4 +1,4 @@
-import { ContainerColor, ContainerPiece, FactoryPiece, ShipPosition, WarehousePiece } from "./gamestate";
+import { ContainerColor, ContainerPiece, FactoryPiece, ShipPosition, WarehousePiece } from './gamestate';
 
 export declare namespace Moves {
     export interface MoveBuyFromFactory {
@@ -105,20 +105,20 @@ export type Move =
     Moves.MovePass | Moves.MoveUndo | Moves.MoveDomesticSale;
 
 export enum MoveName {
-    DomesticSale = "domesticSale",
-    BuyWarehouse = "buyWarehouse",
-    BuyFactory = "buyFactory",
-    BuyFromFactory = "buyFromFactory",
-    BuyFromWarehouse = "buyFromWarehouse",
-    GetLoan = "getLoan",
-    PayLoan = "payLoan",
-    Produce = "produce",
-    Sail = "sail",
-    ArrangeFactory = "arrangeFactory",
-    ArrangeWarehouse = "arrangeWarehouse",
-    Bid = "bid",
-    Accept = "accept",
-    Decline = "decline",
-    Pass = "pass",
-    Undo = "undo"
+    DomesticSale = 'domesticSale',
+    BuyWarehouse = 'buyWarehouse',
+    BuyFactory = 'buyFactory',
+    BuyFromFactory = 'buyFromFactory',
+    BuyFromWarehouse = 'buyFromWarehouse',
+    GetLoan = 'getLoan',
+    PayLoan = 'payLoan',
+    Produce = 'produce',
+    Sail = 'sail',
+    ArrangeFactory = 'arrangeFactory',
+    ArrangeWarehouse = 'arrangeWarehouse',
+    Bid = 'bid',
+    Accept = 'accept',
+    Decline = 'decline',
+    Pass = 'pass',
+    Undo = 'undo'
 }

@@ -1,12 +1,14 @@
-import assert from "assert";
-import { cloneDeep, groupBy, isEqual } from "lodash";
-import seedrandom from "seedrandom";
-import { availableMoves } from "./available-moves";
-import pointCards from "./cards";
-import { ContainerColor, ContainerPiece, FactoryPiece, GameOptions, GameState, Phase, Player, ShipPosition } from "./gamestate";
-import { GameEventName, LogItem } from "./log";
-import { Move, MoveName, Moves } from "./move";
-import { asserts, shuffle } from "./utils";
+import assert from 'assert';
+import { cloneDeep, groupBy, isEqual } from 'lodash';
+import seedrandom from 'seedrandom';
+import { availableMoves } from './available-moves';
+import pointCards from './cards';
+import { ContainerColor, ContainerPiece, FactoryPiece, GameOptions, GameState, Phase, Player, ShipPosition } from './gamestate';
+import { GameEventName, LogItem, GameEvents } from './log';
+import { Move, MoveName, Moves } from './move';
+import { asserts, shuffle } from './utils';
+
+const playerColors = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'];
 
 export function setup(numPlayers: number, { beginner = true }: GameOptions, seed?: string): GameState {
     seed = seed || Math.random().toString();
@@ -92,12 +94,10 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         player.warehouses.push(G.warehousesLeft.pop()!);
     });
 
-    G.log.push({ type: "phase", phase: Phase.Setup });
+    G.log.push({ type: 'event', event: { name: GameEventName.GameStart } });
 
     G.players[G.currentPlayer!].actions = 2;
     G.players[G.currentPlayer!].availableMoves = availableMoves(G, G.players[G.currentPlayer!]);
-
-    G.log.push({ type: "event", event: { name: GameEventName.GameStart } });
 
     return G;
 }
@@ -132,12 +132,10 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
     const player = G.players[playerNumber];
     const available = player.availableMoves?.[move.name];
 
-    assert(G.currentPlayer === playerNumber, "It is not your turn!");
-    assert(available, "You are not allowed to run the command " + move.name);
-    assert(available.some(x => isEqual(x, move.data)), "Wrong argument for the command " + move.name);
-    assert(move.name != MoveName.Bid || move.extraData.price + player.bid <= player.money, "Can't bid more money than you have!");
-
-    G.log.push({ type: "move", player: playerNumber, move });
+    assert(G.currentPlayer === playerNumber, 'It is not your turn!');
+    assert(available, 'You are not allowed to run the command ' + move.name);
+    assert(available.some(x => isEqual(x, move.data)), 'Wrong argument for the command ' + move.name);
+    assert(move.name != MoveName.Bid || move.extraData.price + player.bid <= player.money, 'Can\'t bid more money than you have!');
 
     switch (move.name) {
         case MoveName.DomesticSale: {
@@ -154,6 +152,9 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
             player.money += 2;
             player.actions--;
+
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} sells a ${containerColorHTML(move.data.color)} container back to the supply for $2` });
+
             break;
         }
 
@@ -163,6 +164,9 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             player.factories.push(move.extraData);
             player.money -= player.factories.length * 3;
             player.actions--;
+
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} buys a ${containerColorHTML(move.data)} factory for $${player.factories.length * 3}` });
+
             break;
         }
 
@@ -172,6 +176,9 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             player.warehouses.push(move.extraData);
             player.money -= player.warehouses.length + 2;
             player.actions--;
+
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} buys a warehouse for $${player.warehouses.length + 2}` });
+
             break;
         }
 
@@ -188,6 +195,13 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             if (player.lastMove?.name !== MoveName.BuyFromFactory || player.lastMove?.data.player !== move.data.player) {
                 player.actions -= 1;
             }
+
+            G.log.push({
+                type: 'move',
+                player: playerNumber,
+                move,
+                pretty: `${playerNameHTML(player)} buys a ${containerColorHTML(move.data.piece.color)} container from ${playerNameHTML(otherPlayer)} for $${aux.price}, new price is $${move.extraData.price}`
+            });
 
             break;
         }
@@ -206,30 +220,35 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 player.actions -= 1;
             }
 
+            G.log.push({
+                type: 'move',
+                player: playerNumber,
+                move,
+                pretty: `${playerNameHTML(player)} buys a ${containerColorHTML(move.data.piece.color)} container from ${playerNameHTML(otherPlayer)} for $${aux.price}`
+            });
+
             break;
         }
 
         case MoveName.GetLoan: {
             asserts<Moves.MoveGetLoan>(move);
             const loan = G.loansLeft.pop()!;
-            if (!loan) {
-                console.error("Error loan", G);
-            }
-
             player.loans.push(loan);
             player.money += 10;
+
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} takes a loan` });
+
             break;
         }
 
         case MoveName.PayLoan: {
             asserts<Moves.MovePayLoan>(move);
             const loan = player.loans.splice(player.loans.length - 1, 1)[0];
-            if (!loan) {
-                console.error("Error loan", G);
-            }
-
             G.loansLeft.push(loan);
             player.money -= 10;
+
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} pays a loan` });
+
             break;
         }
 
@@ -243,6 +262,8 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 player.money -= 1;
                 playerBefore(player, G).money += 1;
             }
+
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} produces a ${containerColorHTML(move.extraData.piece.color)} container, price is $${move.extraData.price}` });
 
             break;
         }
@@ -259,6 +280,8 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 player.actions--;
             }
 
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} sails to ${prettyShipPosition(G, move.data)}` });
+
             break;
         }
 
@@ -272,6 +295,8 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 player.actions--;
             }
 
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} changes the price of a ${containerColorHTML(move.data.color)} factory container from $${aux.price} to $${move.extraData.price}` });
+
             break;
         }
 
@@ -284,6 +309,8 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             if (player.lastMove?.name !== MoveName.BuyFromFactory && player.lastMove?.name !== MoveName.ArrangeWarehouse) {
                 player.actions--;
             }
+
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} changes the price of a ${containerColorHTML(move.data.color)} warehouse container from $${aux.price} to $${move.extraData.price}` });
 
             break;
         }
@@ -319,6 +346,12 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 }
             }
 
+            if (G.phase == Phase.AcceptDecline) {
+                const players = G.players.filter(p => p.id !== G.auctioningPlayer);
+                const pretty = `Bids: ${players.map(p => `${playerNameHTML(p)} $${p.bid + p.additionalBid}`).join(', ')}`;
+                G.log.push({ type: 'move', player: playerNumber, move, pretty });
+            }
+
             break;
         }
 
@@ -345,6 +378,8 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 }
             }
 
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} accepts ${playerNameHTML(otherPlayer)}'s bid` });
+
             break;
         }
 
@@ -370,6 +405,8 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 }
             }
 
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} declines all bids` });
+
             break;
         }
 
@@ -387,15 +424,16 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 }
             }
 
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} passes` });
+
             break;
         }
 
         case MoveName.Undo: {
             asserts<Moves.MoveUndo>(move);
-            G.log.pop();
 
             const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == "move" && lastLog.player == G.currentPlayer && !fake) {
+            if (lastLog.type == 'move' && lastLog.player == G.currentPlayer && !fake) {
                 G.log.pop();
                 G = reconstructState(getBaseState(G), G.log);
             }
@@ -473,6 +511,9 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
                         moveName = null;
                 } else if (data.startsWith('playerHarbor4')) {
                     if (G.players[4].containersOnWarehouseStore.length == 0)
+                        moveName = null;
+                } else {
+                    if (player.lastMove?.name == MoveName.Sail)
                         moveName = null;
                 }
             } else if (moveName == MoveName.ArrangeFactory) {
@@ -556,6 +597,9 @@ export function ended(G: GameState): boolean {
 
 function calculateEndScore(G: GameState) {
     G.players.forEach(player => {
+        player.finalScoreBreakdown = [];
+        player.finalScoreBreakdown.push('$' + player.money);
+
         if (player.containersOnIsland.length > 0) {
             const hasOneOfEach = [...new Set(player.containersOnIsland.map(c => c.color))].length == 5;
 
@@ -576,18 +620,33 @@ function calculateEndScore(G: GameState) {
                 return grouped[a].length > grouped[b].length ? a : b;
             });
 
-            const points = player.pointCard!.containerValues.map(cv => {
-                if (grouped[cv.containerColor] && cv.containerColor != most)
+            const points = cloneDeep(player.pointCard!.containerValues).sort((a, b) => a.containerColor.localeCompare(b.containerColor)).map(cv => {
+                if (cv.containerColor == most) {
+                    player.finalScoreBreakdown!.push('$' + (hasOneOfEach ? cv.specialValue : cv.baseValue) + ' x -');
+                    return 0;
+                } else if (grouped[cv.containerColor]) {
+                    player.finalScoreBreakdown!.push('$' + (hasOneOfEach ? cv.specialValue : cv.baseValue) + ' x ' + grouped[cv.containerColor].length);
                     return grouped[cv.containerColor].length * (hasOneOfEach ? cv.specialValue : cv.baseValue);
-
-                return 0;
+                } else {
+                    player.finalScoreBreakdown!.push('$' + (hasOneOfEach ? cv.specialValue : cv.baseValue) + ' x 0');
+                    return 0;
+                }
             });
 
             player.money += points.reduce((a, b) => a + b, 0);
+        } else {
+            player.finalScoreBreakdown.push('-');
+            player.finalScoreBreakdown.push('-');
+            player.finalScoreBreakdown.push('-');
+            player.finalScoreBreakdown.push('-');
+            player.finalScoreBreakdown.push('-');
         }
 
+        player.finalScoreBreakdown.push('$2 x ' + player.containersOnWarehouseStore.length);
         player.money += player.containersOnWarehouseStore.length * 2;
+        player.finalScoreBreakdown.push('$3 x ' + player.ship.containers.length);
         player.money += player.ship.containers.length * 3;
+        player.finalScoreBreakdown.push('-$11 x ' + player.loans.length);
         player.money += player.loans.length * -11;
     });
 }
@@ -601,15 +660,15 @@ export function reconstructState(initialState: GameState, log: LogItem[]): GameS
 
     for (const item of log) {
         switch (item.type) {
-            case "event": {
+            case 'event': {
                 break;
             }
 
-            case "phase": {
+            case 'phase': {
                 break;
             }
 
-            case "move": {
+            case 'move': {
                 move(G, item.move, item.player);
                 break;
             }
@@ -630,32 +689,44 @@ function nextPlayer(G: GameState) {
 function doUpkeep(G: GameState) {
     const player = G.players[G.currentPlayer!];
     const loanCount = player.loans.length;
+    const interest: string[] = [];
     for (let i = 0; i < loanCount; i++) {
         if (player.money > 0) {
             player.money--;
+            interest.push('money');
         } else if (player.containersOnIsland.length > 0) {
-            removeRandom(player.containersOnIsland);
+            const container = removeRandom(player.containersOnIsland);
+            G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${container.color} from ${playerNameHTML(player)}'s island` } });
         } else if (player.containersOnWarehouseStore.length + player.containersOnFactoryStore.length > 0) {
             if (player.containersOnWarehouseStore.length >= 2) {
-                removeRandom(player.containersOnWarehouseStore);
-                removeRandom(player.containersOnWarehouseStore);
+                const c1 = removeRandom(player.containersOnWarehouseStore);
+                const c2 = removeRandom(player.containersOnWarehouseStore);
+                G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${c1.color} and a ${c2.color} from ${playerNameHTML(player)}'s warehouses` } });
             } else if (player.containersOnWarehouseStore.length == 1) {
-                removeRandom(player.containersOnWarehouseStore);
+                const c1 = removeRandom(player.containersOnWarehouseStore);
                 if (player.containersOnFactoryStore.length >= 1) {
-                    removeRandom(player.containersOnFactoryStore);
+                    const c2 = removeRandom(player.containersOnFactoryStore);
+                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${c1.color} from ${playerNameHTML(player)}'s warehouses and a ${c2.color} from ${playerNameHTML(player)}'s factory` } });
+                } else {
+                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${c1.color} from ${playerNameHTML(player)}'s warehouses` } });
                 }
             } else {
-                removeRandom(player.containersOnFactoryStore);
+                const c1 = removeRandom(player.containersOnFactoryStore);
                 if (player.containersOnFactoryStore.length >= 1) {
-                    removeRandom(player.containersOnFactoryStore);
+                    const c2 = removeRandom(player.containersOnFactoryStore);
+                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${c1.color} and a ${c2.color} from ${playerNameHTML(player)}'s factory` } });
+                } else {
+                    G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a ${c1.color} from ${playerNameHTML(player)}'s factory` } });
                 }
             }
         } else if (player.warehouses.length > 2) {
             player.warehouses.pop();
             player.loans.pop();
+            G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a warehouse from ${playerNameHTML(player)}` } });
         } else if (player.factories.length > 2) {
             player.factories.pop();
             player.loans.pop();
+            G.log.push({ type: 'event', event: { name: GameEventName.Upkeep, interest: `The bank seizes a factory from ${playerNameHTML(player)}` } });
         }
     }
 
@@ -673,7 +744,7 @@ function remove(array, value) {
 }
 
 function removeRandom(array) {
-    array.splice(Math.floor(Math.random() * array.length), 1);
+    return array.splice(Math.floor(Math.random() * array.length), 1)[0];
 }
 
 function getBaseState(G: GameState): GameState {
@@ -684,4 +755,33 @@ function getBaseState(G: GameState): GameState {
     });
 
     return baseState;
+}
+
+function prettyShipPosition(G: GameState, data: ShipPosition): string {
+    switch (data) {
+        case ShipPosition.Island:
+            return 'the island harbor';
+        case ShipPosition.OpenSea:
+            return 'the open sea';
+        default: {
+            const index = data[12];
+            return `${playerNameHTML(G.players[index])}'s harbor`;
+        }
+    }
+}
+
+function playerNameHTML(player) {
+    return `<span style="background-color: ${playerColors[player.id]}; font-weight: bold; padding: 0 3px;">${player.name}</span>`;
+}
+
+function containerColorHTML(containerColor: ContainerColor) {
+    switch (containerColor) {
+        case ContainerColor.Brown:
+        case ContainerColor.Orange:
+        case ContainerColor.Tan:
+        case ContainerColor.White:
+            return `<span style="background-color: ${containerColor}; font-weight: bold; border: 1px solid black; padding: 0 3px;">${containerColor}</span>`;
+        case ContainerColor.Black:
+            return '<span style="background-color: #2F4F4F; font-weight: bold; border: 1px solid black; padding: 0 3px;">darkslategray</span>';
+    }
 }
