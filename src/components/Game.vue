@@ -103,6 +103,10 @@
                 </template>
             </template>
 
+            <template v-if="G && gameEnded(G)">
+                <Button :transform="`translate(140, 580)`" :width="130" :text="'Final Score'" @click="endScoreVisible = true" />
+            </template>
+
             <template v-if="ui.helpOn">
                 <template v-if="ui.dragged == null">
                     <rect v-if="canBuyFactory('orange')" x="8" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
@@ -148,6 +152,37 @@
             <use xlink:href="#moving" />
             <use xlink:href="#dragged" />
         </svg>
+
+        <div v-if="G" :class="['modal', { visible: logVisible }]">
+            <div class="modal-content">
+                <span class="close" @click="logVisible = false">&times;</span>
+                <div class="modal-title">Log</div>
+                <div class="modal-log">
+                    <div v-for="(log, i) in logReversed" :key="'L' + i" class="log-line" v-html="log" />
+                </div>
+            </div>
+        </div>
+
+        <div v-if="G" :class="['modal', { visible: endScoreVisible }]">
+            <div class="modal-content">
+                <span class="close" @click="endScoreVisible = false">&times;</span>
+                <div class="modal-title">Final Score</div>
+                <table class="final-score-table">
+                    <tr>
+                        <th>Player</th>
+                        <th v-for="player in G.players" :key="'FS' + player.id">{{ player.name }}</th>
+                    </tr>
+                    <tr v-for="(cat, i) in ['Money', 'Brown', 'Dark Green', 'Orange', 'Tan', 'White', 'Containers in Warehouse', 'Containers in Ship', 'Loans']" :key="'FC_' + cat">
+                        <td>{{ cat }}</td>
+                        <td v-for="player in G.players" :key="'FS' + player.id + i">{{ player.finalScoreBreakdown ? player.finalScoreBreakdown[i] : '0' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Final Score</td>
+                        <td v-for="player in G.players" :key="'FS' + player.id + 'money'">{{ player.money > 0 ? '$' + player.money : '-$' + Math.abs(player.money) }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
     </div>
 </template>
 <script lang="ts">
@@ -164,7 +199,7 @@ import PlayerBoard from './PlayerBoard.vue';
 import PointCard from './PointCard.vue';
 import DropZone from './DropZone.vue';
 import Calculator from './Calculator.vue';
-import { LogMove } from 'container-engine/src/log';
+import { GameEventName, LogMove } from 'container-engine/src/log';
 
 @Component({
     created(this: Game) {
@@ -229,17 +264,21 @@ export default class Game extends Vue {
 
     soundOn = true;
 
+    logVisible = false;
+
+    endScoreVisible = false;
+
     @Watch('state', { immediate: true })
     onStateChanged(state: GameState) {
-        this.replaceState(state);
+        this.replaceState(state, false);
     }
 
-    replaceState(state: GameState) {
+    replaceState(state: GameState, fake: boolean) {
         this.G = JSON.parse(JSON.stringify(state));
 
         this.createPieces();
 
-        if (this.soundOn && this.G?.log[this.G?.log.length - 1].type == 'move') {
+        if (!fake && this.soundOn && this.G?.log[this.G?.log.length - 1].type == 'move') {
             const move = (this.G?.log[this.G?.log.length - 1] as LogMove).move;
             if (move.name == MoveName.Pass && this.G.currentPlayer == this.player) {
                 (document.getElementById('notification')!.cloneNode(true) as HTMLAudioElement).play();
@@ -295,15 +334,27 @@ export default class Game extends Vue {
                 if (container.color !== lastColor)
                     offset += 10;
 
-                this.containers.push({
-                    id: container.id,
-                    x: 860 + offset + 12 * ci,
-                    y: 445 + 44 * pi,
-                    rotate: 90,
-                    color: container.color.toString(),
-                    owner: pi,
-                    state: ContainerState.OnIsland
-                });
+                if (player.containersOnIsland.length <= 28) {
+                    this.containers.push({
+                        id: container.id,
+                        x: 860 + offset + 12 * ci,
+                        y: 445 + 44 * pi,
+                        rotate: 90,
+                        color: container.color.toString(),
+                        owner: pi,
+                        state: ContainerState.OnIsland
+                    });
+                } else {
+                    this.containers.push({
+                        id: container.id,
+                        x: 860 + offset + 6 * ci,
+                        y: 435 + 44 * pi + 20 * (ci % 2),
+                        rotate: 90,
+                        color: container.color.toString(),
+                        owner: pi,
+                        state: ContainerState.OnIsland
+                    });
+                }
 
                 lastColor = container.color;
             });
@@ -486,10 +537,6 @@ export default class Game extends Vue {
                 break;
         }
 
-        // if (this.soundOn && e.pieceType != PieceType.Loan) {
-        //     (document.getElementById('piece-drop')!.cloneNode(true) as HTMLAudioElement).play();
-        // }
-
         this.updateUI();
     }
 
@@ -529,7 +576,7 @@ export default class Game extends Vue {
     sendMove(move) {
         this.emitter.emit('move', move);
 
-        this.replaceState(engineMove(this.G!, move, this.player!, true));
+        this.replaceState(engineMove(this.G!, move, this.player!, true), true);
     }
 
     gameEnded(G: GameState) {
@@ -660,6 +707,7 @@ export default class Game extends Vue {
     }
 
     showLog() {
+        this.logVisible = true;
     }
 
     getStatusMessage() {
@@ -668,7 +716,15 @@ export default class Game extends Vue {
         } else if (this.G?.currentPlayer == this.player) {
             return 'It\'s your turn!';
         } else {
-            return `Waiting for ${this.G?.players[this.G!.currentPlayer].name} to play...`;
+            if (!this.G.log || this.G.log.length == 0 || this.G.log[this.G.log.length - 1].type != 'move' || (this.G.log[this.G.log.length - 1] as LogMove).move.name == MoveName.Pass)
+                return `Waiting for ${this.G?.players[this.G!.currentPlayer].name} to play...`;
+
+            let log = (this.G.log[this.G.log.length - 1] as LogMove).pretty!;
+            while (log?.indexOf('>') != -1) {
+                log = log?.substr(0, log.indexOf('<')) + log.substr(log.indexOf('>') + 1);
+            }
+
+            return log.replaceAll('darkslategray', 'dark green');
         }
     }
 
@@ -787,6 +843,29 @@ export default class Game extends Vue {
 
         return null;
     }
+
+    get logReversed() {
+        let logReversed: string[] = [];
+        if (this.G && this.G.log) {
+            this.G.log.forEach(log => {
+                if (log.type == 'phase') {
+                    logReversed.push('New phase: ' + log.phase);
+                } else if (log.type == 'event') {
+                    if (log.event.name == GameEventName.Upkeep) {
+                        logReversed.push('New event: ' + log.event.interest);
+                    } else {
+                        logReversed.push('New event: ' + log.event.name);
+                    }
+                } else if (log.type == 'move') {
+                    logReversed.push(log.pretty!.replaceAll('darkslategray', 'dark green'));
+                }
+            });
+
+            logReversed.reverse();
+        }
+
+        return logReversed;
+    }
 }
 
 </script>
@@ -902,6 +981,93 @@ text {
 
         text {
             fill: silver;
+        }
+    }
+}
+
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0); /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+
+    &.visible {
+        display: block;
+    }
+}
+
+.modal-content {
+    border-radius: 5px;
+    background-color: #fefefe;
+    margin: auto;
+    padding: 10px 20px 20px 20px;
+    border: 1px solid #888;
+    width: 50%;
+    height: 70%;
+}
+
+.modal-log {
+    max-height: calc(100% - 42px);
+    overflow: auto;
+    border: 1px solid black;
+}
+
+.log-line {
+    padding: 5px;
+
+    &:nth-last-child(even) {
+        background: #ccc;
+    }
+    &:nth-last-child(odd) {
+        background: #fff;
+    }
+}
+
+.modal-title {
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.final-score-table {
+    margin: auto;
+    border: 1px solid black;
+
+    tr {
+        padding: 4px;
+
+        td,
+        th {
+            border: 1px solid black;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+            width: 130px;
+            height: 38px;
+            padding: 0 4px;
         }
     }
 }

@@ -115,6 +115,9 @@ export default class DropZone extends Vue {
 
                 if (this.data.type == DropZoneType.IslandHarbor && ship.containers?.length == 0)
                     return false;
+
+                if (this.data.owner == this.player)
+                    return false;
             } else {
                 if (this.data.type != DropZoneType.OpenSea)
                     return false;

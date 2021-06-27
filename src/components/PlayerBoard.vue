@@ -6,12 +6,12 @@
         <rect width="250" height="180" x="0" y="20" fill="gray" />
 
         <rect width="20" height="80" x="0" y="200" fill="gray" />
-        <DropZone :transform="`translate(20, 200)`" :width="42" :height="80" :accepts="'ship'" :data="{ type: 'playerHarbor' + owner + '1', owner: owner }" />
         <rect width="20" height="80" x="62" y="200" fill="gray" />
-        <DropZone :transform="`translate(82, 200)`" :width="42" :height="80" :accepts="'ship'" :data="{ type: 'playerHarbor' + owner + '2', owner: owner }" />
         <rect width="20" height="80" x="124" y="200" fill="gray" />
-        <DropZone :transform="`translate(144, 200)`" :width="42" :height="80" :accepts="'ship'" :data="{ type: 'playerHarbor' + owner + '3', owner: owner }" />
         <rect width="20" height="80" x="186" y="200" fill="gray" />
+        <DropZone :transform="`translate(20, 200)`" :width="42" :height="80" :accepts="'ship'" :data="{ type: 'playerHarbor' + owner + '1', owner: owner }" />
+        <DropZone :transform="`translate(82, 200)`" :width="42" :height="80" :accepts="'ship'" :data="{ type: 'playerHarbor' + owner + '2', owner: owner }" />
+        <DropZone :transform="`translate(144, 200)`" :width="42" :height="80" :accepts="'ship'" :data="{ type: 'playerHarbor' + owner + '3', owner: owner }" />
         <DropZone :transform="`translate(206, 200)`" :width="43" :height="80" :accepts="'ship'" :data="{ type: 'playerHarbor' + owner + '4', owner: owner }" />
 
         <DropZone :transform="`translate(200, 23)`" :width="47" :height="77" :enabled="isCurrentPlayer" :accepts="'loan'" :data="{ type: 'getLoan' }" />

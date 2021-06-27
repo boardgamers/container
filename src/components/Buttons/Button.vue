@@ -17,7 +17,7 @@ export default class Button extends Vue {
     width?: number;
 
     getText() {
-        return this.text!.length > 15 ? this.text?.substring(0, 5).concat('...') : this.text;
+        return this.text!.length > 15 ? this.text?.substring(0, 12).concat('...') : this.text;
     }
 }
 </script>
