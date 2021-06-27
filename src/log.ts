@@ -38,7 +38,7 @@ export type LogMove = {
     type: 'move';
     player: number;
     move: Move;
-    pretty?: string;
+    pretty: string;
 }
 
 export type LogItem = LogPhase | LogEvent | LogMove;
