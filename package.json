@@ -1,6 +1,6 @@
 {
     "name": "container-engine",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "An engine for Container",
     "main": "dist/index.js",
     "types": "index.ts",

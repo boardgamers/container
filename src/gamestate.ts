@@ -128,6 +128,7 @@ export interface GameState {
     phase: Phase;
     options: GameOptions;
     log: LogItem[];
+    hiddenLog: LogItem[];
     seed: string;
     round: number;
 }

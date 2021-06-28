@@ -25,9 +25,12 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
     switch (G.phase) {
         case Phase.Bid: {
             const moves = {
-                [MoveName.GetLoan]: [true],
                 [MoveName.Bid]: [true]
             };
+
+            if (player.loans.length < 2)
+                moves[MoveName.GetLoan] = [true];
+
 
             // Undo
             const lastLog = G.log[G.log.length - 1];
@@ -39,9 +42,11 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
 
         case Phase.AcceptDecline: {
             const moves: AvailableMoves = {
-                [MoveName.GetLoan]: [true],
-                [MoveName.Accept]: G.highestBidders,
+                [MoveName.Accept]: G.highestBidders
             };
+
+            if (player.loans.length < 2)
+                moves[MoveName.GetLoan] = [true];
 
             const highestBidder = G.players[G.highestBidders[0]];
             if (player.money >= highestBidder.bid + highestBidder.additionalBid)

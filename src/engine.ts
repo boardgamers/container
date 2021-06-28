@@ -4,7 +4,7 @@ import seedrandom from 'seedrandom';
 import { availableMoves } from './available-moves';
 import pointCards from './cards';
 import { ContainerColor, ContainerPiece, FactoryPiece, GameOptions, GameState, Phase, Player, ShipPosition } from './gamestate';
-import { GameEventName, LogItem, GameEvents } from './log';
+import { GameEventName, LogItem } from './log';
 import { Move, MoveName, Moves } from './move';
 import { asserts, shuffle } from './utils';
 
@@ -75,6 +75,7 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         phase: Phase.Move,
         options: { beginner },
         log: [],
+        hiddenLog: [],
         seed,
         round: 1
     } as GameState;
@@ -105,7 +106,8 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
 export function stripSecret(G: GameState, player?: number): GameState {
     return {
         ...G,
-        // seed: "secret",
+        seed: 'secret',
+        hiddenLog: [],
         players: G.players.map((pl, i) => {
             if (player === i) {
                 return pl;
@@ -236,7 +238,11 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             player.loans.push(loan);
             player.money += 10;
 
-            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} takes a loan` });
+            if (G.phase == Phase.Bid) {
+                G.hiddenLog.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} takes a loan` });
+            } else {
+                G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} takes a loan` });
+            }
 
             break;
         }
@@ -247,7 +253,11 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             G.loansLeft.push(loan);
             player.money -= 10;
 
-            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} pays a loan` });
+            if (G.phase == Phase.Bid) {
+                G.hiddenLog.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} pays a loan` });
+            } else {
+                G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} pays a loan` });
+            }
 
             break;
         }
@@ -319,9 +329,11 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             asserts<Moves.MoveBid>(move);
 
             if (G.highestBidders.length === 0) {
+                G.hiddenLog.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} bids $${move.extraData.price}` });
                 player.bid = move.extraData.price;
                 nextPlayer(G);
             } else {
+                G.hiddenLog.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} bids additional $${move.extraData.price}` });
                 player.additionalBid = move.extraData.price;
                 do { nextPlayer(G); } while (G.highestBidders.indexOf(G.currentPlayer) === -1 && G.auctioningPlayer !== G.currentPlayer);
             }
@@ -347,9 +359,8 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             }
 
             if (G.phase == Phase.AcceptDecline) {
-                const players = G.players.filter(p => p.id !== G.auctioningPlayer);
-                const pretty = `Bids: ${players.map(p => `${playerNameHTML(p)} $${p.bid + p.additionalBid}`).join(', ')}`;
-                G.log.push({ type: 'move', player: playerNumber, move, pretty });
+                G.log.push(...G.hiddenLog);
+                G.hiddenLog = [];
             }
 
             break;
@@ -413,6 +424,8 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
         case MoveName.Pass: {
             asserts<Moves.MovePass>(move);
 
+            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} passes` });
+
             nextPlayer(G);
             if (!fake) {
                 if ([...new Set(G.containersLeft.map(c => c.color))].length >= 4) {
@@ -423,8 +436,6 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                     calculateEndScore(G);
                 }
             }
-
-            G.log.push({ type: 'move', player: playerNumber, move, pretty: `${playerNameHTML(player)} passes` });
 
             break;
         }
@@ -473,11 +484,11 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
             const moves = Object.keys(player.availableMoves!);
 
             if (player.lastMove?.name == MoveName.Sail && player.ship.containers.length < 5 &&
-                ((player.lastMove?.data.startsWith('player0') && G.players[0].containersOnWarehouseStore.length > 0) ||
-                    (player.lastMove?.data.startsWith('player1') && G.players[1].containersOnWarehouseStore.length > 0) ||
-                    (player.lastMove?.data.startsWith('player2') && G.players[2].containersOnWarehouseStore.length > 0) ||
-                    (player.lastMove?.data.startsWith('player3') && G.players[3].containersOnWarehouseStore.length > 0) ||
-                    (player.lastMove?.data.startsWith('player4') && G.players[4].containersOnWarehouseStore.length > 0))) {
+                ((player.lastMove?.data.startsWith('playerHarbor0') && G.players[0].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data.startsWith('playerHarbor1') && G.players[1].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data.startsWith('playerHarbor2') && G.players[2].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data.startsWith('playerHarbor3') && G.players[3].containersOnWarehouseStore.length > 0) ||
+                    (player.lastMove?.data.startsWith('playerHarbor4') && G.players[4].containersOnWarehouseStore.length > 0))) {
                 moveName = MoveName.BuyFromWarehouse;
             } else {
                 moveName = moves[Math.floor(Math.random() * moves.length)];
