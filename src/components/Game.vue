@@ -99,7 +99,7 @@
                     <template v-for="(bidder, i) in G.highestBidders">
                         <Button :key="bidder" :transform="`translate(140, ${450 + 40 * i})`" :width="130" :text="'Accept ' + getName(bidder)" @click="accept(bidder)" />
                     </template>
-                    <Button :transform="`translate(140, ${450 + 40 * G.highestBidders.length})`" :width="130" :text="'Decline'" @click="decline()" />
+                    <Button :transform="`translate(140, ${450 + 40 * G.highestBidders.length})`" :width="130" :text="'Decline'" :enabled="canDecline()" @click="decline()" />
                 </template>
             </template>
 
@@ -696,6 +696,16 @@ export default class Game extends Vue {
         const availableMoves = currentPlayer.availableMoves!;
 
         return !!availableMoves[MoveName.Undo];
+    }
+
+    canDecline() {
+        if (!this.canMove())
+            return false;
+
+        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const availableMoves = currentPlayer.availableMoves!;
+
+        return !!availableMoves[MoveName.Decline];
     }
 
     toggleSound() {
