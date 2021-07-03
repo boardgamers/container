@@ -13,7 +13,7 @@
 </template>
 <script lang="ts">
 import { Vue, Component, Prop, Watch, Inject, InjectReactive } from 'vue-property-decorator';
-import { ContainerState, DropZoneType, PieceType, UIData } from '../types/ui-data';
+import { ContainerState, DropZoneType, PieceType, UIData, Preferences } from '../types/ui-data';
 import { EventEmitter, Listener } from 'events';
 import Piece from './pieces/Piece.vue';
 import { Ship, Container, LoanCard } from './pieces';
@@ -23,6 +23,9 @@ import { ShipPosition } from 'container-engine/src/gamestate';
 export default class DropZone extends Vue {
     @Inject()
     readonly ui!: UIData;
+
+    @Inject()
+    readonly preferences!: Preferences;
 
     @InjectReactive()
     readonly player!: number;
@@ -150,7 +153,7 @@ export default class DropZone extends Vue {
     }
 
     get showDrop() {
-        return this.ui.helpOn && this.canDrop;
+        return this.preferences.help && this.canDrop;
     }
 }
 </script>
