@@ -1323,6 +1323,11 @@ export default class Game extends Vue {
 
         return logReversed;
     }
+
+    @Watch('G.log')
+    onLogChanged() {
+        this.emitter.emit('replaceLog', [...this.logReversed].reverse());
+    }
 }
 </script>
 <style lang="scss">
