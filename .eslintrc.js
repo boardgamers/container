@@ -1,37 +1,26 @@
 module.exports = {
-    root: true,
+    extends: ["eslint:recommended", "plugin:vue/recommended"],
+    rules: {
+        "vue/no-unused-vars": "error",
+        "vue/html-indent": ["error", 4, { alignAttributesVertically: false }],
+        "vue/max-attributes-per-line": 0,
+        "vue/html-closing-bracket-newline": [
+            "error",
+            {
+                singleline: "never",
+                multiline: "never",
+            },
+        ],
+        "vue/attribute-hyphenation": ["error", "never"],
+        "vue/singleline-html-element-content-newline": "off",
+        "no-case-declarations": "off",
+        "no-unused-vars": "off",
+        quotes: ["error", "single"],
+    },
     env: {
-        node: true
+        node: true,
     },
     parserOptions: {
-        ecmaVersion: 2020
+        parser: "@typescript-eslint/parser",
     },
-    parser: '@typescript-eslint/parser',
-    plugins: [
-        '@typescript-eslint',
-    ],
-    extends: [
-        'eslint:recommended',
-        'plugin:@typescript-eslint/eslint-recommended',
-        'plugin:@typescript-eslint/recommended',
-    ],
-    rules: {
-        'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-        'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-        semi: ['error', 'always'],
-        '@typescript-eslint/no-non-null-assertion': 'off',
-        //    '@typescript-eslint/consistent-type-assertions': 'off',
-        //    '@typescript-eslint/no-explicit-any': 'off',
-        '@typescript-eslint/no-empty-function': 'off',
-        '@typescript-eslint/no-unused-vars': ["warn", { "argsIgnorePattern": "^_" }],
-        '@typescript-eslint/explicit-function-return-type': 'off',
-        '@typescript-eslint/no-use-before-define': 'off',
-        '@typescript-eslint/no-namespace': 'off',
-        'no-inner-declarations': 'off',
-        'no-return-assign': 'off',
-        //    'no-fallthrough': 'off',
-        quotes: 'off',
-        'no-empty': 'off',
-        'quotes': ['error', 'single']
-    }
 };
