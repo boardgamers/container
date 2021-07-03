@@ -18,8 +18,8 @@
             <PassButton transform="translate(1105, 5)" :enabled="canPass()" @click="pass()" />
             <UndoButton transform="translate(1105, 36)" :enabled="canUndo()" @click="undo()" />
             <LogButton transform="translate(1105, 67)" @click="showLog()" />
-            <SoundButton transform="translate(1200, 15)" :isOn="soundOn" @click="toggleSound()" />
-            <HelpButton transform="translate(1200, 55)" :isOn="ui.helpOn" @click="toggleHelp()" />
+            <SoundButton transform="translate(1200, 15)" :isOn="preferences.sound" @click="toggleSound()" />
+            <HelpButton transform="translate(1200, 55)" :isOn="!preferences.disableHelp" @click="toggleHelp()" />
 
             <DropZone
                 transform="translate(5, 5)"
@@ -177,7 +177,7 @@
                 />
             </template>
 
-            <template v-if="ui.helpOn">
+            <template v-if="!preferences.disableHelp">
                 <template v-if="ui.dragged == null">
                     <rect
                         v-if="canBuyFactory('orange')"
@@ -487,12 +487,12 @@
     </div>
 </template>
 <script lang="ts">
-import { Vue, Component, Prop, Watch, Provide, ProvideReactive, } from 'vue-property-decorator';
+import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
 import { MoveName, ended, move as engineMove } from 'container-engine';
 import type { GameState } from 'container-engine';
 import { EventEmitter } from 'events';
 import { groupBy } from 'lodash';
-import { ContainerState, DropZoneType, Piece, PieceType, ShipType, UIData } from '../types/ui-data';
+import { ContainerState, DropZoneType, Piece, PieceType, ShipType, UIData, Preferences } from '../types/ui-data';
 import { ContainerColor, ShipPosition } from 'container-engine/src/gamestate';
 import { Container, Factory, Warehouse, Ship, LoanCard, Piece as PieceComponent } from './pieces';
 import { Button, PassButton, UndoButton, LogButton, SoundButton, HelpButton } from './buttons';
@@ -522,7 +522,7 @@ import { GameEventName, LogMove } from 'container-engine/src/log';
         HelpButton,
         DropZone,
         Calculator,
-        Button
+        Button,
     },
 })
 export default class Game extends Vue {
@@ -536,13 +536,16 @@ export default class Game extends Vue {
     @Prop()
     emitter!: EventEmitter;
 
+    @Prop()
+    @ProvideReactive()
+    preferences!: Preferences;
+
     paused = false;
 
     @Provide()
     ui: UIData = {
         dragged: null,
         waitingAnimations: 0,
-        helpOn: true
     };
 
     @Provide()
@@ -563,8 +566,6 @@ export default class Game extends Vue {
 
     animationQueue: Array<Function> = [];
 
-    soundOn = true;
-
     logVisible = false;
 
     endScoreVisible = false;
@@ -579,16 +580,29 @@ export default class Game extends Vue {
 
         this.createPieces();
 
-        if (!fake && this.soundOn && this.G?.log[this.G?.log.length - 1].type == 'move') {
+        if (!fake && this.preferences.sound && this.G?.log[this.G?.log.length - 1].type == 'move') {
             const move = (this.G?.log[this.G?.log.length - 1] as LogMove).move;
             if (move.name == MoveName.Pass && this.G.currentPlayer == this.player) {
                 (document.getElementById('notification')!.cloneNode(true) as HTMLAudioElement).play();
             } else {
-                if (move.name == MoveName.DomesticSale || move.name == MoveName.BuyWarehouse || move.name == MoveName.ArrangeWarehouse ||
-                    move.name == MoveName.BuyFactory || move.name == MoveName.BuyFromFactory || move.name == MoveName.Produce ||
-                    move.name == MoveName.Sail || move.name == MoveName.ArrangeFactory) {
-                    setTimeout(() => { (document.getElementById('piece-drop')!.cloneNode(true) as HTMLAudioElement).play(); }, 800);
-                } else if (move.name == MoveName.Accept || move.name == MoveName.Decline || move.name == MoveName.BuyFromWarehouse) {
+                if (
+                    move.name == MoveName.DomesticSale ||
+                    move.name == MoveName.BuyWarehouse ||
+                    move.name == MoveName.ArrangeWarehouse ||
+                    move.name == MoveName.BuyFactory ||
+                    move.name == MoveName.BuyFromFactory ||
+                    move.name == MoveName.Produce ||
+                    move.name == MoveName.Sail ||
+                    move.name == MoveName.ArrangeFactory
+                ) {
+                    setTimeout(() => {
+                        (document.getElementById('piece-drop')!.cloneNode(true) as HTMLAudioElement).play();
+                    }, 800);
+                } else if (
+                    move.name == MoveName.Accept ||
+                    move.name == MoveName.Decline ||
+                    move.name == MoveName.BuyFromWarehouse
+                ) {
                     (document.getElementById('piece-drop')!.cloneNode(true) as HTMLAudioElement).play();
                 }
             }
@@ -599,8 +613,8 @@ export default class Game extends Vue {
         // Containers
         this.containers = [];
         this.G?.players.forEach((player, pi) => {
-            let grouped = groupBy(player.containersOnFactoryStore, c => c.price);
-            Object.keys(grouped).forEach(price => {
+            let grouped = groupBy(player.containersOnFactoryStore, (c) => c.price);
+            Object.keys(grouped).forEach((price) => {
                 grouped[price].forEach((container, ci) => {
                     this.containers.push({
                         id: container.piece.id,
@@ -609,13 +623,13 @@ export default class Game extends Vue {
                         rotate: 0,
                         color: container.piece.color.toString(),
                         owner: pi,
-                        state: ContainerState.OnFactoryStore
+                        state: ContainerState.OnFactoryStore,
                     });
                 });
             });
 
-            grouped = groupBy(player.containersOnWarehouseStore, c => c.price);
-            Object.keys(grouped).forEach(price => {
+            grouped = groupBy(player.containersOnWarehouseStore, (c) => c.price);
+            Object.keys(grouped).forEach((price) => {
                 grouped[price].forEach((container, ci) => {
                     this.containers.push({
                         id: container.piece.id,
@@ -624,46 +638,47 @@ export default class Game extends Vue {
                         rotate: 0,
                         color: container.piece.color.toString(),
                         owner: pi,
-                        state: ContainerState.OnWarehouseStore
+                        state: ContainerState.OnWarehouseStore,
                     });
                 });
             });
 
             let lastColor;
             let offset = 0;
-            player.containersOnIsland.sort((a, b) => a.color.localeCompare(b.color)).forEach((container, ci) => {
-                if (container.color !== lastColor)
-                    offset += 10;
+            player.containersOnIsland
+                .sort((a, b) => a.color.localeCompare(b.color))
+                .forEach((container, ci) => {
+                    if (container.color !== lastColor) offset += 10;
 
-                if (player.containersOnIsland.length <= 28) {
-                    this.containers.push({
-                        id: container.id,
-                        x: 860 + offset + 12 * ci,
-                        y: 445 + 44 * pi,
-                        rotate: 90,
-                        color: container.color.toString(),
-                        owner: pi,
-                        state: ContainerState.OnIsland
-                    });
-                } else {
-                    this.containers.push({
-                        id: container.id,
-                        x: 860 + offset + 6 * ci,
-                        y: 435 + 44 * pi + 20 * (ci % 2),
-                        rotate: 90,
-                        color: container.color.toString(),
-                        owner: pi,
-                        state: ContainerState.OnIsland
-                    });
-                }
+                    if (player.containersOnIsland.length <= 28) {
+                        this.containers.push({
+                            id: container.id,
+                            x: 860 + offset + 12 * ci,
+                            y: 445 + 44 * pi,
+                            rotate: 90,
+                            color: container.color.toString(),
+                            owner: pi,
+                            state: ContainerState.OnIsland,
+                        });
+                    } else {
+                        this.containers.push({
+                            id: container.id,
+                            x: 860 + offset + 6 * ci,
+                            y: 435 + 44 * pi + 20 * (ci % 2),
+                            rotate: 90,
+                            color: container.color.toString(),
+                            owner: pi,
+                            state: ContainerState.OnIsland,
+                        });
+                    }
 
-                lastColor = container.color;
-            });
+                    lastColor = container.color;
+                });
         });
 
         if (this.G?.containersLeft) {
             let c = {};
-            this.G?.containersLeft.sort().forEach(container => {
+            this.G?.containersLeft.sort().forEach((container) => {
                 if (!c[container.color]) {
                     c[container.color] = 0;
                 }
@@ -676,10 +691,10 @@ export default class Game extends Vue {
                     rotate: 0,
                     color: container.color.toString(),
                     owner: -1,
-                    state: ContainerState.OnBoard
+                    state: ContainerState.OnBoard,
                 });
 
-                c[container.color]++
+                c[container.color]++;
             });
         }
 
@@ -687,22 +702,34 @@ export default class Game extends Vue {
         this.factories = [];
         this.G?.players.forEach((player, pi) => {
             player.factories.forEach((factory, i) => {
-                this.factories.push({ id: factory.id, x: 28 + pi * 250 + i * 48, y: 140, owner: player.id, color: factory.color.toString() });
+                this.factories.push({
+                    id: factory.id,
+                    x: 28 + pi * 250 + i * 48,
+                    y: 140,
+                    owner: player.id,
+                    color: factory.color.toString(),
+                });
             });
         });
 
         if (this.G?.factoriesLeft) {
             let c = 0;
             let lastColor;
-            this.G?.factoriesLeft.sort().forEach(factory => {
+            this.G?.factoriesLeft.sort().forEach((factory) => {
                 if (lastColor !== factory.color) {
                     c = 0;
                 }
 
                 const offset = 120 * Object.values(ContainerColor).indexOf(factory.color);
-                this.factories.push({ id: factory.id, x: 20 + offset + 22 * (c % 5), y: 20 + Math.floor(c / 5) * 12, owner: -1, color: factory.color.toString() });
+                this.factories.push({
+                    id: factory.id,
+                    x: 20 + offset + 22 * (c % 5),
+                    y: 20 + Math.floor(c / 5) * 12,
+                    owner: -1,
+                    color: factory.color.toString(),
+                });
                 lastColor = factory.color;
-                c++
+                c++;
             });
         }
 
@@ -710,13 +737,23 @@ export default class Game extends Vue {
         this.warehouses = [];
         this.G?.players.forEach((player, pi) => {
             for (let c = 0; c < player.warehouses.length; c++) {
-                this.warehouses.push({ id: player.warehouses[c].id, x: 13 + pi * 250 + c * 48, y: 210, owner: player.id });
+                this.warehouses.push({
+                    id: player.warehouses[c].id,
+                    x: 13 + pi * 250 + c * 48,
+                    y: 210,
+                    owner: player.id,
+                });
             }
         });
 
         if (this.G?.warehousesLeft) {
             for (let c = 0; c < this.G.warehousesLeft.length; c++) {
-                this.warehouses.push({ id: this.G.warehousesLeft[c].id, x: 620 + 32 * (c % 13), y: 15 + Math.floor(c / 13) * 32, owner: -1 });
+                this.warehouses.push({
+                    id: this.G.warehousesLeft[c].id,
+                    x: 620 + 32 * (c % 13),
+                    y: 15 + Math.floor(c / 13) * 32,
+                    owner: -1,
+                });
             }
         }
 
@@ -738,17 +775,44 @@ export default class Game extends Vue {
             const color = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'][pi];
             switch (player.ship.shipPosition) {
                 case ShipPosition.OpenSea:
-                    this.ships.push({ id: player.ship.piece.id, x: 380 + pi * 44, y: 480, rotate: 0, color, containers: player.ship.containers, owner: pi, position: player.ship.shipPosition });
+                    this.ships.push({
+                        id: player.ship.piece.id,
+                        x: 380 + pi * 44,
+                        y: 480,
+                        rotate: 0,
+                        color,
+                        containers: player.ship.containers,
+                        owner: pi,
+                        position: player.ship.shipPosition,
+                    });
                     break;
 
                 case ShipPosition.Island:
-                    this.ships.push({ id: player.ship.piece.id, x: 800, y: 410 + pi * 44, rotate: 90, color, containers: player.ship.containers, owner: pi, position: player.ship.shipPosition });
+                    this.ships.push({
+                        id: player.ship.piece.id,
+                        x: 800,
+                        y: 410 + pi * 44,
+                        rotate: 90,
+                        color,
+                        containers: player.ship.containers,
+                        owner: pi,
+                        position: player.ship.shipPosition,
+                    });
                     break;
 
                 default:
                     const otherPlayer = Number.parseInt(player.ship.shipPosition[12]);
                     const harbor = Number.parseInt(player.ship.shipPosition[13]);
-                    this.ships.push({ id: player.ship.piece.id, x: 26 + 250 * otherPlayer + 62 * (harbor - 1), y: 305, rotate: 0, color, containers: player.ship.containers, owner: pi, position: player.ship.shipPosition });
+                    this.ships.push({
+                        id: player.ship.piece.id,
+                        x: 26 + 250 * otherPlayer + 62 * (harbor - 1),
+                        y: 305,
+                        rotate: 0,
+                        color,
+                        containers: player.ship.containers,
+                        owner: pi,
+                        position: player.ship.shipPosition,
+                    });
                     break;
             }
         });
@@ -775,38 +839,75 @@ export default class Game extends Vue {
 
             case PieceType.Factory:
                 const factory = e as Factory;
-                this.sendMove({ name: MoveName.BuyFactory, data: factory.color, extraData: { id: factory.pieceId, color: factory.color } });
+                this.sendMove({
+                    name: MoveName.BuyFactory,
+                    data: factory.color,
+                    extraData: { id: factory.pieceId, color: factory.color },
+                });
                 break;
 
             case PieceType.Container:
                 const container = e as Container;
                 if (container.state == ContainerState.OnBoard) {
                     if (d.type == DropZoneType.FactoryStore) {
-                        this.sendMove({ name: MoveName.Produce, data: container.color, extraData: { piece: { id: container.pieceId, color: container.color }, price: d.price } });
+                        this.sendMove({
+                            name: MoveName.Produce,
+                            data: container.color,
+                            extraData: { piece: { id: container.pieceId, color: container.color }, price: d.price },
+                        });
                     }
                 } else if (container.state == ContainerState.OnFactoryStore) {
                     if (d.type == DropZoneType.FactoryStore) {
-                        if (this.G!.players[this.G!.currentPlayer!].containersOnFactoryStore.find(c => c.piece.id == e.pieceId)!.price === d.price) {
+                        if (
+                            this.G!.players[this.G!.currentPlayer!].containersOnFactoryStore.find(
+                                (c) => c.piece.id == e.pieceId
+                            )!.price === d.price
+                        ) {
                             return;
                         }
 
-                        this.sendMove({ name: MoveName.ArrangeFactory, data: { id: container.pieceId, color: container.color }, extraData: { price: d.price } });
+                        this.sendMove({
+                            name: MoveName.ArrangeFactory,
+                            data: { id: container.pieceId, color: container.color },
+                            extraData: { price: d.price },
+                        });
                     } else if (d.type == DropZoneType.WarehouseStore) {
-                        this.sendMove({ name: MoveName.BuyFromFactory, data: { player: container.owner, piece: { id: container.pieceId, color: container.color } }, extraData: { price: d.price } });
+                        this.sendMove({
+                            name: MoveName.BuyFromFactory,
+                            data: { player: container.owner, piece: { id: container.pieceId, color: container.color } },
+                            extraData: { price: d.price },
+                        });
                     } else if (d.type == DropZoneType.Supply) {
-                        this.sendMove({ name: MoveName.DomesticSale, data: { id: container.pieceId, color: container.color } });
+                        this.sendMove({
+                            name: MoveName.DomesticSale,
+                            data: { id: container.pieceId, color: container.color },
+                        });
                     }
                 } else if (container.state == ContainerState.OnWarehouseStore) {
                     if (d.type == DropZoneType.WarehouseStore) {
-                        if (this.G!.players[this.G!.currentPlayer!].containersOnWarehouseStore.find(c => c.piece.id == e.pieceId)!.price === d.price) {
+                        if (
+                            this.G!.players[this.G!.currentPlayer!].containersOnWarehouseStore.find(
+                                (c) => c.piece.id == e.pieceId
+                            )!.price === d.price
+                        ) {
                             return;
                         }
 
-                        this.sendMove({ name: MoveName.ArrangeWarehouse, data: { id: container.pieceId, color: container.color }, extraData: { price: d.price } });
+                        this.sendMove({
+                            name: MoveName.ArrangeWarehouse,
+                            data: { id: container.pieceId, color: container.color },
+                            extraData: { price: d.price },
+                        });
                     } else if (d.type == DropZoneType.Ship) {
-                        this.sendMove({ name: MoveName.BuyFromWarehouse, data: { player: container.owner, piece: { id: container.pieceId, color: container.color } } });
+                        this.sendMove({
+                            name: MoveName.BuyFromWarehouse,
+                            data: { player: container.owner, piece: { id: container.pieceId, color: container.color } },
+                        });
                     } else if (d.type == DropZoneType.Supply) {
-                        this.sendMove({ name: MoveName.DomesticSale, data: { id: container.pieceId, color: container.color } });
+                        this.sendMove({
+                            name: MoveName.DomesticSale,
+                            data: { id: container.pieceId, color: container.color },
+                        });
                     }
                 }
 
@@ -885,12 +986,16 @@ export default class Game extends Vue {
     }
 
     canMove() {
-        return this.G && this.G.currentPlayer == this.player! && this.G.players[this.player!] && this.G.players[this.player!].availableMoves;
+        return (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
+            this.G.players[this.player!] &&
+            this.G.players[this.player!].availableMoves
+        );
     }
 
     canDragContainer(container: Piece) {
-        if (!this.canMove())
-            return false;
+        if (!this.canMove()) return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -898,24 +1003,34 @@ export default class Game extends Vue {
         switch (container.state) {
             case ContainerState.OnBoard: {
                 const available = availableMoves[MoveName.Produce];
-                return available && available.indexOf(container.color as ContainerColor) != -1 && currentPlayer.produced.indexOf(container.color as ContainerColor) == -1;
+                return (
+                    available &&
+                    available.indexOf(container.color as ContainerColor) != -1 &&
+                    currentPlayer.produced.indexOf(container.color as ContainerColor) == -1
+                );
             }
 
             case ContainerState.OnFactoryStore: {
                 if (container.owner == currentPlayer.id) {
-                    return availableMoves[MoveName.ArrangeFactory] != undefined || availableMoves[MoveName.DomesticSale] != undefined;
+                    return (
+                        availableMoves[MoveName.ArrangeFactory] != undefined ||
+                        availableMoves[MoveName.DomesticSale] != undefined
+                    );
                 } else {
                     const available = availableMoves[MoveName.BuyFromFactory];
-                    return available && available.find(a => a.piece.id == container.id);
+                    return available && available.find((a) => a.piece.id == container.id);
                 }
             }
 
             case ContainerState.OnWarehouseStore: {
                 if (container.owner == currentPlayer.id) {
-                    return availableMoves[MoveName.ArrangeWarehouse] != undefined || availableMoves[MoveName.DomesticSale] != undefined;
+                    return (
+                        availableMoves[MoveName.ArrangeWarehouse] != undefined ||
+                        availableMoves[MoveName.DomesticSale] != undefined
+                    );
                 } else {
                     const available = availableMoves[MoveName.BuyFromWarehouse];
-                    return available && available.find(a => a.piece.id == container.id);
+                    return available && available.find((a) => a.piece.id == container.id);
                 }
             }
 
@@ -927,35 +1042,30 @@ export default class Game extends Vue {
     }
 
     canDragFactory(factory: Piece) {
-        if (!this.canMove())
-            return false;
+        if (!this.canMove()) return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
         const availableMoves = currentPlayer.availableMoves!;
 
-        if (factory.owner !== -1)
-            return false;
+        if (factory.owner !== -1) return false;
 
         const available = availableMoves[MoveName.BuyFactory];
-        return available && available.find(a => a == factory.color);
+        return available && available.find((a) => a == factory.color);
     }
 
     canDragWarehouse(warehouse: Piece) {
-        if (!this.canMove())
-            return false;
+        if (!this.canMove()) return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
         const availableMoves = currentPlayer.availableMoves!;
 
-        if (warehouse.owner !== -1)
-            return false;
+        if (warehouse.owner !== -1) return false;
 
         return availableMoves[MoveName.BuyWarehouse] != undefined;
     }
 
     canDragLoan(loanCard: Piece) {
-        if (!this.canMove())
-            return false;
+        if (!this.canMove()) return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -970,8 +1080,7 @@ export default class Game extends Vue {
     }
 
     canDragShip(ship: Piece) {
-        if (!this.canMove())
-            return false;
+        if (!this.canMove()) return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -980,8 +1089,7 @@ export default class Game extends Vue {
     }
 
     canPass() {
-        if (!this.canMove())
-            return false;
+        if (!this.canMove()) return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -990,8 +1098,7 @@ export default class Game extends Vue {
     }
 
     canUndo() {
-        if (!this.canMove())
-            return false;
+        if (!this.canMove()) return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1000,8 +1107,7 @@ export default class Game extends Vue {
     }
 
     canDecline() {
-        if (!this.canMove())
-            return false;
+        if (!this.canMove()) return false;
 
         const currentPlayer = this.G!.players[this.G!.currentPlayer!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1010,11 +1116,11 @@ export default class Game extends Vue {
     }
 
     toggleSound() {
-        this.soundOn = !this.soundOn;
+        this.preferences.sound = !this.preferences.sound;
     }
 
     toggleHelp() {
-        this.ui.helpOn = !this.ui.helpOn;
+        this.preferences.disableHelp = !this.preferences.disableHelp;
     }
 
     showLog() {
@@ -1025,9 +1131,14 @@ export default class Game extends Vue {
         if (this.G?.currentPlayer == undefined) {
             return 'Game ended!';
         } else if (this.G?.currentPlayer == this.player) {
-            return 'It\'s your turn!';
+            return "It's your turn!";
         } else {
-            if (!this.G.log || this.G.log.length == 0 || this.G.log[this.G.log.length - 1].type != 'move' || (this.G.log[this.G.log.length - 1] as LogMove).move.name == MoveName.Pass)
+            if (
+                !this.G.log ||
+                this.G.log.length == 0 ||
+                this.G.log[this.G.log.length - 1].type != 'move' ||
+                (this.G.log[this.G.log.length - 1] as LogMove).move.name == MoveName.Pass
+            )
                 return `Waiting for ${this.G?.players[this.G!.currentPlayer].name} to play...`;
 
             let log = (this.G.log[this.G.log.length - 1] as LogMove).pretty;
@@ -1044,84 +1155,118 @@ export default class Game extends Vue {
     }
 
     canBuyFactory(color) {
-        return this.G && this.G.currentPlayer == this.player! &&
+        return (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.BuyFactory] &&
-            this.G.players[this.player!].availableMoves![MoveName.BuyFactory]!.indexOf(color) != -1;
+            this.G.players[this.player!].availableMoves![MoveName.BuyFactory]!.indexOf(color) != -1
+        );
     }
 
     canBuyWarehouse() {
-        return this.G && this.G.currentPlayer == this.player! &&
+        return (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
-            this.G.players[this.player!].availableMoves![MoveName.BuyWarehouse];
+            this.G.players[this.player!].availableMoves![MoveName.BuyWarehouse]
+        );
     }
 
     canProduce(color) {
-        return this.G && this.G.currentPlayer == this.player! &&
+        return (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.Produce] &&
-            this.G.players[this.player!].availableMoves![MoveName.Produce]!.indexOf(color) != -1;
+            this.G.players[this.player!].availableMoves![MoveName.Produce]!.indexOf(color) != -1
+        );
     }
 
     canGetLoan() {
-        return this.G && this.G.currentPlayer == this.player! &&
+        return (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
-            this.G.players[this.player!].availableMoves![MoveName.GetLoan];
+            this.G.players[this.player!].availableMoves![MoveName.GetLoan]
+        );
     }
 
     canPayLoan() {
-        return this.G && this.G.currentPlayer == this.player! &&
+        return (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
-            this.G.players[this.player!].availableMoves![MoveName.PayLoan];
+            this.G.players[this.player!].availableMoves![MoveName.PayLoan]
+        );
     }
 
     canSail() {
-        return this.G && this.G.currentPlayer == this.player! &&
+        return (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
-            this.G.players[this.player!].availableMoves![MoveName.Sail];
+            this.G.players[this.player!].availableMoves![MoveName.Sail]
+        );
     }
 
     canArrangeFactory() {
-        return this.G && this.G.currentPlayer == this.player! &&
+        return (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
-            this.G.players[this.player!].availableMoves![MoveName.ArrangeFactory];
+            this.G.players[this.player!].availableMoves![MoveName.ArrangeFactory]
+        );
     }
 
     canArrangeWarehouse() {
-        return this.G && this.G.currentPlayer == this.player! &&
+        return (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
-            this.G.players[this.player!].availableMoves![MoveName.ArrangeWarehouse];
+            this.G.players[this.player!].availableMoves![MoveName.ArrangeWarehouse]
+        );
     }
 
     canBuyFromPlayerFactory(otherPlayer) {
-        if (this.G && this.G.currentPlayer == this.player! &&
+        if (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
-            this.G.players[this.player!].availableMoves![MoveName.BuyFromFactory]) {
-            const buyable = this.G.players[this.player!].availableMoves![MoveName.BuyFromFactory]!.map(c => c.piece.id);
-            const playerContainers = otherPlayer.containersOnFactoryStore.map(c => c.piece.id)
-            return buyable.some(id => playerContainers.indexOf(id) !== -1);
+            this.G.players[this.player!].availableMoves![MoveName.BuyFromFactory]
+        ) {
+            const buyable = this.G.players[this.player!].availableMoves![MoveName.BuyFromFactory]!.map(
+                (c) => c.piece.id
+            );
+            const playerContainers = otherPlayer.containersOnFactoryStore.map((c) => c.piece.id);
+            return buyable.some((id) => playerContainers.indexOf(id) !== -1);
         }
 
         return false;
     }
 
     canBuyFromPlayerWarehouse(otherPlayer) {
-        if (this.G && this.G.currentPlayer == this.player! &&
+        if (
+            this.G &&
+            this.G.currentPlayer == this.player! &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
-            this.G.players[this.player!].availableMoves![MoveName.BuyFromWarehouse]) {
-            const buyable = this.G.players[this.player!].availableMoves![MoveName.BuyFromWarehouse]!.map(c => c.piece.id);
-            const playerContainers = otherPlayer.containersOnWarehouseStore.map(c => c.piece.id)
-            return buyable.some(id => playerContainers.indexOf(id) !== -1);
+            this.G.players[this.player!].availableMoves![MoveName.BuyFromWarehouse]
+        ) {
+            const buyable = this.G.players[this.player!].availableMoves![MoveName.BuyFromWarehouse]!.map(
+                (c) => c.piece.id
+            );
+            const playerContainers = otherPlayer.containersOnWarehouseStore.map((c) => c.piece.id);
+            return buyable.some((id) => playerContainers.indexOf(id) !== -1);
         }
 
         return false;
@@ -1137,17 +1282,17 @@ export default class Game extends Vue {
 
             if (container.owner == this.player) {
                 if (container.state == ContainerState.OnFactoryStore) {
-                    return 'ownFactoryContainer'
+                    return 'ownFactoryContainer';
                 } else if (container.state == ContainerState.OnWarehouseStore) {
-                    return 'ownWarehouseContainer'
+                    return 'ownWarehouseContainer';
                 }
             } else {
                 if (container.state == ContainerState.OnBoard) {
-                    return 'boardContainer'
+                    return 'boardContainer';
                 } else if (container.state == ContainerState.OnFactoryStore) {
-                    return 'factoryContainer'
+                    return 'factoryContainer';
                 } else if (container.state == ContainerState.OnWarehouseStore) {
-                    return 'warehouseContainer'
+                    return 'warehouseContainer';
                 }
             }
         }
@@ -1158,7 +1303,7 @@ export default class Game extends Vue {
     get logReversed() {
         let logReversed: string[] = [];
         if (this.G && this.G.log) {
-            this.G.log.forEach(log => {
+            this.G.log.forEach((log) => {
                 if (log.type == 'phase') {
                     logReversed.push('New phase: ' + log.phase);
                 } else if (log.type == 'event') {

@@ -13,7 +13,7 @@
 </template>
 <script lang="ts">
 import { Vue, Component, Prop, Watch, Inject, InjectReactive } from 'vue-property-decorator';
-import { ContainerState, DropZoneType, PieceType, UIData } from '../types/ui-data';
+import { ContainerState, DropZoneType, PieceType, UIData, Preferences } from '../types/ui-data';
 import { EventEmitter, Listener } from 'events';
 import Piece from './pieces/Piece.vue';
 import { Ship, Container, LoanCard } from './pieces';
@@ -23,6 +23,9 @@ import { ShipPosition } from 'container-engine/src/gamestate';
 export default class DropZone extends Vue {
     @Inject()
     readonly ui!: UIData;
+
+    @InjectReactive()
+    readonly preferences!: Preferences;
 
     @InjectReactive()
     readonly player!: number;
@@ -73,7 +76,11 @@ export default class DropZone extends Vue {
         const rect1 = this.$el.getBoundingClientRect();
         const rect2 = this.ui.dragged!.$el.getBoundingClientRect();
 
-        this.overlapping = rect1.bottom >= rect2.top && rect1.right >= rect2.left && rect1.top <= rect2.bottom && rect1.left <= rect2.right;
+        this.overlapping =
+            rect1.bottom >= rect2.top &&
+            rect1.right >= rect2.left &&
+            rect1.top <= rect2.bottom &&
+            rect1.left <= rect2.right;
     }
 
     @Watch('enabled', { immediate: true })
@@ -95,53 +102,43 @@ export default class DropZone extends Vue {
     }
 
     get canDrop() {
-        if (!this.enabled || !this.ui.dragged || this.accepts?.indexOf(this.ui.dragged.pieceType) == -1)
-            return false;
+        if (!this.enabled || !this.ui.dragged || this.accepts?.indexOf(this.ui.dragged.pieceType) == -1) return false;
 
         if (this.ui.dragged.pieceType == PieceType.Loan) {
             const loan = this.ui.dragged as LoanCard;
             if (loan.owner == this.player) {
-                if (this.data.type == DropZoneType.GetLoan)
-                    return false;
+                if (this.data.type == DropZoneType.GetLoan) return false;
             } else {
-                if (this.data.type == DropZoneType.PayLoan)
-                    return false;
+                if (this.data.type == DropZoneType.PayLoan) return false;
             }
         } else if (this.ui.dragged.pieceType == PieceType.Ship) {
             const ship = this.ui.dragged as Ship;
             if (ship.position == ShipPosition.OpenSea) {
-                if (this.data.type == DropZoneType.OpenSea)
-                    return false;
+                if (this.data.type == DropZoneType.OpenSea) return false;
 
-                if (this.data.type == DropZoneType.IslandHarbor && ship.containers?.length == 0)
-                    return false;
+                if (this.data.type == DropZoneType.IslandHarbor && ship.containers?.length == 0) return false;
 
-                if (this.data.owner == this.player)
-                    return false;
+                if (this.data.owner == this.player) return false;
             } else {
-                if (this.data.type != DropZoneType.OpenSea)
-                    return false;
+                if (this.data.type != DropZoneType.OpenSea) return false;
             }
         } else if (this.ui.dragged.pieceType == PieceType.Container) {
             const container = this.ui.dragged as Container;
             if (container.state == ContainerState.OnBoard) {
-                if (this.data.type != DropZoneType.FactoryStore)
-                    return false;
+                if (this.data.type != DropZoneType.FactoryStore) return false;
             } else if (container.state == ContainerState.OnFactoryStore) {
                 if (container.owner == this.player) {
                     if (this.data.type != DropZoneType.FactoryStore && this.data.type != DropZoneType.Supply)
                         return false;
                 } else {
-                    if (this.data.type != DropZoneType.WarehouseStore)
-                        return false;
+                    if (this.data.type != DropZoneType.WarehouseStore) return false;
                 }
             } else if (container.state == ContainerState.OnWarehouseStore) {
                 if (container.owner == this.player) {
                     if (this.data.type != DropZoneType.WarehouseStore && this.data.type != DropZoneType.Supply)
                         return false;
                 } else {
-                    if (this.data.type != DropZoneType.Ship)
-                        return false;
+                    if (this.data.type != DropZoneType.Ship) return false;
                 }
             }
         }
@@ -150,7 +147,7 @@ export default class DropZone extends Vue {
     }
 
     get showDrop() {
-        return this.ui.helpOn && this.canDrop;
+        return !this.preferences.disableHelp && this.canDrop;
     }
 }
 </script>
