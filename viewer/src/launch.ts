@@ -1,14 +1,15 @@
 import type { GameState, Move } from 'container-engine';
 import { EventEmitter } from 'events';
 import Vue from 'vue';
-import Game from './components/Game.vue';
+import Game, { Preferences } from './components/Game.vue';
 
 function launch(selector: string) {
     let params: {
         state: null | GameState;
         player?: number;
         emitter: EventEmitter;
-    } = { state: null, emitter: new EventEmitter() };
+        preferences: null | Preferences;
+    } = { state: null, emitter: new EventEmitter(), preferences: null };
 
     const app = new Vue({
         render: (h) => h(Game, { props: params }, []),
@@ -26,6 +27,10 @@ function launch(selector: string) {
     item.addListener('state:updated', () => item.emit('fetchState'));
     item.addListener('player', (data) => {
         params.player = data.index;
+        app.$forceUpdate();
+    });
+    item.addListener('preferences', (data) => {
+        params.preferences = { ...params.preferences, ...data };
         app.$forceUpdate();
     });
     item.addListener('gamelog', (_) => item.emit('fetchState'));

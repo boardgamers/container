@@ -4,7 +4,6 @@ import PieceComponent from '../components/pieces/Piece.vue';
 export interface UIData {
     dragged?: PieceComponent | null;
     waitingAnimations: number;
-    helpOn: boolean;
 }
 
 export interface Piece {
