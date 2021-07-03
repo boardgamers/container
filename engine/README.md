@@ -1,4 +1,4 @@
-# gaia-engine
+# container-engine
 
 Typescript engine for Container.
 
@@ -6,14 +6,14 @@ Typescript engine for Container.
 
 ### Requirements
 
-Recent version of node / yarn.
+Recent version of node / pnpm.
 
 ### Dependencies
 
 In the project's folder:
 
 ```
-yarn
+pnpm
 ```
 
 ### Build
@@ -21,24 +21,11 @@ yarn
 To compile Typescript into javascript:
 
 ```
-yarn build
+pnpm build
 ```
 
 ### Test
 
 ```
-yarn test
-```
-
-### Usage as a dependency from another module
-
-If you want to use your local copy of this module instead of the npm version, as a dependency of
-another module, do this:
-
-```
-## In this folder
-yarn link
-
-## In the other project's folder
-yarn link container-engine
+pnpm test
 ```
