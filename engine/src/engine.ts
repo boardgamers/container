@@ -1,10 +1,11 @@
 import assert from 'assert';
-import { cloneDeep, groupBy, isEqual } from 'lodash';
+import { chunk, cloneDeep, groupBy, isEqual, range, zip } from 'lodash';
 import seedrandom from 'seedrandom';
 import { availableMoves } from './available-moves';
 import pointCards from './cards';
 import {
     ContainerColor,
+    containerColors,
     ContainerPiece,
     FactoryPiece,
     GameOptions,
@@ -20,19 +21,18 @@ import { asserts, shuffle } from './utils';
 const playerColors = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'];
 
 export function setup(numPlayers: number, { beginner = true }: GameOptions, seed?: string): GameState {
-    seed = seed || Math.random().toString();
+    seed = seed ?? Math.random().toString();
     const rng = seedrandom(seed);
 
     const cards = shuffle(pointCards, rng() + '');
 
-    let id = 0;
-    const players: Player[] = new Array(numPlayers).fill(0).map(() => ({
-        id: id++,
+    const players: Player[] = range(numPlayers).map((id) => ({
+        id,
         pointCard: cards.shift()!,
         factories: [],
         warehouses: [],
         ship: {
-            piece: { id: 'S' + id },
+            piece: { id: `S${id}` },
             containers: [],
             shipPosition: ShipPosition.OpenSea,
         },
@@ -54,35 +54,19 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         isAI: false,
     }));
 
-    id = 0;
     const totalContainers = players.length * 4;
     const containersLeft: ContainerPiece[] = [];
-    containersLeft.push(
-        ...new Array(totalContainers).fill(0).map((_) => ({ id: 'C' + id++, color: ContainerColor.Brown }))
-    );
-    containersLeft.push(
-        ...new Array(totalContainers).fill(0).map((_) => ({ id: 'C' + id++, color: ContainerColor.White }))
-    );
-    containersLeft.push(
-        ...new Array(totalContainers).fill(0).map((_) => ({ id: 'C' + id++, color: ContainerColor.Black }))
-    );
-    containersLeft.push(
-        ...new Array(totalContainers).fill(0).map((_) => ({ id: 'C' + id++, color: ContainerColor.Orange }))
-    );
-    containersLeft.push(
-        ...new Array(totalContainers).fill(0).map((_) => ({ id: 'C' + id++, color: ContainerColor.Tan }))
-    );
+    for (const [containerIds, color] of zip(chunk(range(0, totalContainers * 5), totalContainers), containerColors)) {
+        containersLeft.push(...containerIds!.map((i) => ({ id: `C${i}` as const, color: color! })));
+    }
 
-    id = 0;
     const factoriesLeft: FactoryPiece[] = [];
-    factoriesLeft.push(...new Array(5).fill(0).map((_) => ({ id: 'F' + id++, color: ContainerColor.Brown })));
-    factoriesLeft.push(...new Array(5).fill(0).map((_) => ({ id: 'F' + id++, color: ContainerColor.White })));
-    factoriesLeft.push(...new Array(5).fill(0).map((_) => ({ id: 'F' + id++, color: ContainerColor.Black })));
-    factoriesLeft.push(...new Array(5).fill(0).map((_) => ({ id: 'F' + id++, color: ContainerColor.Orange })));
-    factoriesLeft.push(...new Array(5).fill(0).map((_) => ({ id: 'F' + id++, color: ContainerColor.Tan })));
+    for (const [factoryIds, color] of zip(chunk(range(0, containerColors.length * 5), 5), containerColors)) {
+        factoriesLeft.push(...factoryIds!.map((i) => ({ id: `F${i}` as const, color: color! })));
+    }
 
-    const warehousesLeft = new Array(players.length * 5).fill(0).map((_, i) => ({ id: 'W' + i }));
-    const loansLeft = new Array(players.length * 2).fill(0).map((_, i) => ({ id: 'L' + i }));
+    const warehousesLeft = range(5).map((i) => ({ id: 'W' + i }));
+    const loansLeft = range(players.length * 2).map((i) => ({ id: 'L' + i }));
 
     const startingPlayer = Math.abs(rng.int32()) % players.length;
     const G: GameState = {
@@ -103,10 +87,7 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         round: 1,
     } as GameState;
 
-    const colors = shuffle(
-        [ContainerColor.Black, ContainerColor.Orange, ContainerColor.Tan, ContainerColor.White, ContainerColor.Brown],
-        rng() + ''
-    );
+    const colors = shuffle(containerColors, rng() + '');
 
     G.players.forEach((player, i) => {
         const color = colors[i];
