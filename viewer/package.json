@@ -5,7 +5,7 @@
         "serve": "vue-cli-service serve",
         "build": "vue-cli-service build",
         "test:unit": "vue-cli-service test:unit",
-        "package": "vue-cli-service build --target lib src/wrapper.ts",
+        "package": "vue-cli-service build --target lib --name container-viewer src/wrapper.ts",
         "prepublishOnly": "npm run package"
     },
     "dependencies": {
