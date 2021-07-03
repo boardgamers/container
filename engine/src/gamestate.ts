@@ -14,6 +14,8 @@ export enum ContainerColor {
     Tan = 'tan',
 }
 
+export const containerColors = Object.values(ContainerColor);
+
 export interface ContainerValue {
     containerColor: ContainerColor;
     baseValue: number;
@@ -94,17 +96,17 @@ export enum Phase {
 }
 
 export interface ContainerPiece {
-    id: string;
+    id: `C${number}`;
     color: ContainerColor;
 }
 
 export interface FactoryPiece {
-    id: string;
+    id: `F${number}`;
     color: ContainerColor;
 }
 
 export interface WarehousePiece {
-    id: string;
+    id: `W${number}`;
 }
 
 export interface LoanPiece {
@@ -112,7 +114,7 @@ export interface LoanPiece {
 }
 
 export interface ShipPiece {
-    id: string;
+    id: `S${number}`;
 }
 
 export interface GameState {
