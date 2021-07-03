@@ -4,8 +4,12 @@ import PieceComponent from '../components/pieces/Piece.vue';
 export interface UIData {
     dragged?: PieceComponent | null;
     waitingAnimations: number;
-    helpOn: boolean;
 }
+
+export type Preferences = {
+    sound: boolean;
+    help: boolean;
+};
 
 export interface Piece {
     id: string;
