@@ -19,5 +19,4 @@ export default class Factory extends Mixins(Piece) {
     @Prop()
     color?: string;
 }
-
 </script>

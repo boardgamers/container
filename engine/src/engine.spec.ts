@@ -1,12 +1,9 @@
-import { expect } from "chai";
-import { availableMoves } from "./available-moves";
-import { setup, move as execMove, ended } from './engine';
-import { ContainerColor, ShipPosition } from "./gamestate";
-import { Move } from './move';
+import { expect } from 'chai';
+import { ended, setup } from './engine';
 
-describe("Engine", () => {
-    it("should play full game", () => {
-        const G = setup(5, { beginner: false }, "test");
+describe('Engine', () => {
+    it('should play full game', () => {
+        const G = setup(5, { beginner: false }, 'test');
 
         // G.currentPlayer = 0;
         // G.players[0].actions = 2;

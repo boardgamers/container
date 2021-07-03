@@ -124,5 +124,4 @@ export default class Piece extends Draggable {
         return this.dragging ? 'dragged' : (this.transitioning || this.moving ? 'moving' : undefined);
     }
 }
-
 </script>

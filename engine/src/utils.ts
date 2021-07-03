@@ -1,8 +1,7 @@
-import seedrandom from "seedrandom";
+import seedrandom from 'seedrandom';
 
 /* eslint-disable */
-export function asserts<T>(move: any): asserts move is T {
-}
+export function asserts<T>(move: any): asserts move is T {}
 
 /* eslint-enable */
 
@@ -20,5 +19,5 @@ export function shuffle<T>(array: T[], seed: string) {
         reverse.set(n, i);
     });
 
-    return [...reverse.keys()].sort().map(n => array[reverse.get(n)!]);
+    return [...reverse.keys()].sort().map((n) => array[reverse.get(n)!]);
 }

@@ -4,7 +4,7 @@ import { Move } from './move';
 export enum GameEventName {
     GameStart = 'Game Start!',
     GameEnd = 'Game End!',
-    Upkeep = 'Upkeep'
+    Upkeep = 'Upkeep',
 }
 
 export declare namespace GameEvents {
@@ -32,13 +32,13 @@ export type LogPhase = {
 export type LogEvent = {
     type: 'event';
     event: GameEvent;
-}
+};
 
 export type LogMove = {
     type: 'move';
     player: number;
     move: Move;
     pretty: string;
-}
+};
 
 export type LogItem = LogPhase | LogEvent | LogMove;

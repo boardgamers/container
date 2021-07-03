@@ -153,7 +153,6 @@ export default class DropZone extends Vue {
         return this.ui.helpOn && this.canDrop;
     }
 }
-
 </script>
 <style lang="scss">
 g.placeholder {

@@ -1,8 +1,8 @@
 import type { GameState } from './index';
-import { Move } from './src/move';
 import * as engine from './src/engine';
-import { asserts } from './src/utils';
 import type { LogMove } from './src/log';
+import { Move } from './src/move';
+import { asserts } from './src/utils';
 
 export async function init(nbPlayers: number, expansions: string[], options: {}, seed?: string): Promise<GameState> {
     return engine.setup(nbPlayers, options, seed);
@@ -20,7 +20,7 @@ export async function move(G: GameState, move: Move, player: number) {
     return G;
 }
 
-export { ended, scores } from './src/engine';
+export { ended, scores, stripSecret } from './src/engine';
 
 export function rankings(G: GameState) {
     const sortedPlayers = G.players
@@ -30,9 +30,10 @@ export function rankings(G: GameState) {
             } else {
                 return p1.money - p2.money;
             }
-        }).map(pl => pl.id);
+        })
+        .map((pl) => pl.id);
 
-    return G.players.map(pl => sortedPlayers.indexOf(pl.id) + 1);
+    return G.players.map((pl) => sortedPlayers.indexOf(pl.id) + 1);
 }
 
 export function replay(G: GameState) {
@@ -46,7 +47,7 @@ export function replay(G: GameState) {
         G.players[i].name = oldPlayers[i].name;
     }
 
-    for (const move of oldG.log.filter(event => event.type === 'move')) {
+    for (const move of oldG.log.filter((event) => event.type === 'move')) {
         asserts<LogMove>(move);
 
         G = engine.move(G, move.move, move.player);
@@ -69,15 +70,13 @@ export function currentPlayer(G: GameState) {
     return G.currentPlayer;
 }
 
-export { stripSecret } from './src/engine';
-
 export function messages(G: GameState) {
     const messages = (G as any).messages || [];
     delete (G as any).messages;
 
     return {
         messages,
-        data: G
+        data: G,
     };
 }
 
@@ -89,8 +88,11 @@ export function logSlice(G: GameState, options?: { player?: number; start?: numb
     const stripped = engine.stripSecret(G, options?.player);
     return {
         log: stripped.log.slice(options?.start, options?.end),
-        availableMoves: options?.end === undefined ?
-            stripped.players.map(pl => pl.availableMoves) :
-            engine.stripSecret(replay({ ...G, log: G.log.slice(0, options!.end) }), options!.player).players.map(pl => pl.availableMoves)
+        availableMoves:
+            options?.end === undefined
+                ? stripped.players.map((pl) => pl.availableMoves)
+                : engine
+                      .stripSecret(replay({ ...G, log: G.log.slice(0, options!.end) }), options!.player)
+                      .players.map((pl) => pl.availableMoves),
     };
 }

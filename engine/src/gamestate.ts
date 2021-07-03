@@ -11,7 +11,7 @@ export enum ContainerColor {
     Brown = 'brown',
     White = 'white',
     Black = 'darkslategray',
-    Tan = 'tan'
+    Tan = 'tan',
 }
 
 export interface ContainerValue {
@@ -51,7 +51,7 @@ export enum ShipPosition {
     PlayerHarbor42 = 'playerHarbor42',
     PlayerHarbor43 = 'playerHarbor43',
     PlayerHarbor44 = 'playerHarbor44',
-    Island = 'island'
+    Island = 'island',
 }
 
 export interface Ship {
@@ -90,7 +90,7 @@ export enum Phase {
     Bid = 'bid',
     AcceptDecline = 'acceptDecline',
     Setup = 'setup',
-    GameEnd = 'gameEnd'
+    GameEnd = 'gameEnd',
 }
 
 export interface ContainerPiece {

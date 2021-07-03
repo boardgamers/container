@@ -4,11 +4,11 @@
             {{ getStatusMessage() }}
         </div>
         <audio id="piece-drop" preload="none">
-            <source src="../audio/piece-drop.mp3" type="audio/mpeg">
+            <source src="../audio/piece-drop.mp3" type="audio/mpeg" />
         </audio>
         <audio id="notification" preload="none">
-            <source src="../audio/notification.mp3" type="audio/mpeg">
-            <source src="../audio/notification.ogg" type="audio/ogg">
+            <source src="../audio/notification.mp3" type="audio/mpeg" />
+            <source src="../audio/notification.ogg" type="audio/ogg" />
         </audio>
         <svg id="scene" viewBox="0 0 1250 650" height="650">
             <rect width="100%" height="100%" x="0" y="0" fill="lightblue" />
@@ -21,27 +21,60 @@
             <SoundButton transform="translate(1200, 15)" :isOn="soundOn" @click="toggleSound()" />
             <HelpButton transform="translate(1200, 55)" :isOn="ui.helpOn" @click="toggleHelp()" />
 
-            <DropZone transform="translate(5, 5)" :width="600" :height="90" :enabled="true" :accepts="'container'" :data="{ type: 'supply' }" />
+            <DropZone
+                transform="translate(5, 5)"
+                :width="600"
+                :height="90"
+                :enabled="true"
+                :accepts="'container'"
+                :data="{ type: 'supply' }"
+            />
 
             <template v-if="G">
                 <template v-for="(p, i) in G.players">
-                    <PlayerBoard :key="'B' + i"
+                    <PlayerBoard
+                        :key="'B' + i"
                         :player="p"
                         :color="playerColors[i]"
                         :transform="`translate(${250 * i}, 100)`"
                         :owner="i"
                         :isCurrentPlayer="isCurrentPlayer(i)"
                         :ended="gameEnded(G)"
-                        @pieceDrop="onPieceDrop" />
-                    <rect :key="'I' + i" width="390" height="41" x="860" :y="430 + i * 44" fill="none" stroke-width="3" :stroke="playerColors[i]" />
+                        @pieceDrop="onPieceDrop"
+                    />
+                    <rect
+                        :key="'I' + i"
+                        width="390"
+                        height="41"
+                        x="860"
+                        :y="430 + i * 44"
+                        fill="none"
+                        stroke-width="3"
+                        :stroke="playerColors[i]"
+                    />
                 </template>
             </template>
 
-            <DropZone :transform="`translate(280, 425)`" :width="400" :height="225" :enabled="true" :accepts="'ship'" :data="{ type: 'openSea' }" />
-            <DropZone :transform="`translate(770, 425)`" :width="480" :height="225" :enabled="true" :accepts="'ship'" :data="{ type: 'islandHarbor' }" />
+            <DropZone
+                :transform="`translate(280, 425)`"
+                :width="400"
+                :height="225"
+                :enabled="true"
+                :accepts="'ship'"
+                :data="{ type: 'openSea' }"
+            />
+            <DropZone
+                :transform="`translate(770, 425)`"
+                :width="480"
+                :height="225"
+                :enabled="true"
+                :accepts="'ship'"
+                :data="{ type: 'islandHarbor' }"
+            />
 
             <template v-for="ship in ships">
-                <Ship :key="ship.id"
+                <Ship
+                    :key="ship.id"
                     :pieceId="ship.id"
                     :targetState="{ x: ship.x, y: ship.y, rotate: ship.rotate }"
                     :canDrag="canDragShip(ship)"
@@ -49,43 +82,63 @@
                     :owner="ship.owner"
                     :ownerName="G.players[ship.owner].name"
                     :position="ship.position"
-                    :color="ship.color" />
+                    :color="ship.color"
+                />
             </template>
 
             <template v-for="container in containers">
-                <Container :key="container.id"
+                <Container
+                    :key="container.id"
                     :pieceId="container.id"
-                    :targetState="{ x: container.x, y: container.y, rotate: container.rotate }"
+                    :targetState="{
+                        x: container.x,
+                        y: container.y,
+                        rotate: container.rotate,
+                    }"
                     :canDrag="canDragContainer(container)"
                     :color="container.color"
                     :owner="container.owner"
-                    :state="container.state" />
+                    :state="container.state"
+                />
             </template>
 
             <template v-for="factory in factories">
-                <Factory :key="factory.id"
+                <Factory
+                    :key="factory.id"
                     :pieceId="factory.id"
-                    :targetState="{ x: factory.x, y: factory.y}"
+                    :targetState="{ x: factory.x, y: factory.y }"
                     :color="factory.color"
-                    :canDrag="canDragFactory(factory)" />
+                    :canDrag="canDragFactory(factory)"
+                />
             </template>
 
             <template v-for="warehouse in warehouses">
-                <Warehouse :key="warehouse.id"
+                <Warehouse
+                    :key="warehouse.id"
                     :pieceId="warehouse.id"
-                    :targetState="{ x: warehouse.x, y: warehouse.y}"
-                    :canDrag="canDragWarehouse(warehouse)" />
+                    :targetState="{ x: warehouse.x, y: warehouse.y }"
+                    :canDrag="canDragWarehouse(warehouse)"
+                />
             </template>
 
-            <DropZone :transform="`translate(1045, 5)`" :width="50" :height="90" :enabled="true" :accepts="'loan'" :data="{ type: 'payLoan' }" />
+            <DropZone
+                :transform="`translate(1045, 5)`"
+                :width="50"
+                :height="90"
+                :enabled="true"
+                :accepts="'loan'"
+                :data="{ type: 'payLoan' }"
+            />
 
             <template v-for="loanCard in loanCards">
-                <LoanCard :key="loanCard.id"
+                <LoanCard
+                    :key="loanCard.id"
                     :targetState="{ x: loanCard.x, y: loanCard.y }"
                     :owner="loanCard.owner"
                     :player="player"
                     :canDrag="canDragLoan(loanCard)"
-                    @fastClick="loan($event)" />
+                    @fastClick="loan($event)"
+                />
             </template>
 
             <template v-if="G">
@@ -97,53 +150,282 @@
                 <Calculator v-if="G.phase == 'bid'" transform="translate(140, 430)" @bid="bid($event)" />
                 <template v-if="player == G.auctioningPlayer">
                     <template v-for="(bidder, i) in G.highestBidders">
-                        <Button :key="bidder" :transform="`translate(140, ${450 + 40 * i})`" :width="130" :text="'Accept ' + getName(bidder)" @click="accept(bidder)" />
+                        <Button
+                            :key="bidder"
+                            :transform="`translate(140, ${450 + 40 * i})`"
+                            :width="130"
+                            :text="'Accept ' + getName(bidder)"
+                            @click="accept(bidder)"
+                        />
                     </template>
-                    <Button :transform="`translate(140, ${450 + 40 * G.highestBidders.length})`" :width="130" :text="'Decline'" :enabled="canDecline()" @click="decline()" />
+                    <Button
+                        :transform="`translate(140, ${450 + 40 * G.highestBidders.length})`"
+                        :width="130"
+                        :text="'Decline'"
+                        :enabled="canDecline()"
+                        @click="decline()"
+                    />
                 </template>
             </template>
 
             <template v-if="G && gameEnded(G)">
-                <Button :transform="`translate(140, 580)`" :width="130" :text="'Final Score'" @click="endScoreVisible = true" />
+                <Button
+                    :transform="`translate(140, 580)`"
+                    :width="130"
+                    :text="'Final Score'"
+                    @click="endScoreVisible = true"
+                />
             </template>
 
             <template v-if="ui.helpOn">
                 <template v-if="ui.dragged == null">
-                    <rect v-if="canBuyFactory('orange')" x="8" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
-                    <rect v-if="canBuyFactory('brown')" x="128" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
-                    <rect v-if="canBuyFactory('white')" x="248" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
-                    <rect v-if="canBuyFactory('darkslategray')" x="368" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
-                    <rect v-if="canBuyFactory('tan')" x="488" y="8" width="114" height="24" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect
+                        v-if="canBuyFactory('orange')"
+                        x="8"
+                        y="8"
+                        width="114"
+                        height="24"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
+                    <rect
+                        v-if="canBuyFactory('brown')"
+                        x="128"
+                        y="8"
+                        width="114"
+                        height="24"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
+                    <rect
+                        v-if="canBuyFactory('white')"
+                        x="248"
+                        y="8"
+                        width="114"
+                        height="24"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
+                    <rect
+                        v-if="canBuyFactory('darkslategray')"
+                        x="368"
+                        y="8"
+                        width="114"
+                        height="24"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
+                    <rect
+                        v-if="canBuyFactory('tan')"
+                        x="488"
+                        y="8"
+                        width="114"
+                        height="24"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
 
-                    <rect v-if="canBuyWarehouse()" x="615" y="10" width="424" height="72" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect
+                        v-if="canBuyWarehouse()"
+                        x="615"
+                        y="10"
+                        width="424"
+                        height="72"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
 
-                    <rect v-if="canProduce('orange')" x="6" y="36" width="116" height="54" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
-                    <rect v-if="canProduce('brown')" x="126" y="36" width="116" height="54" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
-                    <rect v-if="canProduce('white')" x="246" y="36" width="116" height="54" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
-                    <rect v-if="canProduce('darkslategray')" x="366" y="36" width="116" height="54" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
-                    <rect v-if="canProduce('tan')" x="486" y="36" width="116" height="54" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect
+                        v-if="canProduce('orange')"
+                        x="6"
+                        y="36"
+                        width="116"
+                        height="54"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
+                    <rect
+                        v-if="canProduce('brown')"
+                        x="126"
+                        y="36"
+                        width="116"
+                        height="54"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
+                    <rect
+                        v-if="canProduce('white')"
+                        x="246"
+                        y="36"
+                        width="116"
+                        height="54"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
+                    <rect
+                        v-if="canProduce('darkslategray')"
+                        x="366"
+                        y="36"
+                        width="116"
+                        height="54"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
+                    <rect
+                        v-if="canProduce('tan')"
+                        x="486"
+                        y="36"
+                        width="116"
+                        height="54"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
 
-                    <rect v-if="canGetLoan()" x="1045" y="5" width="50" height="90" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect
+                        v-if="canGetLoan()"
+                        x="1045"
+                        y="5"
+                        width="50"
+                        height="90"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
 
-                    <rect v-if="canPass()" x="1104" y="4" width="82" height="28" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect
+                        v-if="canPass()"
+                        x="1104"
+                        y="4"
+                        width="82"
+                        height="28"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
 
-                    <rect v-if="canUndo()" x="1104" y="35" width="82" height="28" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect
+                        v-if="canUndo()"
+                        x="1104"
+                        y="35"
+                        width="82"
+                        height="28"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
 
-                    <rect v-if="canPayLoan()" :x="200 + player * 250" y="123" width="47" height="77" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect
+                        v-if="canPayLoan()"
+                        :x="200 + player * 250"
+                        y="123"
+                        width="47"
+                        height="77"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
 
                     <g v-if="canSail()">
-                        <rect v-if="!ships[player].rotate" :x="ships[player].x - 5" :y="ships[player].y - 5" width="40" height="90" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
-                        <rect v-else :x="ships[player].x - 30" :y="ships[player].y + 20" width="90" height="40" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                        <rect
+                            v-if="!ships[player].rotate"
+                            :x="ships[player].x - 5"
+                            :y="ships[player].y - 5"
+                            width="40"
+                            height="90"
+                            fill="none"
+                            stroke="blue"
+                            stroke-width="2px"
+                            rx="2px"
+                        />
+                        <rect
+                            v-else
+                            :x="ships[player].x - 30"
+                            :y="ships[player].y + 20"
+                            width="90"
+                            height="40"
+                            fill="none"
+                            stroke="blue"
+                            stroke-width="2px"
+                            rx="2px"
+                        />
                     </g>
 
-                    <rect v-if="canArrangeFactory()" :x="6 + player * 250" y="158" width="188" height="44" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect
+                        v-if="canArrangeFactory()"
+                        :x="6 + player * 250"
+                        y="158"
+                        width="188"
+                        height="44"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
 
-                    <rect v-if="canArrangeWarehouse()" :x="6 + player * 250" y="248" width="236" height="44" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                    <rect
+                        v-if="canArrangeWarehouse()"
+                        :x="6 + player * 250"
+                        y="248"
+                        width="236"
+                        height="44"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
 
                     <template v-if="G">
                         <template v-for="(p, i) in G.players">
-                            <rect v-if="canBuyFromPlayerFactory(p)" :key="'PHF' + i" :x="6 + i * 250" y="158" width="188" height="44" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
-                            <rect v-if="canBuyFromPlayerWarehouse(p)" :key="'PHW' + i" :x="6 + i * 250" y="248" width="236" height="44" fill="none" stroke="blue" stroke-width="2px" rx="2px" />
+                            <rect
+                                v-if="canBuyFromPlayerFactory(p)"
+                                :key="'PHF' + i"
+                                :x="6 + i * 250"
+                                y="158"
+                                width="188"
+                                height="44"
+                                fill="none"
+                                stroke="blue"
+                                stroke-width="2px"
+                                rx="2px"
+                            />
+                            <rect
+                                v-if="canBuyFromPlayerWarehouse(p)"
+                                :key="'PHW' + i"
+                                :x="6 + i * 250"
+                                y="248"
+                                width="236"
+                                height="44"
+                                fill="none"
+                                stroke="blue"
+                                stroke-width="2px"
+                                rx="2px"
+                            />
                         </template>
                     </template>
                 </template>
@@ -170,15 +452,34 @@
                 <table class="final-score-table">
                     <tr>
                         <th>Player</th>
-                        <th v-for="player in G.players" :key="'FS' + player.id">{{ player.name }}</th>
+                        <th v-for="player in G.players" :key="'FS' + player.id">
+                            {{ player.name }}
+                        </th>
                     </tr>
-                    <tr v-for="(cat, i) in ['Money', 'Brown', 'Dark Green', 'Orange', 'Tan', 'White', 'Containers in Warehouse', 'Containers in Ship', 'Loans']" :key="'FC_' + cat">
+                    <tr
+                        v-for="(cat, i) in [
+                            'Money',
+                            'Brown',
+                            'Dark Green',
+                            'Orange',
+                            'Tan',
+                            'White',
+                            'Containers in Warehouse',
+                            'Containers in Ship',
+                            'Loans',
+                        ]"
+                        :key="'FC_' + cat"
+                    >
                         <td>{{ cat }}</td>
-                        <td v-for="player in G.players" :key="'FS' + player.id + i">{{ player.finalScoreBreakdown ? player.finalScoreBreakdown[i] : '0' }}</td>
+                        <td v-for="player in G.players" :key="'FS' + player.id + i">
+                            {{ player.finalScoreBreakdown ? player.finalScoreBreakdown[i] : '0' }}
+                        </td>
                     </tr>
                     <tr>
                         <td>Final Score</td>
-                        <td v-for="player in G.players" :key="'FS' + player.id + 'money'">{{ player.money > 0 ? '$' + player.money : '-$' + Math.abs(player.money) }}</td>
+                        <td v-for="player in G.players" :key="'FS' + player.id + 'money'">
+                            {{ player.money > 0 ? '$' + player.money : '-$' + Math.abs(player.money) }}
+                        </td>
                     </tr>
                 </table>
             </div>
@@ -877,7 +1178,6 @@ export default class Game extends Vue {
         return logReversed;
     }
 }
-
 </script>
 <style lang="scss">
 .game {
@@ -915,7 +1215,7 @@ html {
 }
 
 text {
-    font-family: "Arial";
+    font-family: 'Arial';
     pointer-events: none;
     dominant-baseline: central;
 

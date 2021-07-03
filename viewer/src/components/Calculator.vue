@@ -49,7 +49,6 @@ export default class Calculator extends Vue {
         this.value = 0;
     }
 }
-
 </script>
 <style lang="scss">
 .calculator {
@@ -60,7 +59,7 @@ export default class Calculator extends Vue {
     }
 
     .visor {
-        font-family: "system-ui";
+        font-family: 'system-ui';
     }
 }
 </style>

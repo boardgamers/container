@@ -27,7 +27,7 @@ export enum PieceType {
     Factory = 'factory',
     Container = 'container',
     Ship = 'ship',
-    Loan = 'loan'
+    Loan = 'loan',
 }
 
 export enum DropZoneType {
@@ -56,7 +56,7 @@ export enum DropZoneType {
     IslandHarbor = 'islandHarbor',
     GetLoan = 'getLoan',
     PayLoan = 'payLoan',
-    Supply = 'supply'
+    Supply = 'supply',
 }
 
 export enum ContainerState {
@@ -64,5 +64,5 @@ export enum ContainerState {
     OnFactoryStore = 'onFactoryStore',
     OnWarehouseStore = 'onWarehouseStore',
     OnShip = 'onShip',
-    OnIsland = 'onIsland'
+    OnIsland = 'onIsland',
 }

@@ -1,29 +1,29 @@
 {
-  "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "strict": true,
-    "jsx": "preserve",
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "experimentalDecorators": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "noImplicitAny": false,
-    "sourceMap": true,
-    "baseUrl": ".",
-    "types": ["webpack-env", "mocha", "chai"],
-    "paths": {
-      "@/*": ["viewer/src/*"]
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "esnext",
+        "strict": true,
+        "jsx": "preserve",
+        "importHelpers": true,
+        "moduleResolution": "node",
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "noImplicitAny": false,
+        "sourceMap": true,
+        "baseUrl": ".",
+        "types": ["webpack-env", "mocha", "chai"],
+        "paths": {
+            "@/*": ["viewer/src/*"]
+        },
+        "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
     },
-    "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
-  },
-  "include": [
-    "viewer/src/**/*.ts",
-    "viewer/src/**/*.tsx",
-    "viewer/src/**/*.vue",
-    "viewer/tests/**/*.ts",
-    "viewer/tests/**/*.tsx"
-  ],
-  "exclude": ["node_modules"]
+    "include": [
+        "viewer/src/**/*.ts",
+        "viewer/src/**/*.tsx",
+        "viewer/src/**/*.vue",
+        "viewer/tests/**/*.ts",
+        "viewer/tests/**/*.tsx"
+    ],
+    "exclude": ["node_modules"]
 }

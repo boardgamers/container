@@ -16,5 +16,4 @@ import Piece from './Piece.vue';
 })
 export default class Warehouse extends Mixins(Piece) {
 }
-
 </script>

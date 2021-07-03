@@ -96,13 +96,22 @@ export declare namespace Moves {
 }
 
 export type Move =
-    Moves.MoveBuyFromFactory | Moves.MoveBuyFromWarehouse |
-    Moves.MoveBuyFactory | Moves.MoveBuyWarehouse |
-    Moves.MoveGetLoan | Moves.MovePayLoan |
-    Moves.MoveProduce | Moves.MoveSail |
-    Moves.MoveArrangeFactory | Moves.MoveArrangeWarehouse |
-    Moves.MoveBid | Moves.MoveAccept | Moves.MoveDecline |
-    Moves.MovePass | Moves.MoveUndo | Moves.MoveDomesticSale;
+    | Moves.MoveBuyFromFactory
+    | Moves.MoveBuyFromWarehouse
+    | Moves.MoveBuyFactory
+    | Moves.MoveBuyWarehouse
+    | Moves.MoveGetLoan
+    | Moves.MovePayLoan
+    | Moves.MoveProduce
+    | Moves.MoveSail
+    | Moves.MoveArrangeFactory
+    | Moves.MoveArrangeWarehouse
+    | Moves.MoveBid
+    | Moves.MoveAccept
+    | Moves.MoveDecline
+    | Moves.MovePass
+    | Moves.MoveUndo
+    | Moves.MoveDomesticSale;
 
 export enum MoveName {
     DomesticSale = 'domesticSale',
@@ -120,5 +129,5 @@ export enum MoveName {
     Accept = 'accept',
     Decline = 'decline',
     Pass = 'pass',
-    Undo = 'undo'
+    Undo = 'undo',
 }

@@ -6,8 +6,8 @@ Mono repo containing the viewer & the engine for Gaia Container
 
 Checkout their READMEs:
 
-- [engine](./engine/README.md)
-- [viewer](./viewer/README.md)
+-   [engine](./engine/README.md)
+-   [viewer](./viewer/README.md)
 
 ## Demo
 

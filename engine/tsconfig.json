@@ -5,22 +5,12 @@
         "module": "commonjs",
         "esModuleInterop": true,
         "strictNullChecks": true,
-        "declaration": true, /* Generates corresponding '.d.ts' file. */
-        "sourceMap": false, /* Generates corresponding '.map' file. */
+        "declaration": true /* Generates corresponding '.d.ts' file. */,
+        "sourceMap": false /* Generates corresponding '.map' file. */,
         // "outFile": "./",                       /* Concatenate and emit output to single file. */
-        "outDir": "./dist", /* Redirect output structure to the directory. */
+        "outDir": "./dist" /* Redirect output structure to the directory. */
     },
-    "types": [
-        "node"
-    ],
-    "include": [
-        "src/**/*.ts",
-        "index.ts",
-        "wrapper.ts"
-    ],
-    "exclude": [
-        "node_modules",
-        "dist",
-        "**/*.spec.ts"
-    ]
+    "types": ["node"],
+    "include": ["src/**/*.ts", "index.ts", "wrapper.ts"],
+    "exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }

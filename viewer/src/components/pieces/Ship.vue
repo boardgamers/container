@@ -1,12 +1,18 @@
 <template>
-    <g :id="elId" :class="['piece', { dragging, canDrag }]" :transform="`translate(${currentX}, ${currentY}) rotate(${rotate}, 15, 40)`">
+    <g
+        :id="elId"
+        :class="['piece', { dragging, canDrag }]"
+        :transform="`translate(${currentX}, ${currentY}) rotate(${rotate}, 15, 40)`"
+    >
         <path d="M15 0 L30 10 L30 80 L0 80 L0 10Z" :fill="color" stroke="black" />
         <template v-for="(container, i) in containers">
-            <Container :key="container.id"
+            <Container
+                :key="container.id"
                 :pieceId="container.id"
                 :targetState="{ x: 5, y: 15 + 12 * i, rotate: 0 }"
                 :canDrag="false"
-                :color="container.color" />
+                :color="container.color"
+            />
         </template>
         <DropZone :width="30" :height="80" :enabled="player == owner" :accepts="'container'" :data="{ type: 'ship' }" />
         <title>{{ ownerName }}'s Ship</title>
@@ -48,5 +54,4 @@ export default class Ship extends Mixins(Piece) {
     @Prop()
     position!: ShipPosition;
 }
-
 </script>

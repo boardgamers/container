@@ -25,7 +25,6 @@ export default class LoanCard extends Mixins(Piece) {
     @Prop()
     player?: number;
 }
-
 </script>
 <style lang="scss">
 .loan {

@@ -1,5 +1,9 @@
 <template>
-    <g :id="elId" :class="['piece', { dragging, canDrag }]" :transform="`translate(${currentX}, ${currentY}) rotate(${rotate}, 10, 5)`">
+    <g
+        :id="elId"
+        :class="['piece', { dragging, canDrag }]"
+        :transform="`translate(${currentX}, ${currentY}) rotate(${rotate}, 10, 5)`"
+    >
         <filter id="my-filter">
             <feComponentTransfer>
                 <feFuncR type="linear" slope="0.5" />
@@ -33,5 +37,4 @@ export default class Container extends Mixins(Piece) {
     @Prop()
     state?: ContainerState;
 }
-
 </script>

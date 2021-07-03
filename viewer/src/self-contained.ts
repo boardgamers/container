@@ -17,8 +17,7 @@ function launchSelfContained(selector = '#app') {
     const playerIndex = 1;
 
     for (const player of gameState.players) {
-        if (player.id != playerIndex)
-            player.isAI = true;
+        if (player.id != playerIndex) player.isAI = true;
     }
 
     emitter.on('move', async (move: Move) => {
@@ -29,8 +28,11 @@ function launchSelfContained(selector = '#app') {
         emitter.emit('state', cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState));
 
         let delay = 800;
-        while (gameState.players.some(pl => pl.isAI && pl.availableMoves)) {
-            gameState = moveAI(gameState, gameState.players.findIndex(pl => pl.isAI && pl.availableMoves));
+        while (gameState.players.some((pl) => pl.isAI && pl.availableMoves)) {
+            gameState = moveAI(
+                gameState,
+                gameState.players.findIndex((pl) => pl.isAI && pl.availableMoves)
+            );
             let newState = cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState);
             setTimeout(() => emitter.emit('state', newState), delay);
             delay += 800;
@@ -39,14 +41,19 @@ function launchSelfContained(selector = '#app') {
         console.log('available moves', gameState.players[playerIndex].availableMoves);
     });
 
-    emitter.on('fetchSate', () => emitter.emit('state', cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState)));
+    emitter.on('fetchSate', () =>
+        emitter.emit('state', cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState))
+    );
 
     emitter.emit('player', { index: playerIndex });
     emitter.emit('state', cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState));
 
     let delay = 800;
-    while (gameState.players.some(pl => pl.isAI && pl.availableMoves)) {
-        gameState = moveAI(gameState, gameState.players.findIndex(pl => pl.isAI && pl.availableMoves));
+    while (gameState.players.some((pl) => pl.isAI && pl.availableMoves)) {
+        gameState = moveAI(
+            gameState,
+            gameState.players.findIndex((pl) => pl.isAI && pl.availableMoves)
+        );
         let newState = cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState);
         setTimeout(() => emitter.emit('state', newState), delay);
         delay += 800;
