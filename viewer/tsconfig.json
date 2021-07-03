@@ -14,16 +14,10 @@
         "baseUrl": ".",
         "types": ["webpack-env", "mocha", "chai"],
         "paths": {
-            "@/*": ["viewer/src/*"]
+            "@/*": ["src/*"]
         },
         "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
     },
-    "include": [
-        "viewer/src/**/*.ts",
-        "viewer/src/**/*.tsx",
-        "viewer/src/**/*.vue",
-        "viewer/tests/**/*.ts",
-        "viewer/tests/**/*.tsx"
-    ],
+    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx"],
     "exclude": ["node_modules"]
 }
