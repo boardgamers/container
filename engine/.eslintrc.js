@@ -29,6 +29,6 @@ module.exports = {
         'no-return-assign': 'off',
         //    'no-fallthrough': 'off',
         'no-empty': 'off',
-        quotes: ['error', 'single'],
+        quotes: 'off',
     },
 };
