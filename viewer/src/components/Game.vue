@@ -503,10 +503,6 @@ import Calculator from './Calculator.vue';
 import { GameEventName, LogMove } from 'container-engine/src/log';
 
 @Component({
-    created(this: Game) {
-        this.communicator.on('pieceDrop', this.onPieceDrop);
-        this.$on('hook:beforeDestroy', () => this.communicator.off('pieceDrop', this.onPieceDrop));
-    },
     components: {
         PlayerBoard,
         Container,
@@ -536,9 +532,11 @@ export default class Game extends Vue {
     @Prop()
     emitter!: EventEmitter;
 
-    @Prop()
     @ProvideReactive()
-    preferences!: Preferences;
+    preferences: Preferences = {
+        sound: true,
+        disableHelp: false,
+    };
 
     paused = false;
 
@@ -569,6 +567,12 @@ export default class Game extends Vue {
     logVisible = false;
 
     endScoreVisible = false;
+
+    created(this: Game) {
+        this.communicator.on('pieceDrop', this.onPieceDrop);
+        this.communicator.on('preferences', (data) => (this.preferences = { ...this.preferences, ...data }));
+        this.$on('hook:beforeDestroy', () => this.communicator.off('pieceDrop', this.onPieceDrop));
+    }
 
     @Watch('state', { immediate: true })
     onStateChanged(state: GameState) {
@@ -976,7 +980,7 @@ export default class Game extends Vue {
     }
 
     sendMove(move) {
-        this.emitter.emit('move', move);
+        this.emitter.emit('uplink:move', move);
 
         this.replaceState(engineMove(this.G!, move, this.player!, true), true);
     }
@@ -1325,7 +1329,7 @@ export default class Game extends Vue {
 
     @Watch('G.log')
     onLogChanged() {
-        this.emitter.emit('replaceLog', [...this.logReversed].reverse());
+        this.emitter.emit('uplink:replaceLog', [...this.logReversed].reverse());
     }
 }
 </script>

@@ -2,21 +2,15 @@ import type { GameState, Move } from 'container-engine';
 import { EventEmitter } from 'events';
 import Vue from 'vue';
 import Game from './components/Game.vue';
-import type { Preferences } from './types/ui-data';
 
 function launch(selector: string) {
     let params: {
         state: null | GameState;
         player?: number;
         emitter: EventEmitter;
-        preferences: Preferences;
     } = {
         state: null,
         emitter: new EventEmitter(),
-        preferences: {
-            sound: true,
-            disableHelp: false,
-        },
     };
 
     const app = new Vue({
@@ -25,9 +19,8 @@ function launch(selector: string) {
 
     const item: EventEmitter = new EventEmitter();
 
-    params.emitter.on('move', (move: Move) => item.emit('move', move));
-    params.emitter.on('addLog', (data: string[]) => item.emit('addLog', data));
-    params.emitter.on('replaceLog', (data: string[]) => item.emit('replaceLog', data));
+    params.emitter.on('uplink:move', (move: Move) => item.emit('move', move));
+    params.emitter.on('uplink:replaceLog', (data: string[]) => item.emit('replaceLog', data));
 
     item.addListener('state', (data) => {
         params.state = data;
@@ -40,7 +33,7 @@ function launch(selector: string) {
         app.$forceUpdate();
     });
     item.addListener('preferences', (data) => {
-        Object.assign(params.preferences, data);
+        params.emitter.emit('preferences', data);
     });
     item.addListener('gamelog', (_) => item.emit('fetchState'));
 
