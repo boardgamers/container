@@ -38,6 +38,7 @@ export type LogMove = {
     type: 'move';
     player: number;
     move: Move;
+    simple: string;
     pretty: string;
 };
 

@@ -1370,9 +1370,32 @@ export default class Game extends Vue {
         return logReversed;
     }
 
+    get logReversedSimple() {
+        let logReversed: string[] = [];
+        if (this.G && this.G.log) {
+            this.G.log.forEach((log) => {
+                if (log.type == 'phase') {
+                    logReversed.push('New phase: ' + log.phase);
+                } else if (log.type == 'event') {
+                    if (log.event.name == GameEventName.Upkeep) {
+                        logReversed.push('New event: ' + log.event.interest);
+                    } else {
+                        logReversed.push('New event: ' + log.event.name);
+                    }
+                } else if (log.type == 'move') {
+                    logReversed.push(log.simple.replaceAll('darkslategray', 'dark green'));
+                }
+            });
+
+            logReversed.reverse();
+        }
+
+        return logReversed;
+    }
+
     @Watch('G.log')
     onLogChanged() {
-        this.emitter.emit('replaceLog', [...this.logReversed].reverse());
+        this.emitter.emit('replaceLog', [...this.logReversedSimple].reverse());
     }
 
     getCurrentPlayerMoves() {

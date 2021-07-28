@@ -172,6 +172,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} sells a ${move.data.color} container back to the supply for $2`,
                 pretty: `${playerNameHTML(player)} sells a ${containerColorHTML(
                     move.data.color
                 )} container back to the supply for $2`,
@@ -191,6 +192,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} buys a ${move.data} factory for $${player.factories.length * 3}`,
                 pretty: `${playerNameHTML(player)} buys a ${containerColorHTML(move.data)} factory for $${
                     player.factories.length * 3
                 }`,
@@ -210,6 +212,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} buys a warehouse for $${player.warehouses.length + 2}`,
                 pretty: `${playerNameHTML(player)} buys a warehouse for $${player.warehouses.length + 2}`,
             });
 
@@ -241,6 +244,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} buys a ${move.data.piece.color} container from ${otherPlayer.name} for $${aux.price}, new price is $${move.extraData.price}`,
                 pretty: `${playerNameHTML(player)} buys a ${containerColorHTML(
                     move.data.piece.color
                 )} container from ${playerNameHTML(otherPlayer)} for $${aux.price}, new price is $${
@@ -273,6 +277,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} buys a ${move.data.piece.color} container from ${otherPlayer.name} for $${aux.price}`,
                 pretty: `${playerNameHTML(player)} buys a ${containerColorHTML(
                     move.data.piece.color
                 )} container from ${playerNameHTML(otherPlayer)} for $${aux.price}`,
@@ -287,20 +292,18 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             player.loans.push(loan);
             player.money += 10;
 
+            const log: LogItem = {
+                type: 'move',
+                player: playerNumber,
+                move,
+                simple: `${player.name} takes a loan`,
+                pretty: `${playerNameHTML(player)} takes a loan`,
+            };
+
             if (G.phase == Phase.Bid) {
-                G.hiddenLog.push({
-                    type: 'move',
-                    player: playerNumber,
-                    move,
-                    pretty: `${playerNameHTML(player)} takes a loan`,
-                });
+                G.hiddenLog.push(log);
             } else {
-                G.log.push({
-                    type: 'move',
-                    player: playerNumber,
-                    move,
-                    pretty: `${playerNameHTML(player)} takes a loan`,
-                });
+                G.log.push(log);
             }
 
             break;
@@ -312,20 +315,18 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             G.loansLeft.push(loan);
             player.money -= 10;
 
+            const log: LogItem = {
+                type: 'move',
+                player: playerNumber,
+                move,
+                simple: `${player.name} pays a loan`,
+                pretty: `${playerNameHTML(player)} pays a loan`,
+            };
+
             if (G.phase == Phase.Bid) {
-                G.hiddenLog.push({
-                    type: 'move',
-                    player: playerNumber,
-                    move,
-                    pretty: `${playerNameHTML(player)} pays a loan`,
-                });
+                G.hiddenLog.push(log);
             } else {
-                G.log.push({
-                    type: 'move',
-                    player: playerNumber,
-                    move,
-                    pretty: `${playerNameHTML(player)} pays a loan`,
-                });
+                G.log.push(log);
             }
 
             break;
@@ -350,6 +351,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} produces a ${move.extraData.piece.color} container, price is $${move.extraData.price}`,
                 pretty: `${playerNameHTML(player)} produces a ${containerColorHTML(
                     move.extraData.piece.color
                 )} container, price is $${move.extraData.price}`,
@@ -374,6 +376,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} sails to ${prettyShipPosition(G, move.data, true)}`,
                 pretty: `${playerNameHTML(player)} sails to ${prettyShipPosition(G, move.data)}`,
             });
 
@@ -398,6 +401,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} changes the price of a ${move.data.color} factory container from $${aux.price} to $${move.extraData.price}`,
                 pretty: `${playerNameHTML(player)} changes the price of a ${containerColorHTML(
                     move.data.color
                 )} factory container from $${aux.price} to $${move.extraData.price}`,
@@ -427,6 +431,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} changes the price of a ${move.data.color} warehouse container from $${aux.price} to $${move.extraData.price}`,
                 pretty: `${playerNameHTML(player)} changes the price of a ${containerColorHTML(
                     move.data.color
                 )} warehouse container from $${aux.price} to $${move.extraData.price}`,
@@ -443,6 +448,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                     type: 'move',
                     player: playerNumber,
                     move,
+                    simple: `${player.name} bids $${move.extraData.price}`,
                     pretty: `${playerNameHTML(player)} bids $${move.extraData.price}`,
                 });
                 player.bid = move.extraData.price;
@@ -452,6 +458,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                     type: 'move',
                     player: playerNumber,
                     move,
+                    simple: `${player.name} bids additional $${move.extraData.price}`,
                     pretty: `${playerNameHTML(player)} bids additional $${move.extraData.price}`,
                 });
                 player.additionalBid = move.extraData.price;
@@ -531,6 +538,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} accepts ${otherPlayer.name}'s bid`,
                 pretty: `${playerNameHTML(player)} accepts ${playerNameHTML(otherPlayer)}'s bid`,
             });
 
@@ -567,6 +575,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} declines all bids`,
                 pretty: `${playerNameHTML(player)} declines all bids`,
             });
 
@@ -580,6 +589,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
+                simple: `${player.name} passes`,
                 pretty: `${playerNameHTML(player)} passes`,
             });
 
@@ -1039,7 +1049,7 @@ function getBaseState(G: GameState): GameState {
     return baseState;
 }
 
-function prettyShipPosition(G: GameState, data: ShipPosition): string {
+function prettyShipPosition(G: GameState, data: ShipPosition, simple: boolean = false): string {
     switch (data) {
         case ShipPosition.Island:
             return 'the island harbor';
@@ -1047,7 +1057,7 @@ function prettyShipPosition(G: GameState, data: ShipPosition): string {
             return 'the open sea';
         default: {
             const index = data[12];
-            return `${playerNameHTML(G.players[index])}'s harbor`;
+            return simple ? `${G.players[index].name}'s harbor` : `${playerNameHTML(G.players[index])}'s harbor`;
         }
     }
 }
