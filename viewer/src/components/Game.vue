@@ -1130,6 +1130,14 @@ export default class Game extends Vue {
         if (this.G?.currentPlayer == undefined) {
             return 'Game ended!';
         } else if (this.G?.currentPlayer == this.player) {
+            if (this.G.players[this.player].availableMoves[MoveName.Bid]) {
+                if (this.G.highestBidders.length != 0) {
+                    return 'It\'s a tie, choose your ADDITIONAL bid!';
+                }
+
+                return 'It\'s your turn to bid!';
+            }
+
             return 'It\'s your turn!';
         } else {
             if (
