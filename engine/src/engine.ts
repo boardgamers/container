@@ -50,7 +50,6 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         additionalBid: 0,
         showBid: false,
         showAdditionalBid: false,
-        finalScore: 0,
         isAI: false,
         didDomesticSale: false,
     }));
@@ -824,7 +823,7 @@ function calculateEndScore(G: GameState) {
                 return grouped[a].length > grouped[b].length ? a : b;
             });
 
-            const points = cloneDeep(player.pointCard!.containerValues).map((cv) => {
+            const points = player.pointCard!.containerValues.map((cv) => {
                 if (grouped[cv.containerColor]) {
                     player.finalScoreBreakdown!.push(
                         `$${grouped[cv.containerColor].length * (hasOneOfEach ? cv.specialValue : cv.baseValue)} (${

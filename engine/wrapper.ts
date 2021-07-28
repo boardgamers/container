@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import type { GameState } from './index';
 import * as engine from './src/engine';
 import type { LogMove } from './src/log';
@@ -23,7 +24,7 @@ export async function move(G: GameState, move: Move, player: number) {
 export { ended, scores, stripSecret } from './src/engine';
 
 export function rankings(G: GameState) {
-    const sortedPlayers = G.players
+    const sortedPlayers = cloneDeep(G.players)
         .sort((p1, p2) => {
             if (p1.money == p2.money) {
                 return p1.containersOnIsland.length - p2.containersOnIsland.length;
