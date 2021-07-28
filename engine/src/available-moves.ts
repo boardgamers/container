@@ -64,7 +64,7 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
             let moves: AvailableMoves = {};
 
             // DomesticSale
-            if (player.actions > 0 && G.round > 1) {
+            if (player.actions == 2 && !player.didDomesticSale && G.round > 1) {
                 if (player.containersOnFactoryStore.length > 0) {
                     moves[MoveName.DomesticSale] = player.containersOnFactoryStore.map((c) => c.piece);
                 } else if (player.containersOnWarehouseStore.length > 0) {

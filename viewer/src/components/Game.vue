@@ -28,6 +28,7 @@
                 :enabled="true"
                 :accepts="'container'"
                 :data="{ type: 'supply' }"
+                :availableMoves="getCurrentPlayerMoves()"
             />
 
             <template v-if="G">
@@ -1129,7 +1130,7 @@ export default class Game extends Vue {
         if (this.G?.currentPlayer == undefined) {
             return 'Game ended!';
         } else if (this.G?.currentPlayer == this.player) {
-            return "It's your turn!";
+            return 'It\'s your turn!';
         } else {
             if (
                 !this.G.log ||
@@ -1324,6 +1325,13 @@ export default class Game extends Vue {
     @Watch('G.log')
     onLogChanged() {
         this.emitter.emit('replaceLog', [...this.logReversed].reverse());
+    }
+
+    getCurrentPlayerMoves() {
+        if (!this.canMove())
+            return [];
+
+        return this.G!.players[this.G!.currentPlayer!].availableMoves!;
     }
 }
 </script>

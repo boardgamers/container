@@ -86,6 +86,7 @@ export interface Player {
     containersOnIsland: ContainerPiece[];
     isAI: boolean;
     finalScoreBreakdown?: string[];
+    didDomesticSale: boolean;
 }
 
 export enum Phase {

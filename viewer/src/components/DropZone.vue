@@ -18,6 +18,7 @@ import { EventEmitter, Listener } from 'events';
 import Piece from './pieces/Piece.vue';
 import { Ship, Container, LoanCard } from './pieces';
 import { ShipPosition } from 'container-engine/src/gamestate';
+import { MoveName } from 'container-engine';
 
 @Component
 export default class DropZone extends Vue {
@@ -47,6 +48,9 @@ export default class DropZone extends Vue {
 
     @Prop()
     data?: any;
+
+    @Prop()
+    availableMoves?: any;
 
     listener?: Listener;
     overlapping = false;
@@ -128,15 +132,25 @@ export default class DropZone extends Vue {
                 if (this.data.type != DropZoneType.FactoryStore) return false;
             } else if (container.state == ContainerState.OnFactoryStore) {
                 if (container.owner == this.player) {
-                    if (this.data.type != DropZoneType.FactoryStore && this.data.type != DropZoneType.Supply)
+                    if (this.data.type == DropZoneType.Supply) {
+                        if (!this.availableMoves[MoveName.DomesticSale]?.find((c) => c.id === container.pieceId)) {
+                            return false;
+                        }
+                    } else  if (this.data.type != DropZoneType.FactoryStore) {
                         return false;
+                    }
                 } else {
                     if (this.data.type != DropZoneType.WarehouseStore) return false;
                 }
             } else if (container.state == ContainerState.OnWarehouseStore) {
                 if (container.owner == this.player) {
-                    if (this.data.type != DropZoneType.WarehouseStore && this.data.type != DropZoneType.Supply)
+                    if (this.data.type == DropZoneType.Supply) {
+                        if (!this.availableMoves[MoveName.DomesticSale]?.find((c) => c.id === container.pieceId)) {
+                            return false;
+                        }
+                    } else  if (this.data.type != DropZoneType.WarehouseStore) {
                         return false;
+                    }
                 } else {
                     if (this.data.type != DropZoneType.Ship) return false;
                 }

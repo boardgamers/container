@@ -52,6 +52,7 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         showAdditionalBid: false,
         finalScore: 0,
         isAI: false,
+        didDomesticSale: false,
     }));
 
     const totalContainers = players.length * 4;
@@ -166,7 +167,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             G.containersLeft.push(move.data);
 
             player.money += 2;
-            player.actions--;
+            player.didDomesticSale = true;
 
             G.log.push({
                 type: 'move',
@@ -1014,6 +1015,7 @@ function doUpkeep(G: GameState) {
     G.players[G.currentPlayer!].produced = [];
     G.players[G.currentPlayer!].containersOnFactoryStore.forEach((c) => (c.moved = false));
     G.players[G.currentPlayer!].containersOnWarehouseStore.forEach((c) => (c.moved = false));
+    G.players[G.currentPlayer!].didDomesticSale = false;
 
     if (G.currentPlayer == G.startingPlayer) {
         G.round++;
