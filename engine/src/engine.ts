@@ -65,8 +65,8 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         factoriesLeft.push(...factoryIds!.map((i) => ({ id: `F${i}` as const, color: color! })));
     }
 
-    const warehousesLeft = range(players.length * 5).map((i) => ({ id: 'W' + i }));
-    const loansLeft = range(players.length * 2).map((i) => ({ id: 'L' + i }));
+    const warehousesLeft = range(players.length * 5).map((i) => ({ id: `W${i}` }));
+    const loansLeft = range(players.length * 2).map((i) => ({ id: `L${i}` }));
 
     const startingPlayer = Math.abs(rng.int32()) % players.length;
     const G: GameState = {
@@ -97,7 +97,7 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
 
         index = G.containersLeft.findIndex((c) => c.color == color);
         const container = G.containersLeft.splice(index, 1)[0];
-        player.containersOnFactoryStore.push({ piece: container, price: 2 });
+        player.containersOnFactoryStore.push({ piece: container, price: 2, moved: false });
 
         player.warehouses.push(G.warehousesLeft.pop()!);
     });
@@ -224,6 +224,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             player.containersOnWarehouseStore.push({
                 piece: move.data.piece,
                 price: move.extraData.price,
+                moved: false,
             });
 
             player.money -= aux.price;
@@ -307,7 +308,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
         case MoveName.PayLoan: {
             asserts<Moves.MovePayLoan>(move);
-            const loan = player.loans.splice(player.loans.length - 1, 1)[0];
+            const loan = player.loans.pop()!;
             G.loansLeft.push(loan);
             player.money -= 10;
 
@@ -336,6 +337,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             player.containersOnFactoryStore.push({
                 piece: move.extraData.piece,
                 price: move.extraData.price,
+                moved: false,
             });
             player.produced.push(move.extraData.piece.color);
             if (player.lastMove?.name !== MoveName.Produce) {
@@ -385,6 +387,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             player.containersOnFactoryStore.push({
                 piece: move.data,
                 price: move.extraData.price,
+                moved: true,
             });
 
             if (player.lastMove?.name !== MoveName.Produce && player.lastMove?.name !== MoveName.ArrangeFactory) {
@@ -410,6 +413,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             player.containersOnWarehouseStore.push({
                 piece: move.data,
                 price: move.extraData.price,
+                moved: true,
             });
 
             if (
@@ -1008,6 +1012,8 @@ function doUpkeep(G: GameState) {
 
     G.players[G.currentPlayer!].actions = 2;
     G.players[G.currentPlayer!].produced = [];
+    G.players[G.currentPlayer!].containersOnFactoryStore.forEach((c) => (c.moved = false));
+    G.players[G.currentPlayer!].containersOnWarehouseStore.forEach((c) => (c.moved = false));
 
     if (G.currentPlayer == G.startingPlayer) {
         G.round++;

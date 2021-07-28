@@ -29,6 +29,7 @@ export interface PointCard {
 export interface ContainerOnStore {
     piece: ContainerPiece;
     price: number;
+    moved: boolean;
 }
 
 export enum ShipPosition {

@@ -1013,24 +1013,22 @@ export default class Game extends Vue {
             case ContainerState.OnFactoryStore: {
                 if (container.owner == currentPlayer.id) {
                     return (
-                        availableMoves[MoveName.ArrangeFactory] != undefined ||
-                        availableMoves[MoveName.DomesticSale] != undefined
+                        availableMoves[MoveName.ArrangeFactory]?.find((c) => c.id == container.id) ||
+                        availableMoves[MoveName.DomesticSale]?.find((c) => c.id == container.id)
                     );
                 } else {
-                    const available = availableMoves[MoveName.BuyFromFactory];
-                    return available && available.find((a) => a.piece.id == container.id);
+                    return availableMoves[MoveName.BuyFromFactory]?.find((a) => a.piece.id == container.id);
                 }
             }
 
             case ContainerState.OnWarehouseStore: {
                 if (container.owner == currentPlayer.id) {
                     return (
-                        availableMoves[MoveName.ArrangeWarehouse] != undefined ||
-                        availableMoves[MoveName.DomesticSale] != undefined
+                        availableMoves[MoveName.ArrangeWarehouse]?.find((c) => c.id == container.id) ||
+                        availableMoves[MoveName.DomesticSale]?.find((c) => c.id == container.id)
                     );
                 } else {
-                    const available = availableMoves[MoveName.BuyFromWarehouse];
-                    return available && available.find((a) => a.piece.id == container.id);
+                    return availableMoves[MoveName.BuyFromWarehouse]?.find((a) => a.piece.id == container.id);
                 }
             }
 
@@ -1485,6 +1483,7 @@ text {
     &:nth-last-child(even) {
         background: #ccc;
     }
+
     &:nth-last-child(odd) {
         background: #fff;
     }

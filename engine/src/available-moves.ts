@@ -202,8 +202,9 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
                 player.lastMove?.name === MoveName.Produce ||
                 player.lastMove?.name === MoveName.ArrangeFactory
             ) {
-                if (player.containersOnFactoryStore.length > 0) {
-                    moves[MoveName.ArrangeFactory] = player.containersOnFactoryStore.map((c) => c.piece);
+                const notMoved = player.containersOnFactoryStore.filter((c) => !c.moved);
+                if (notMoved.length > 0) {
+                    moves[MoveName.ArrangeFactory] = notMoved.map((c) => c.piece);
                 }
             }
 
@@ -213,8 +214,9 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
                 player.lastMove?.name === MoveName.BuyFromFactory ||
                 player.lastMove?.name === MoveName.ArrangeWarehouse
             ) {
-                if (player.containersOnWarehouseStore.length > 0) {
-                    moves[MoveName.ArrangeWarehouse] = player.containersOnWarehouseStore.map((c) => c.piece);
+                const notMoved = player.containersOnWarehouseStore.filter((c) => !c.moved);
+                if (notMoved.length > 0) {
+                    moves[MoveName.ArrangeWarehouse] = notMoved.map((c) => c.piece);
                 }
             }
 
