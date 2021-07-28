@@ -148,9 +148,20 @@
             </template>
 
             <template v-if="isCurrentPlayer(player)">
-                <Calculator v-if="G.phase == 'bid'" transform="translate(140, 430)" @bid="bid($event)" />
                 <template v-if="player == G.auctioningPlayer">
                     <template v-for="(bidder, i) in G.highestBidders">
+                        <rect
+                            v-if="!preferences.disableHelp"
+                            :key="'R' + bidder"
+                            x="138"
+                            :y="448 + 40 * i"
+                            width="134"
+                            height="34"
+                            fill="none"
+                            stroke="blue"
+                            stroke-width="2px"
+                            rx="2px"
+                        />
                         <Button
                             :key="bidder"
                             :transform="`translate(140, ${450 + 40 * i})`"
@@ -159,6 +170,17 @@
                             @click="accept(bidder)"
                         />
                     </template>
+                    <rect
+                        v-if="!preferences.disableHelp"
+                        x="138"
+                        :y="448 + 40 * G.highestBidders.length"
+                        width="134"
+                        height="34"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
                     <Button
                         :transform="`translate(140, ${450 + 40 * G.highestBidders.length})`"
                         :width="130"
@@ -166,6 +188,20 @@
                         :enabled="canDecline()"
                         @click="decline()"
                     />
+                </template>
+                <template v-else-if="G.phase == 'bid'">
+                    <rect
+                        v-if="!preferences.disableHelp"
+                        x="135"
+                        y="425"
+                        width="140"
+                        height="220"
+                        stroke="blue"
+                        fill="transparent"
+                        stroke-width="2px"
+                        rx="2px"
+                    />
+                    <Calculator transform="translate(140, 430)" @bid="bid($event)" />
                 </template>
             </template>
 
@@ -540,8 +576,6 @@ export default class Game extends Vue {
     @Prop()
     @ProvideReactive()
     preferences!: Preferences;
-
-    paused = false;
 
     @Provide()
     ui: UIData = {
@@ -1130,7 +1164,7 @@ export default class Game extends Vue {
         if (this.G?.currentPlayer == undefined) {
             return 'Game ended!';
         } else if (this.G?.currentPlayer == this.player) {
-            if (this.G.players[this.player].availableMoves[MoveName.Bid]) {
+            if (this.G.players[this.player].availableMoves![MoveName.Bid]) {
                 if (this.G.highestBidders.length != 0) {
                     return 'It\'s a tie, choose your ADDITIONAL bid!';
                 }
