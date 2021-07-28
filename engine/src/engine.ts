@@ -65,7 +65,7 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         factoriesLeft.push(...factoryIds!.map((i) => ({ id: `F${i}` as const, color: color! })));
     }
 
-    const warehousesLeft = range(5).map((i) => ({ id: 'W' + i }));
+    const warehousesLeft = range(players.length * 5).map((i) => ({ id: 'W' + i }));
     const loansLeft = range(players.length * 2).map((i) => ({ id: 'L' + i }));
 
     const startingPlayer = Math.abs(rng.int32()) % players.length;
