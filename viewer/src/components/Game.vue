@@ -153,10 +153,10 @@
                         <rect
                             v-if="!preferences.disableHelp"
                             :key="'R' + bidder"
-                            x="138"
-                            :y="448 + 40 * i"
-                            width="134"
-                            height="34"
+                            x="139"
+                            :y="449 + 40 * i"
+                            width="132"
+                            height="32"
                             fill="none"
                             stroke="blue"
                             stroke-width="2px"
@@ -172,10 +172,10 @@
                     </template>
                     <rect
                         v-if="!preferences.disableHelp"
-                        x="138"
-                        :y="448 + 40 * G.highestBidders.length"
-                        width="134"
-                        height="34"
+                        x="139"
+                        :y="449 + 40 * G.highestBidders.length"
+                        width="132"
+                        height="32"
                         fill="none"
                         stroke="blue"
                         stroke-width="2px"
@@ -488,34 +488,40 @@
                 <div class="modal-title">Final Score</div>
                 <table class="final-score-table">
                     <tr>
-                        <th>Player</th>
+                        <th><div>Player</div></th>
                         <th v-for="player in G.players" :key="'FS' + player.id">
-                            {{ player.name }}
+                            <div :style="'background-color: ' + playerColors[player.id]">{{ player.name }}</div>
                         </th>
                     </tr>
                     <tr
                         v-for="(cat, i) in [
                             'Money',
-                            'Brown',
-                            'Dark Green',
-                            'Orange',
-                            'Tan',
-                            'White',
-                            'Containers in Warehouse',
-                            'Containers in Ship',
-                            'Loans',
+                            '$10 containers',
+                            '$5/$10 containers',
+                            '$6 containers',
+                            '$4 containers',
+                            '$2 containers',
+                            'Discarded color',
+                            'Containers in Warehouses ($2 each)',
+                            'Containers on Ship ($3 each)',
+                            'Loans (-$11 each)',
                         ]"
                         :key="'FC_' + cat"
                     >
                         <td>{{ cat }}</td>
                         <td v-for="player in G.players" :key="'FS' + player.id + i">
-                            {{ player.finalScoreBreakdown ? player.finalScoreBreakdown[i] : '0' }}
+                            <div
+                                :style="i === 6 || i === 9 ? 'color: red;' : 'color: green;'"
+                                v-html="getFinalScoreHTML(player, i)"
+                            />
                         </td>
                     </tr>
                     <tr>
                         <td>Final Score</td>
                         <td v-for="player in G.players" :key="'FS' + player.id + 'money'">
-                            {{ player.money > 0 ? '$' + player.money : '-$' + Math.abs(player.money) }}
+                            <div style="font-weight: bold" :style="player.money < 0 ? 'color: red;' : 'color: green;'">
+                                {{ player.money > 0 ? '$' + player.money : '-$' + Math.abs(player.money) }}
+                            </div>
                         </td>
                     </tr>
                 </table>
@@ -1375,6 +1381,18 @@ export default class Game extends Vue {
 
         return this.G!.players[this.G!.currentPlayer!].availableMoves!;
     }
+
+    getFinalScoreHTML(player, i) {
+        let str = player.finalScoreBreakdown ? player.finalScoreBreakdown[i] : '0';
+
+        str = str.replaceAll('brown', '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: brown; color: brown;"></span>');
+        str = str.replaceAll('darkslategray', '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: darkslategray; color: darkslategray;"></span>');
+        str = str.replaceAll('orange', '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: orange; color: orange;"></span>');
+        str = str.replaceAll('tan', '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: tan; color: tan;"></span>');
+        str = str.replaceAll('white', '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: white; color: white;"></span>');
+
+        return str;
+    }
 }
 </script>
 <style lang="scss">
@@ -1503,7 +1521,6 @@ text {
     width: 100%; /* Full width */
     height: 100%; /* Full height */
     overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0, 0, 0); /* Fallback color */
     background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
 
     &.visible {
@@ -1517,8 +1534,9 @@ text {
     margin: auto;
     padding: 10px 20px 20px 20px;
     border: 1px solid #888;
-    width: 50%;
-    height: 70%;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%);
 }
 
 .modal-log {
@@ -1565,18 +1583,24 @@ text {
     border: 1px solid black;
 
     tr {
-        padding: 4px;
-
         td,
         th {
             border: 1px solid black;
             text-align: center;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 130px;
-            width: 130px;
-            height: 38px;
-            padding: 0 4px;
+
+            div {
+                width: 120px;
+                line-height: 38px;
+            }
+        }
+
+        td:first-child,
+        th:first-child {
+            div {
+                width: 250px;
+            }
         }
     }
 }

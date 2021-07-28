@@ -824,32 +824,29 @@ function calculateEndScore(G: GameState) {
                 return grouped[a].length > grouped[b].length ? a : b;
             });
 
-            const points = cloneDeep(player.pointCard!.containerValues)
-                .sort((a, b) => a.containerColor.localeCompare(b.containerColor))
-                .map((cv) => {
-                    if (cv.containerColor == most) {
-                        player.finalScoreBreakdown!.push(
-                            '$' + (hasOneOfEach ? cv.specialValue : cv.baseValue) + ' x -'
-                        );
-                        return 0;
-                    } else if (grouped[cv.containerColor]) {
-                        player.finalScoreBreakdown!.push(
-                            '$' +
-                                (hasOneOfEach ? cv.specialValue : cv.baseValue) +
-                                ' x ' +
-                                grouped[cv.containerColor].length
-                        );
-                        return grouped[cv.containerColor].length * (hasOneOfEach ? cv.specialValue : cv.baseValue);
-                    } else {
-                        player.finalScoreBreakdown!.push(
-                            '$' + (hasOneOfEach ? cv.specialValue : cv.baseValue) + ' x 0'
-                        );
-                        return 0;
-                    }
-                });
+            const points = cloneDeep(player.pointCard!.containerValues).map((cv) => {
+                if (grouped[cv.containerColor]) {
+                    player.finalScoreBreakdown!.push(
+                        `$${grouped[cv.containerColor].length * (hasOneOfEach ? cv.specialValue : cv.baseValue)} (${
+                            cv.containerColor
+                        } x ${grouped[cv.containerColor].length})`
+                    );
+                    return grouped[cv.containerColor].length * (hasOneOfEach ? cv.specialValue : cv.baseValue);
+                } else {
+                    player.finalScoreBreakdown!.push(`$0 (${cv.containerColor} x 0)`);
+                    return 0;
+                }
+            });
 
             player.money += points.reduce((a, b) => a + b, 0);
+
+            const mostValue = player.pointCard!.containerValues.find((cv) => cv.containerColor === most)!;
+            player.finalScoreBreakdown!.push(
+                '-$' + grouped[most].length * (hasOneOfEach ? mostValue.specialValue : mostValue.baseValue)
+            );
+            player.money -= grouped[most].length * (hasOneOfEach ? mostValue.specialValue : mostValue.baseValue);
         } else {
+            player.finalScoreBreakdown.push('-');
             player.finalScoreBreakdown.push('-');
             player.finalScoreBreakdown.push('-');
             player.finalScoreBreakdown.push('-');
@@ -857,11 +854,11 @@ function calculateEndScore(G: GameState) {
             player.finalScoreBreakdown.push('-');
         }
 
-        player.finalScoreBreakdown.push('$2 x ' + player.containersOnWarehouseStore.length);
+        player.finalScoreBreakdown.push('$' + player.containersOnWarehouseStore.length * 2);
         player.money += player.containersOnWarehouseStore.length * 2;
-        player.finalScoreBreakdown.push('$3 x ' + player.ship.containers.length);
+        player.finalScoreBreakdown.push('$' + player.ship.containers.length * 3);
         player.money += player.ship.containers.length * 3;
-        player.finalScoreBreakdown.push('-$11 x ' + player.loans.length);
+        player.finalScoreBreakdown.push('-$' + player.loans.length * 11);
         player.money += player.loans.length * -11;
     });
 }
@@ -990,7 +987,8 @@ function doUpkeep(G: GameState) {
             }
         } else if (player.warehouses.length > 2) {
             player.warehouses.pop();
-            player.loans.pop();
+            const loan = player.loans.pop()!;
+            G.loansLeft.push(loan);
             G.log.push({
                 type: 'event',
                 event: {
@@ -1000,7 +998,8 @@ function doUpkeep(G: GameState) {
             });
         } else if (player.factories.length > 2) {
             player.factories.pop();
-            player.loans.pop();
+            const loan = player.loans.pop()!;
+            G.loansLeft.push(loan);
             G.log.push({
                 type: 'event',
                 event: {
