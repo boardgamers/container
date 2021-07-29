@@ -72,16 +72,13 @@ export function currentPlayer(G: GameState) {
 }
 
 export function messages(G: GameState) {
-    const messages = (G as any).messages || [];
-    delete (G as any).messages;
-
     return {
-        messages,
+        messages: [],
         data: G,
     };
 }
 
-export function logLength(G: GameState, player?: number) {
+export function logLength(G: GameState, _player?: number) {
     return G.log.length;
 }
 

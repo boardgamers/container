@@ -1049,7 +1049,7 @@ function getBaseState(G: GameState): GameState {
     return baseState;
 }
 
-function prettyShipPosition(G: GameState, data: ShipPosition, simple: boolean = false): string {
+function prettyShipPosition(G: GameState, data: ShipPosition, simple = false): string {
     switch (data) {
         case ShipPosition.Island:
             return 'the island harbor';
