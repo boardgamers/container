@@ -40,7 +40,8 @@ function launch(selector: string) {
         app.$forceUpdate();
     });
     item.addListener('preferences', (data) => {
-        Object.assign(params.preferences, data);
+        params.preferences = { ...params.preferences, ...data };
+        app.$forceUpdate();
     });
     item.addListener('gamelog', (_) => item.emit('fetchState'));
 
