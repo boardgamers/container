@@ -32,7 +32,8 @@ export function rankings(G: GameState) {
                 return p1.money - p2.money;
             }
         })
-        .map((pl) => pl.id);
+        .map((pl) => pl.id)
+        .reverse();
 
     return G.players.map((pl) => sortedPlayers.indexOf(pl.id) + 1);
 }

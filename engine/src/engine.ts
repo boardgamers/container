@@ -873,7 +873,7 @@ function calculateEndScore(G: GameState) {
 }
 
 export function scores(G: GameState): number[] {
-    return G.players.map((_) => 0);
+    return ended(G) ? G.players.map((p) => p.money) : G.players.map((_) => 0);
 }
 
 export function reconstructState(initialState: GameState, log: LogItem[]): GameState {
