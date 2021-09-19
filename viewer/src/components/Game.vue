@@ -142,7 +142,7 @@
                 />
             </template>
 
-            <template v-if="G">
+            <template v-if="G && player != undefined">
                 <text x="20" y="440">Money: ${{ G.players[player].money }}</text>
                 <PointCard :pointCard="G.players[player].pointCard" transform="translate(20, 460)" />
             </template>
