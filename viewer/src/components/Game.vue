@@ -189,7 +189,7 @@
                         @click="decline()"
                     />
                 </template>
-                <template v-else-if="G.phase == 'bid'">
+                <template v-else-if="G.phase == 'bid' && G.currentPlayers.includes(player)">
                     <rect
                         v-if="!preferences.disableHelp"
                         x="135"
@@ -482,6 +482,26 @@
             </div>
         </div>
 
+        <div v-if="G" :class="['modal', { visible: confirmBidVisible }]">
+            <div class="modal-content">
+                <div class="modal-title">Confirm total bid of ${{ totalBid }}?</div>
+                <div style="text-align: center">
+                    <button class="confirmButton" @click="confirmBid()">Confirm</button>
+                    <button class="confirmButton" @click="confirmBidVisible = false">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="G" :class="['modal', { visible: confirmSailVisible }]">
+            <div class="modal-content">
+                <div class="modal-title">End your turn and start an auction?</div>
+                <div style="text-align: center">
+                    <button class="confirmButton" @click="confirmSail()">Confirm</button>
+                    <button class="confirmButton" @click="confirmSailVisible = false">Cancel</button>
+                </div>
+            </div>
+        </div>
+
         <div v-if="G" :class="['modal', { visible: endScoreVisible }]">
             <div class="modal-content">
                 <span class="close" @click="endScoreVisible = false">&times;</span>
@@ -608,8 +628,11 @@ export default class Game extends Vue {
     animationQueue: Array<Function> = [];
 
     logVisible = false;
-
     endScoreVisible = false;
+    confirmBidVisible = false;
+    confirmSailVisible = false;
+
+    totalBid: number = 0;
 
     @Watch('state', { immediate: true })
     onStateChanged(state: GameState) {
@@ -964,8 +987,9 @@ export default class Game extends Vue {
                     if (player.ship.shipPosition !== ShipPosition.OpenSea)
                         this.sendMove({ name: MoveName.Sail, data: ShipPosition.OpenSea });
                 } else if (d.type === DropZoneType.IslandHarbor) {
-                    if (player.ship.shipPosition !== ShipPosition.Island)
-                        this.sendMove({ name: MoveName.Sail, data: ShipPosition.Island });
+                    if (player.ship.shipPosition !== ShipPosition.Island) {
+                        this.confirmSailVisible = true;
+                    }
                 }
 
                 break;
@@ -1006,7 +1030,23 @@ export default class Game extends Vue {
     }
 
     bid(event) {
-        this.sendMove({ name: MoveName.Bid, data: true, extraData: { price: event } });
+        if (this.G!.players[this.player!].bid != 0) {
+            this.confirmBidVisible = true;
+            this.totalBid = this.G!.players[this.player!].bid + event;
+        } else {
+            this.sendMove({ name: MoveName.Bid, data: true, extraData: { price: event } });
+        }
+    }
+
+    confirmBid() {
+        this.confirmBidVisible = false;
+        this.sendMove({ name: MoveName.Bid, data: true, extraData: { price: this.totalBid - this.G!.players[this.player!].bid } });
+        this.totalBid = 0;
+    }
+
+    confirmSail() {
+        this.confirmSailVisible = false;
+        this.sendMove({ name: MoveName.Sail, data: ShipPosition.Island });
     }
 
     accept(bidder) {
@@ -1628,5 +1668,9 @@ text {
             }
         }
     }
+}
+
+.confirmButton {
+    margin: 5px 15px;
 }
 </style>
