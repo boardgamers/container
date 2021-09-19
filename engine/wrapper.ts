@@ -69,7 +69,7 @@ export async function dropPlayer(G: GameState, player: number) {
 }
 
 export function currentPlayer(G: GameState) {
-    return G.currentPlayer;
+    return G.currentPlayers;
 }
 
 export function messages(G: GameState) {

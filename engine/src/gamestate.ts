@@ -122,7 +122,7 @@ export interface ShipPiece {
 export interface GameState {
     players: Player[];
     startingPlayer: number;
-    currentPlayer: number | undefined;
+    currentPlayers: number[];
     containersLeft: ContainerPiece[];
     factoriesLeft: FactoryPiece[];
     warehousesLeft: WarehousePiece[];

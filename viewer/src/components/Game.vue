@@ -623,7 +623,7 @@ export default class Game extends Vue {
 
         if (!fake && this.preferences.sound && this.G?.log[this.G?.log.length - 1].type == 'move') {
             const move = (this.G?.log[this.G?.log.length - 1] as LogMove).move;
-            if (move.name == MoveName.Pass && this.G.currentPlayer == this.player) {
+            if (move.name == MoveName.Pass && this.G.currentPlayers.includes(this.player!)) {
                 (document.getElementById('notification')!.cloneNode(true) as HTMLAudioElement).play();
             } else {
                 if (
@@ -873,6 +873,7 @@ export default class Game extends Vue {
     }
 
     onPieceDrop(e: PieceComponent, d: any) {
+        const currentPlayer = this.G!.currentPlayers[0];
         switch (e.pieceType) {
             case PieceType.Warehouse:
                 this.sendMove({ name: MoveName.BuyWarehouse, data: true, extraData: { id: e.pieceId } });
@@ -900,7 +901,7 @@ export default class Game extends Vue {
                 } else if (container.state == ContainerState.OnFactoryStore) {
                     if (d.type == DropZoneType.FactoryStore) {
                         if (
-                            this.G!.players[this.G!.currentPlayer!].containersOnFactoryStore.find(
+                            this.G!.players[currentPlayer].containersOnFactoryStore.find(
                                 (c) => c.piece.id == e.pieceId
                             )!.price === d.price
                         ) {
@@ -927,7 +928,7 @@ export default class Game extends Vue {
                 } else if (container.state == ContainerState.OnWarehouseStore) {
                     if (d.type == DropZoneType.WarehouseStore) {
                         if (
-                            this.G!.players[this.G!.currentPlayer!].containersOnWarehouseStore.find(
+                            this.G!.players[currentPlayer].containersOnWarehouseStore.find(
                                 (c) => c.piece.id == e.pieceId
                             )!.price === d.price
                         ) {
@@ -955,7 +956,7 @@ export default class Game extends Vue {
                 break;
 
             case PieceType.Ship:
-                const player = this.G!.players[this.G!.currentPlayer!];
+                const player = this.G!.players[currentPlayer];
                 if (d.type.startsWith('playerHarbor')) {
                     if (!player.ship.shipPosition.startsWith('playerHarbor'))
                         this.sendMove({ name: MoveName.Sail, data: d.type });
@@ -999,7 +1000,7 @@ export default class Game extends Vue {
         const loan = event as LoanCard;
         if (loan.owner == -1) {
             this.sendMove({ name: MoveName.GetLoan, data: true });
-        } else if (loan.owner == this.G?.currentPlayer) {
+        } else if (loan.owner == this.player) {
             this.sendMove({ name: MoveName.PayLoan, data: true });
         }
     }
@@ -1028,8 +1029,9 @@ export default class Game extends Vue {
 
     canMove() {
         return (
+            this.player &&
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves
         );
@@ -1038,7 +1040,7 @@ export default class Game extends Vue {
     canDragContainer(container: Piece) {
         if (!this.canMove()) return false;
 
-        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
 
         switch (container.state) {
@@ -1083,7 +1085,7 @@ export default class Game extends Vue {
     canDragFactory(factory: Piece) {
         if (!this.canMove()) return false;
 
-        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
 
         if (factory.owner !== -1) return false;
@@ -1095,7 +1097,7 @@ export default class Game extends Vue {
     canDragWarehouse(warehouse: Piece) {
         if (!this.canMove()) return false;
 
-        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
 
         if (warehouse.owner !== -1) return false;
@@ -1106,7 +1108,7 @@ export default class Game extends Vue {
     canDragLoan(loanCard: Piece) {
         if (!this.canMove()) return false;
 
-        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
 
         if (loanCard.owner == -1) {
@@ -1121,7 +1123,7 @@ export default class Game extends Vue {
     canDragShip(ship: Piece) {
         if (!this.canMove()) return false;
 
-        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
 
         return availableMoves[MoveName.Sail] && this.isCurrentPlayer(ship.owner);
@@ -1130,7 +1132,7 @@ export default class Game extends Vue {
     canPass() {
         if (!this.canMove()) return false;
 
-        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
 
         return !!availableMoves[MoveName.Pass];
@@ -1139,7 +1141,7 @@ export default class Game extends Vue {
     canUndo() {
         if (!this.canMove()) return false;
 
-        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
 
         return !!availableMoves[MoveName.Undo];
@@ -1148,7 +1150,7 @@ export default class Game extends Vue {
     canDecline() {
         if (!this.canMove()) return false;
 
-        const currentPlayer = this.G!.players[this.G!.currentPlayer!];
+        const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
 
         return !!availableMoves[MoveName.Decline];
@@ -1167,9 +1169,9 @@ export default class Game extends Vue {
     }
 
     getStatusMessage() {
-        if (this.G?.currentPlayer == undefined) {
+        if (!this.G || this.G.currentPlayers == []) {
             return 'Game ended!';
-        } else if (this.G?.currentPlayer == this.player) {
+        } else if (this.player !== undefined && this.G?.currentPlayers.includes(this.player)) {
             if (this.G.players[this.player].availableMoves![MoveName.Bid]) {
                 if (this.G.highestBidders.length != 0) {
                     return 'It\'s a tie, choose your ADDITIONAL bid!';
@@ -1186,7 +1188,7 @@ export default class Game extends Vue {
                 this.G.log[this.G.log.length - 1].type != 'move' ||
                 (this.G.log[this.G.log.length - 1] as LogMove).move.name == MoveName.Pass
             )
-                return `Waiting for ${this.G?.players[this.G!.currentPlayer].name} to play...`;
+                return `Waiting for ${this.G!.currentPlayers.map(p => this.G?.players[p].name).join(', ')} to play...`;
 
             let log = (this.G.log[this.G.log.length - 1] as LogMove).pretty;
             while (log?.indexOf('>') != -1) {
@@ -1198,13 +1200,13 @@ export default class Game extends Vue {
     }
 
     isCurrentPlayer(player) {
-        return this.G && this.G.currentPlayer === player;
+        return this.G && this.G.currentPlayers.includes(player);
     }
 
     canBuyFactory(color) {
         return (
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.BuyFactory] &&
@@ -1215,7 +1217,7 @@ export default class Game extends Vue {
     canBuyWarehouse() {
         return (
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.BuyWarehouse]
@@ -1225,7 +1227,7 @@ export default class Game extends Vue {
     canProduce(color) {
         return (
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.Produce] &&
@@ -1236,7 +1238,7 @@ export default class Game extends Vue {
     canGetLoan() {
         return (
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.GetLoan]
@@ -1246,7 +1248,7 @@ export default class Game extends Vue {
     canPayLoan() {
         return (
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.PayLoan]
@@ -1256,7 +1258,7 @@ export default class Game extends Vue {
     canSail() {
         return (
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.Sail]
@@ -1266,7 +1268,7 @@ export default class Game extends Vue {
     canArrangeFactory() {
         return (
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.ArrangeFactory]
@@ -1276,7 +1278,7 @@ export default class Game extends Vue {
     canArrangeWarehouse() {
         return (
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.ArrangeWarehouse]
@@ -1286,7 +1288,7 @@ export default class Game extends Vue {
     canBuyFromPlayerFactory(otherPlayer) {
         if (
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.BuyFromFactory]
@@ -1304,7 +1306,7 @@ export default class Game extends Vue {
     canBuyFromPlayerWarehouse(otherPlayer) {
         if (
             this.G &&
-            this.G.currentPlayer == this.player! &&
+            this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
             this.G.players[this.player!].availableMoves &&
             this.G.players[this.player!].availableMoves![MoveName.BuyFromWarehouse]
@@ -1402,7 +1404,7 @@ export default class Game extends Vue {
         if (!this.canMove())
             return [];
 
-        return this.G!.players[this.G!.currentPlayer!].availableMoves!;
+        return this.G!.players[this.player!].availableMoves!;
     }
 
     getFinalScoreHTML(player, i) {

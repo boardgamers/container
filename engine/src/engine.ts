@@ -72,7 +72,7 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
     const G: GameState = {
         players,
         startingPlayer,
-        currentPlayer: startingPlayer,
+        currentPlayers: [startingPlayer],
         containersLeft,
         factoriesLeft,
         warehousesLeft,
@@ -104,8 +104,8 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
 
     G.log.push({ type: 'event', event: { name: GameEventName.GameStart } });
 
-    G.players[G.currentPlayer!].actions = 2;
-    G.players[G.currentPlayer!].availableMoves = availableMoves(G, G.players[G.currentPlayer!]);
+    G.players[startingPlayer].actions = 2;
+    G.players[startingPlayer].availableMoves = availableMoves(G, G.players[startingPlayer]);
 
     return G;
 }
@@ -134,14 +134,14 @@ export function stripSecret(G: GameState, player?: number): GameState {
 }
 
 export function currentPlayers(G: GameState): number[] {
-    return [G.currentPlayer!];
+    return G.currentPlayers;
 }
 
 export function move(G: GameState, move: Move, playerNumber: number, fake?: boolean): GameState {
     const player = G.players[playerNumber];
     const available = player.availableMoves?.[move.name];
 
-    assert(G.currentPlayer === playerNumber, 'It is not your turn!');
+    assert(G.currentPlayers.includes(playerNumber), 'It is not your turn!');
     assert(available, 'You are not allowed to run the command ' + move.name);
     assert(
         available.some((x) => isEqual(x, move.data)),
@@ -365,9 +365,9 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             player.ship.shipPosition = move.data;
             if (move.data === ShipPosition.Island) {
                 player.actions = 0;
-                G.auctioningPlayer = G.currentPlayer;
+                G.auctioningPlayer = G.currentPlayers[0];
                 G.phase = Phase.Bid;
-                nextPlayer(G);
+                G.currentPlayers = G.players.map((p) => p.id).filter((id) => id !== G.auctioningPlayer);
             } else {
                 player.actions--;
             }
@@ -452,7 +452,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                     pretty: `${playerNameHTML(player)} bids $${move.extraData.price}`,
                 });
                 player.bid = move.extraData.price;
-                nextPlayer(G);
+                G.currentPlayers = G.currentPlayers.filter((id) => id !== player.id);
             } else {
                 G.hiddenLog.push({
                     type: 'move',
@@ -462,39 +462,37 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                     pretty: `${playerNameHTML(player)} bids additional $${move.extraData.price}`,
                 });
                 player.additionalBid = move.extraData.price;
-                do {
-                    nextPlayer(G);
-                } while (G.highestBidders.indexOf(G.currentPlayer) === -1 && G.auctioningPlayer !== G.currentPlayer);
+                G.currentPlayers = G.currentPlayers.filter((id) => id !== player.id);
             }
 
-            if (G.auctioningPlayer === G.currentPlayer) {
+            if (G.currentPlayers.length === 0) {
                 if (G.highestBidders.length === 0) {
                     G.players
-                        .filter((p) => p.id !== G.currentPlayer)
+                        .filter((p) => p.id !== G.auctioningPlayer)
                         .forEach((p) => {
                             p.showBid = true;
                         });
                     const highestBid = Math.max(...G.players.map((p) => p.bid));
                     const highestBidders = G.players
-                        .filter((p) => p.id != G.currentPlayer && p.bid === highestBid)
+                        .filter((p) => p.id != G.auctioningPlayer && p.bid === highestBid)
                         .map((p) => p.id);
                     G.highestBidders = highestBidders;
                     if (highestBidders.length > 1) {
-                        while (highestBidders.indexOf(G.currentPlayer) === -1) {
-                            nextPlayer(G);
-                        }
+                        G.currentPlayers = highestBidders;
                     } else {
+                        G.currentPlayers = [G.auctioningPlayer!];
                         G.phase = Phase.AcceptDecline;
                     }
                 } else {
                     const highestBid = Math.max(...G.players.map((p) => p.bid + p.additionalBid));
                     const highestBidders = G.players
-                        .filter((p) => p.id != G.currentPlayer && p.bid + p.additionalBid === highestBid)
+                        .filter((p) => p.id != G.auctioningPlayer && p.bid + p.additionalBid === highestBid)
                         .map((p) => p.id);
                     G.highestBidders = highestBidders;
                     G.players.forEach((p) => {
                         p.showAdditionalBid = true;
                     });
+                    G.currentPlayers = [G.auctioningPlayer!];
                     G.phase = Phase.AcceptDecline;
                 }
             }
@@ -529,7 +527,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                     doUpkeep(G);
                 } else {
                     G.phase = Phase.GameEnd;
-                    G.currentPlayer = undefined;
+                    G.currentPlayers = [];
                     calculateEndScore(G);
                 }
             }
@@ -566,7 +564,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                     doUpkeep(G);
                 } else {
                     G.phase = Phase.GameEnd;
-                    G.currentPlayer = undefined;
+                    G.currentPlayers = [];
                     calculateEndScore(G);
                 }
             }
@@ -599,7 +597,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                     doUpkeep(G);
                 } else {
                     G.phase = Phase.GameEnd;
-                    G.currentPlayer = undefined;
+                    G.currentPlayers = [];
                     calculateEndScore(G);
                 }
             }
@@ -611,7 +609,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             asserts<Moves.MoveUndo>(move);
 
             const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == 'move' && lastLog.player == G.currentPlayer && !fake) {
+            if (lastLog.type == 'move' && G.currentPlayers.includes(lastLog.player) && !fake) {
                 G.log.pop();
                 G = reconstructState(getBaseState(G), G.log);
             }
@@ -624,8 +622,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
     if (move.name != MoveName.GetLoan && move.name != MoveName.PayLoan) player.lastMove = move;
 
-    if (G.currentPlayer !== undefined)
-        G.players[G.currentPlayer].availableMoves = availableMoves(G, G.players[G.currentPlayer]);
+    G.currentPlayers.forEach((p) => (G.players[p].availableMoves = availableMoves(G, G.players[p])));
 
     return G;
 }
@@ -904,11 +901,11 @@ function playerBefore(player: Player, G: GameState) {
 }
 
 function nextPlayer(G: GameState) {
-    G.currentPlayer = (G.currentPlayer! + 1) % G.players.length;
+    G.currentPlayers = [(G.currentPlayers[0] + 1) % G.players.length];
 }
 
 function doUpkeep(G: GameState) {
-    const player = G.players[G.currentPlayer!];
+    const player = G.players[G.currentPlayers[0]];
     const loanCount = player.loans.length;
     const interest: string[] = [];
     for (let i = 0; i < loanCount; i++) {
@@ -1019,13 +1016,14 @@ function doUpkeep(G: GameState) {
         }
     }
 
-    G.players[G.currentPlayer!].actions = 2;
-    G.players[G.currentPlayer!].produced = [];
-    G.players[G.currentPlayer!].containersOnFactoryStore.forEach((c) => (c.moved = false));
-    G.players[G.currentPlayer!].containersOnWarehouseStore.forEach((c) => (c.moved = false));
-    G.players[G.currentPlayer!].didDomesticSale = false;
+    const currentPlayer = G.currentPlayers[0];
+    G.players[currentPlayer].actions = 2;
+    G.players[currentPlayer].produced = [];
+    G.players[currentPlayer].containersOnFactoryStore.forEach((c) => (c.moved = false));
+    G.players[currentPlayer].containersOnWarehouseStore.forEach((c) => (c.moved = false));
+    G.players[currentPlayer].didDomesticSale = false;
 
-    if (G.currentPlayer == G.startingPlayer) {
+    if (currentPlayer == G.startingPlayer) {
         G.round++;
     }
 }

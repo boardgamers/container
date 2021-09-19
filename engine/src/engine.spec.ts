@@ -17,7 +17,7 @@ describe('Engine', () => {
     it('should play full game', () => {
         const G = setup(5, { beginner: false }, 'test');
 
-        // G.currentPlayer = 0;
+        // G.currentPlayers = [0];
         // G.players[0].actions = 2;
         // G.players[0].availableMoves = availableMoves(G, G.players[0]);
         // G.players[0].factories[0] = ContainerColor.Brown;
