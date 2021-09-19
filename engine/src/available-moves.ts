@@ -171,7 +171,11 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
             }
 
             // BuyFactory
-            if (player.actions > 0 && player.money >= (player.factories.length + 1) * 3) {
+            if (
+                player.actions > 0 &&
+                player.money >= (player.factories.length + 1) * 3 &&
+                player.factories.length < 4
+            ) {
                 const factoriesLeft: ContainerColor[] = [];
                 Object.values(ContainerColor).forEach((color) => {
                     if (
