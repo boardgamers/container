@@ -65,6 +65,8 @@ export function round(G: GameState) {
 export async function dropPlayer(G: GameState, player: number) {
     G.players[player].isDropped = true;
 
+    engine.nextPlayer(G);
+
     return G;
 }
 

@@ -367,7 +367,9 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 player.actions = 0;
                 G.auctioningPlayer = G.currentPlayers[0];
                 G.phase = Phase.Bid;
-                G.currentPlayers = G.players.map((p) => p.id).filter((id) => id !== G.auctioningPlayer);
+                G.currentPlayers = G.players
+                    .filter((p) => p.id !== G.auctioningPlayer && !p.isDropped)
+                    .map((p) => p.id);
             } else {
                 player.actions--;
             }
@@ -474,7 +476,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                         });
                     const highestBid = Math.max(...G.players.map((p) => p.bid));
                     const highestBidders = G.players
-                        .filter((p) => p.id != G.auctioningPlayer && p.bid === highestBid)
+                        .filter((p) => p.id != G.auctioningPlayer && !p.isDropped && p.bid === highestBid)
                         .map((p) => p.id);
                     G.highestBidders = highestBidders;
                     if (highestBidders.length > 1) {
@@ -486,7 +488,9 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 } else {
                     const highestBid = Math.max(...G.players.map((p) => p.bid + p.additionalBid));
                     const highestBidders = G.players
-                        .filter((p) => p.id != G.auctioningPlayer && p.bid + p.additionalBid === highestBid)
+                        .filter(
+                            (p) => p.id != G.auctioningPlayer && !p.isDropped && p.bid + p.additionalBid === highestBid
+                        )
                         .map((p) => p.id);
                     G.highestBidders = highestBidders;
                     G.players.forEach((p) => {
@@ -900,8 +904,10 @@ function playerBefore(player: Player, G: GameState) {
     return player.id === 0 ? G.players[G.players.length - 1] : G.players[player.id - 1];
 }
 
-function nextPlayer(G: GameState) {
+export function nextPlayer(G: GameState) {
     G.currentPlayers = [(G.currentPlayers[0] + 1) % G.players.length];
+
+    if (G.players[G.currentPlayers[0]].isDropped && G.players.some((p) => !p.isDropped)) nextPlayer(G);
 }
 
 function doUpkeep(G: GameState) {
