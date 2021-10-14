@@ -73,19 +73,18 @@
                 :data="{ type: 'islandHarbor' }"
             />
 
-            <template v-for="ship in ships">
-                <Ship
-                    :key="ship.id"
-                    :pieceId="ship.id"
-                    :targetState="{ x: ship.x, y: ship.y, rotate: ship.rotate }"
-                    :canDrag="canDragShip(ship)"
-                    :containers="ship.containers"
-                    :owner="ship.owner"
-                    :ownerName="G.players[ship.owner].name"
-                    :position="ship.position"
-                    :color="ship.color"
-                />
-            </template>
+            <Ship
+                v-for="ship in ships"
+                :key="ship.id"
+                :pieceId="ship.id"
+                :targetState="{ x: ship.x, y: ship.y, rotate: ship.rotate }"
+                :canDrag="canDragShip(ship)"
+                :containers="ship.containers"
+                :owner="ship.owner"
+                :ownerName="G.players[ship.owner].name"
+                :position="ship.position"
+                :color="ship.color"
+            />
 
             <template v-for="container in containers">
                 <Container
@@ -1040,7 +1039,11 @@ export default class Game extends Vue {
 
     confirmBid() {
         this.confirmBidVisible = false;
-        this.sendMove({ name: MoveName.Bid, data: true, extraData: { price: this.totalBid - this.G!.players[this.player!].bid } });
+        this.sendMove({
+            name: MoveName.Bid,
+            data: true,
+            extraData: { price: this.totalBid - this.G!.players[this.player!].bid },
+        });
         this.totalBid = 0;
     }
 
@@ -1067,9 +1070,9 @@ export default class Game extends Vue {
         return ended(G);
     }
 
-    canMove() {
+    get canMove() {
         return (
-            this.player &&
+            this.player != null &&
             this.G &&
             this.G.currentPlayers.includes(this.player!) &&
             this.G.players[this.player!] &&
@@ -1078,7 +1081,7 @@ export default class Game extends Vue {
     }
 
     canDragContainer(container: Piece) {
-        if (!this.canMove()) return false;
+        if (!this.canMove) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1123,7 +1126,7 @@ export default class Game extends Vue {
     }
 
     canDragFactory(factory: Piece) {
-        if (!this.canMove()) return false;
+        if (!this.canMove) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1135,7 +1138,7 @@ export default class Game extends Vue {
     }
 
     canDragWarehouse(warehouse: Piece) {
-        if (!this.canMove()) return false;
+        if (!this.canMove) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1146,7 +1149,7 @@ export default class Game extends Vue {
     }
 
     canDragLoan(loanCard: Piece) {
-        if (!this.canMove()) return false;
+        if (!this.canMove) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1161,7 +1164,7 @@ export default class Game extends Vue {
     }
 
     canDragShip(ship: Piece) {
-        if (!this.canMove()) return false;
+        if (!this.canMove) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1170,7 +1173,7 @@ export default class Game extends Vue {
     }
 
     canPass() {
-        if (!this.canMove()) return false;
+        if (!this.canMove) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1179,7 +1182,7 @@ export default class Game extends Vue {
     }
 
     canUndo() {
-        if (!this.canMove()) return false;
+        if (!this.canMove) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1188,7 +1191,7 @@ export default class Game extends Vue {
     }
 
     canDecline() {
-        if (!this.canMove()) return false;
+        if (!this.canMove) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1214,13 +1217,13 @@ export default class Game extends Vue {
         } else if (this.player !== undefined && this.G?.currentPlayers.includes(this.player)) {
             if (this.G.players[this.player].availableMoves![MoveName.Bid]) {
                 if (this.G.highestBidders.length != 0) {
-                    return 'It\'s a tie, choose your ADDITIONAL bid!';
+                    return "It's a tie, choose your ADDITIONAL bid!";
                 }
 
-                return 'It\'s your turn to bid!';
+                return "It's your turn to bid!";
             }
 
-            return 'It\'s your turn!';
+            return "It's your turn!";
         } else {
             if (
                 !this.G.log ||
@@ -1228,7 +1231,9 @@ export default class Game extends Vue {
                 this.G.log[this.G.log.length - 1].type != 'move' ||
                 (this.G.log[this.G.log.length - 1] as LogMove).move.name == MoveName.Pass
             )
-                return `Waiting for ${this.G!.currentPlayers.map(p => this.G?.players[p].name).join(', ')} to play...`;
+                return `Waiting for ${this.G!.currentPlayers.map((p) => this.G?.players[p].name).join(
+                    ', '
+                )} to play...`;
 
             let log = (this.G.log[this.G.log.length - 1] as LogMove).pretty;
             while (log?.indexOf('>') != -1) {
@@ -1441,8 +1446,7 @@ export default class Game extends Vue {
     }
 
     getCurrentPlayerMoves() {
-        if (!this.canMove())
-            return [];
+        if (!this.canMove) return [];
 
         return this.G!.players[this.player!].availableMoves!;
     }
@@ -1450,11 +1454,26 @@ export default class Game extends Vue {
     getFinalScoreHTML(player, i) {
         let str = player.finalScoreBreakdown ? player.finalScoreBreakdown[i] : '0';
 
-        str = str.replaceAll('brown', '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: brown; color: brown;"></span>');
-        str = str.replaceAll('darkslategray', '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: darkslategray; color: darkslategray;"></span>');
-        str = str.replaceAll('orange', '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: orange; color: orange;"></span>');
-        str = str.replaceAll('tan', '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: tan; color: tan;"></span>');
-        str = str.replaceAll('white', '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: white; color: white;"></span>');
+        str = str.replaceAll(
+            'brown',
+            '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: brown; color: brown;"></span>'
+        );
+        str = str.replaceAll(
+            'darkslategray',
+            '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: darkslategray; color: darkslategray;"></span>'
+        );
+        str = str.replaceAll(
+            'orange',
+            '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: orange; color: orange;"></span>'
+        );
+        str = str.replaceAll(
+            'tan',
+            '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: tan; color: tan;"></span>'
+        );
+        str = str.replaceAll(
+            'white',
+            '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: white; color: white;"></span>'
+        );
 
         return str;
     }
