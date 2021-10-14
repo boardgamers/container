@@ -1,6 +1,7 @@
-import { move as execMove, Move, setup, stripSecret } from 'container-engine';
+import { GameState, move as execMove, Move, setup, stripSecret } from 'container-engine';
 import { moveAI } from 'container-engine/src/engine';
 import { cloneDeep } from 'lodash';
+import AbstractJudge from '../../engine/src/fixtures/Abstract-judge-7215.json';
 import launch from './launch';
 
 function launchSelfContained(selector = '#app') {
@@ -14,10 +15,15 @@ function launchSelfContained(selector = '#app') {
         gameState.players[i].name = `Player ${i + 1}`;
     }
 
-    const playerIndex = 1;
+    let playerIndex = 1;
 
     for (const player of gameState.players) {
         if (player.id != playerIndex) player.isAI = true;
+    }
+
+    if (process.env.VUE_APP_loadGame) {
+        gameState = AbstractJudge as GameState;
+        playerIndex = AbstractJudge.currentPlayers[0];
     }
 
     emitter.on('move', async (move: Move) => {
