@@ -1,0 +1,1195 @@
+{
+    "players": [
+        {
+            "id": 0,
+            "pointCard": {
+                "containerValues": [
+                    {
+                        "containerColor": "tan",
+                        "baseValue": 10,
+                        "specialValue": 10
+                    },
+                    {
+                        "containerColor": "brown",
+                        "baseValue": 5,
+                        "specialValue": 10
+                    },
+                    {
+                        "containerColor": "darkslategray",
+                        "baseValue": 6,
+                        "specialValue": 6
+                    },
+                    {
+                        "containerColor": "white",
+                        "baseValue": 4,
+                        "specialValue": 4
+                    },
+                    {
+                        "containerColor": "orange",
+                        "baseValue": 2,
+                        "specialValue": 2
+                    }
+                ]
+            },
+            "factories": [
+                {
+                    "id": "F5",
+                    "color": "brown"
+                }
+            ],
+            "warehouses": [
+                {
+                    "id": "W24"
+                }
+            ],
+            "ship": {
+                "piece": {
+                    "id": "S0"
+                },
+                "containers": [],
+                "shipPosition": "sea"
+            },
+            "containersOnFactoryStore": [
+                {
+                    "piece": {
+                        "id": "C20",
+                        "color": "brown"
+                    },
+                    "price": 2,
+                    "moved": false
+                }
+            ],
+            "containersOnWarehouseStore": [],
+            "containersOnIsland": [],
+            "money": 20,
+            "loans": [],
+            "produced": [],
+            "availableMoves": {
+                "buyFromFactory": [
+                    {
+                        "player": 1,
+                        "piece": {
+                            "id": "C80",
+                            "color": "tan"
+                        }
+                    },
+                    {
+                        "player": 2,
+                        "piece": {
+                            "id": "C40",
+                            "color": "white"
+                        }
+                    },
+                    {
+                        "player": 3,
+                        "piece": {
+                            "id": "C59",
+                            "color": "white"
+                        }
+                    },
+                    {
+                        "player": 4,
+                        "piece": {
+                            "id": "C60",
+                            "color": "darkslategray"
+                        }
+                    }
+                ],
+                "buyFactory": ["orange", "white", "darkslategray", "tan"],
+                "buyWarehouse": [true],
+                "getLoan": [true],
+                "arrangeFactory": [
+                    {
+                        "id": "C20",
+                        "color": "brown"
+                    }
+                ],
+                "sail": [
+                    "playerHarbor11",
+                    "playerHarbor21",
+                    "playerHarbor31",
+                    "playerHarbor41",
+                    "playerHarbor12",
+                    "playerHarbor22",
+                    "playerHarbor32",
+                    "playerHarbor42",
+                    "playerHarbor13",
+                    "playerHarbor23",
+                    "playerHarbor33",
+                    "playerHarbor43",
+                    "playerHarbor14",
+                    "playerHarbor24",
+                    "playerHarbor34",
+                    "playerHarbor44"
+                ],
+                "pass": [true],
+                "produce": ["brown"]
+            },
+            "lastMove": null,
+            "actions": 2,
+            "isDropped": false,
+            "bid": 0,
+            "additionalBid": 0,
+            "showBid": false,
+            "showAdditionalBid": false,
+            "isAI": false,
+            "didDomesticSale": false,
+            "name": "Jason1002"
+        },
+        {
+            "id": 1,
+            "pointCard": {
+                "containerValues": [
+                    {
+                        "containerColor": "darkslategray",
+                        "baseValue": 10,
+                        "specialValue": 10
+                    },
+                    {
+                        "containerColor": "white",
+                        "baseValue": 5,
+                        "specialValue": 10
+                    },
+                    {
+                        "containerColor": "orange",
+                        "baseValue": 6,
+                        "specialValue": 6
+                    },
+                    {
+                        "containerColor": "tan",
+                        "baseValue": 4,
+                        "specialValue": 4
+                    },
+                    {
+                        "containerColor": "brown",
+                        "baseValue": 2,
+                        "specialValue": 2
+                    }
+                ]
+            },
+            "factories": [
+                {
+                    "id": "F20",
+                    "color": "tan"
+                }
+            ],
+            "warehouses": [
+                {
+                    "id": "W23"
+                }
+            ],
+            "ship": {
+                "piece": {
+                    "id": "S1"
+                },
+                "containers": [],
+                "shipPosition": "sea"
+            },
+            "containersOnFactoryStore": [
+                {
+                    "piece": {
+                        "id": "C80",
+                        "color": "tan"
+                    },
+                    "price": 2,
+                    "moved": false
+                }
+            ],
+            "containersOnWarehouseStore": [],
+            "containersOnIsland": [],
+            "money": 20,
+            "loans": [],
+            "produced": [],
+            "availableMoves": null,
+            "lastMove": null,
+            "actions": 0,
+            "isDropped": false,
+            "bid": 0,
+            "additionalBid": 0,
+            "showBid": false,
+            "showAdditionalBid": false,
+            "isAI": false,
+            "didDomesticSale": false,
+            "name": "Mantheron"
+        },
+        {
+            "id": 2,
+            "pointCard": {
+                "containerValues": [
+                    {
+                        "containerColor": "white",
+                        "baseValue": 10,
+                        "specialValue": 10
+                    },
+                    {
+                        "containerColor": "orange",
+                        "baseValue": 5,
+                        "specialValue": 10
+                    },
+                    {
+                        "containerColor": "tan",
+                        "baseValue": 6,
+                        "specialValue": 6
+                    },
+                    {
+                        "containerColor": "brown",
+                        "baseValue": 4,
+                        "specialValue": 4
+                    },
+                    {
+                        "containerColor": "darkslategray",
+                        "baseValue": 2,
+                        "specialValue": 2
+                    }
+                ]
+            },
+            "factories": [
+                {
+                    "id": "F10",
+                    "color": "white"
+                },
+                {
+                    "id": "F22",
+                    "color": "tan"
+                }
+            ],
+            "warehouses": [
+                {
+                    "id": "W22"
+                },
+                {
+                    "id": "W19"
+                }
+            ],
+            "ship": {
+                "piece": {
+                    "id": "S2"
+                },
+                "containers": [],
+                "shipPosition": "sea"
+            },
+            "containersOnFactoryStore": [
+                {
+                    "piece": {
+                        "id": "C40",
+                        "color": "white"
+                    },
+                    "price": 2,
+                    "moved": false
+                }
+            ],
+            "containersOnWarehouseStore": [],
+            "containersOnIsland": [],
+            "money": 11,
+            "loans": [],
+            "produced": [],
+            "availableMoves": null,
+            "lastMove": {
+                "name": "pass",
+                "data": true
+            },
+            "actions": 0,
+            "isDropped": false,
+            "bid": 0,
+            "additionalBid": 0,
+            "showBid": false,
+            "showAdditionalBid": false,
+            "isAI": false,
+            "didDomesticSale": false,
+            "name": "mglyer"
+        },
+        {
+            "id": 3,
+            "pointCard": {
+                "containerValues": [
+                    {
+                        "containerColor": "brown",
+                        "baseValue": 10,
+                        "specialValue": 10
+                    },
+                    {
+                        "containerColor": "darkslategray",
+                        "baseValue": 5,
+                        "specialValue": 10
+                    },
+                    {
+                        "containerColor": "white",
+                        "baseValue": 6,
+                        "specialValue": 6
+                    },
+                    {
+                        "containerColor": "orange",
+                        "baseValue": 4,
+                        "specialValue": 4
+                    },
+                    {
+                        "containerColor": "tan",
+                        "baseValue": 2,
+                        "specialValue": 2
+                    }
+                ]
+            },
+            "factories": [
+                {
+                    "id": "F0",
+                    "color": "orange"
+                },
+                {
+                    "id": "F14",
+                    "color": "white"
+                }
+            ],
+            "warehouses": [
+                {
+                    "id": "W21"
+                }
+            ],
+            "ship": {
+                "piece": {
+                    "id": "S3"
+                },
+                "containers": [],
+                "shipPosition": "sea"
+            },
+            "containersOnFactoryStore": [
+                {
+                    "piece": {
+                        "id": "C59",
+                        "color": "white"
+                    },
+                    "price": 2,
+                    "moved": false
+                }
+            ],
+            "containersOnWarehouseStore": [],
+            "containersOnIsland": [],
+            "money": 17,
+            "loans": [],
+            "produced": ["white", "orange"],
+            "availableMoves": null,
+            "lastMove": {
+                "name": "pass",
+                "data": true
+            },
+            "actions": 0,
+            "isDropped": false,
+            "bid": 0,
+            "additionalBid": 0,
+            "showBid": false,
+            "showAdditionalBid": false,
+            "isAI": false,
+            "didDomesticSale": false,
+            "name": "trojanrabbit"
+        },
+        {
+            "id": 4,
+            "pointCard": {
+                "containerValues": [
+                    {
+                        "containerColor": "orange",
+                        "baseValue": 10,
+                        "specialValue": 10
+                    },
+                    {
+                        "containerColor": "tan",
+                        "baseValue": 5,
+                        "specialValue": 10
+                    },
+                    {
+                        "containerColor": "brown",
+                        "baseValue": 6,
+                        "specialValue": 6
+                    },
+                    {
+                        "containerColor": "darkslategray",
+                        "baseValue": 4,
+                        "specialValue": 4
+                    },
+                    {
+                        "containerColor": "white",
+                        "baseValue": 2,
+                        "specialValue": 2
+                    }
+                ]
+            },
+            "factories": [
+                {
+                    "id": "F15",
+                    "color": "darkslategray"
+                }
+            ],
+            "warehouses": [
+                {
+                    "id": "W20"
+                },
+                {
+                    "id": "W18"
+                }
+            ],
+            "ship": {
+                "piece": {
+                    "id": "S4"
+                },
+                "containers": [],
+                "shipPosition": "sea"
+            },
+            "containersOnFactoryStore": [
+                {
+                    "piece": {
+                        "id": "C60",
+                        "color": "darkslategray"
+                    },
+                    "price": 2,
+                    "moved": false
+                }
+            ],
+            "containersOnWarehouseStore": [
+                {
+                    "piece": {
+                        "id": "C0",
+                        "color": "orange"
+                    },
+                    "price": 3,
+                    "moved": false
+                },
+                {
+                    "piece": {
+                        "id": "C15",
+                        "color": "orange"
+                    },
+                    "price": 3,
+                    "moved": false
+                }
+            ],
+            "containersOnIsland": [],
+            "money": 12,
+            "loans": [],
+            "produced": [],
+            "availableMoves": null,
+            "lastMove": {
+                "name": "pass",
+                "data": true
+            },
+            "actions": 0,
+            "isDropped": false,
+            "bid": 0,
+            "additionalBid": 0,
+            "showBid": false,
+            "showAdditionalBid": false,
+            "isAI": false,
+            "didDomesticSale": false,
+            "name": "Sveinung"
+        }
+    ],
+    "startingPlayer": 2,
+    "currentPlayers": [0],
+    "containersLeft": [
+        {
+            "id": "C1",
+            "color": "orange"
+        },
+        {
+            "id": "C2",
+            "color": "orange"
+        },
+        {
+            "id": "C3",
+            "color": "orange"
+        },
+        {
+            "id": "C4",
+            "color": "orange"
+        },
+        {
+            "id": "C5",
+            "color": "orange"
+        },
+        {
+            "id": "C6",
+            "color": "orange"
+        },
+        {
+            "id": "C7",
+            "color": "orange"
+        },
+        {
+            "id": "C8",
+            "color": "orange"
+        },
+        {
+            "id": "C9",
+            "color": "orange"
+        },
+        {
+            "id": "C10",
+            "color": "orange"
+        },
+        {
+            "id": "C11",
+            "color": "orange"
+        },
+        {
+            "id": "C12",
+            "color": "orange"
+        },
+        {
+            "id": "C13",
+            "color": "orange"
+        },
+        {
+            "id": "C14",
+            "color": "orange"
+        },
+        {
+            "id": "C16",
+            "color": "orange"
+        },
+        {
+            "id": "C17",
+            "color": "orange"
+        },
+        {
+            "id": "C18",
+            "color": "orange"
+        },
+        {
+            "id": "C19",
+            "color": "orange"
+        },
+        {
+            "id": "C21",
+            "color": "brown"
+        },
+        {
+            "id": "C22",
+            "color": "brown"
+        },
+        {
+            "id": "C23",
+            "color": "brown"
+        },
+        {
+            "id": "C24",
+            "color": "brown"
+        },
+        {
+            "id": "C25",
+            "color": "brown"
+        },
+        {
+            "id": "C26",
+            "color": "brown"
+        },
+        {
+            "id": "C27",
+            "color": "brown"
+        },
+        {
+            "id": "C28",
+            "color": "brown"
+        },
+        {
+            "id": "C29",
+            "color": "brown"
+        },
+        {
+            "id": "C30",
+            "color": "brown"
+        },
+        {
+            "id": "C31",
+            "color": "brown"
+        },
+        {
+            "id": "C32",
+            "color": "brown"
+        },
+        {
+            "id": "C33",
+            "color": "brown"
+        },
+        {
+            "id": "C34",
+            "color": "brown"
+        },
+        {
+            "id": "C35",
+            "color": "brown"
+        },
+        {
+            "id": "C36",
+            "color": "brown"
+        },
+        {
+            "id": "C37",
+            "color": "brown"
+        },
+        {
+            "id": "C38",
+            "color": "brown"
+        },
+        {
+            "id": "C39",
+            "color": "brown"
+        },
+        {
+            "id": "C41",
+            "color": "white"
+        },
+        {
+            "id": "C42",
+            "color": "white"
+        },
+        {
+            "id": "C43",
+            "color": "white"
+        },
+        {
+            "id": "C44",
+            "color": "white"
+        },
+        {
+            "id": "C45",
+            "color": "white"
+        },
+        {
+            "id": "C46",
+            "color": "white"
+        },
+        {
+            "id": "C47",
+            "color": "white"
+        },
+        {
+            "id": "C48",
+            "color": "white"
+        },
+        {
+            "id": "C49",
+            "color": "white"
+        },
+        {
+            "id": "C50",
+            "color": "white"
+        },
+        {
+            "id": "C51",
+            "color": "white"
+        },
+        {
+            "id": "C52",
+            "color": "white"
+        },
+        {
+            "id": "C53",
+            "color": "white"
+        },
+        {
+            "id": "C54",
+            "color": "white"
+        },
+        {
+            "id": "C55",
+            "color": "white"
+        },
+        {
+            "id": "C56",
+            "color": "white"
+        },
+        {
+            "id": "C57",
+            "color": "white"
+        },
+        {
+            "id": "C58",
+            "color": "white"
+        },
+        {
+            "id": "C61",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C62",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C63",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C64",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C65",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C66",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C67",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C68",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C69",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C70",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C71",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C72",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C73",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C74",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C75",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C76",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C77",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C78",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C79",
+            "color": "darkslategray"
+        },
+        {
+            "id": "C81",
+            "color": "tan"
+        },
+        {
+            "id": "C82",
+            "color": "tan"
+        },
+        {
+            "id": "C83",
+            "color": "tan"
+        },
+        {
+            "id": "C84",
+            "color": "tan"
+        },
+        {
+            "id": "C85",
+            "color": "tan"
+        },
+        {
+            "id": "C86",
+            "color": "tan"
+        },
+        {
+            "id": "C87",
+            "color": "tan"
+        },
+        {
+            "id": "C88",
+            "color": "tan"
+        },
+        {
+            "id": "C89",
+            "color": "tan"
+        },
+        {
+            "id": "C90",
+            "color": "tan"
+        },
+        {
+            "id": "C91",
+            "color": "tan"
+        },
+        {
+            "id": "C92",
+            "color": "tan"
+        },
+        {
+            "id": "C93",
+            "color": "tan"
+        },
+        {
+            "id": "C94",
+            "color": "tan"
+        },
+        {
+            "id": "C95",
+            "color": "tan"
+        },
+        {
+            "id": "C96",
+            "color": "tan"
+        },
+        {
+            "id": "C97",
+            "color": "tan"
+        },
+        {
+            "id": "C98",
+            "color": "tan"
+        },
+        {
+            "id": "C99",
+            "color": "tan"
+        }
+    ],
+    "factoriesLeft": [
+        {
+            "id": "F1",
+            "color": "orange"
+        },
+        {
+            "id": "F2",
+            "color": "orange"
+        },
+        {
+            "id": "F3",
+            "color": "orange"
+        },
+        {
+            "id": "F4",
+            "color": "orange"
+        },
+        {
+            "id": "F6",
+            "color": "brown"
+        },
+        {
+            "id": "F7",
+            "color": "brown"
+        },
+        {
+            "id": "F8",
+            "color": "brown"
+        },
+        {
+            "id": "F9",
+            "color": "brown"
+        },
+        {
+            "id": "F11",
+            "color": "white"
+        },
+        {
+            "id": "F12",
+            "color": "white"
+        },
+        {
+            "id": "F13",
+            "color": "white"
+        },
+        {
+            "id": "F16",
+            "color": "darkslategray"
+        },
+        {
+            "id": "F17",
+            "color": "darkslategray"
+        },
+        {
+            "id": "F18",
+            "color": "darkslategray"
+        },
+        {
+            "id": "F19",
+            "color": "darkslategray"
+        },
+        {
+            "id": "F21",
+            "color": "tan"
+        },
+        {
+            "id": "F23",
+            "color": "tan"
+        },
+        {
+            "id": "F24",
+            "color": "tan"
+        }
+    ],
+    "warehousesLeft": [
+        {
+            "id": "W0"
+        },
+        {
+            "id": "W1"
+        },
+        {
+            "id": "W2"
+        },
+        {
+            "id": "W3"
+        },
+        {
+            "id": "W4"
+        },
+        {
+            "id": "W5"
+        },
+        {
+            "id": "W6"
+        },
+        {
+            "id": "W7"
+        },
+        {
+            "id": "W8"
+        },
+        {
+            "id": "W9"
+        },
+        {
+            "id": "W10"
+        },
+        {
+            "id": "W11"
+        },
+        {
+            "id": "W12"
+        },
+        {
+            "id": "W13"
+        },
+        {
+            "id": "W14"
+        },
+        {
+            "id": "W15"
+        },
+        {
+            "id": "W16"
+        },
+        {
+            "id": "W17"
+        }
+    ],
+    "loansLeft": [
+        {
+            "id": "L0"
+        },
+        {
+            "id": "L1"
+        },
+        {
+            "id": "L2"
+        },
+        {
+            "id": "L3"
+        },
+        {
+            "id": "L4"
+        },
+        {
+            "id": "L5"
+        },
+        {
+            "id": "L6"
+        },
+        {
+            "id": "L7"
+        },
+        {
+            "id": "L8"
+        },
+        {
+            "id": "L9"
+        }
+    ],
+    "auctioningPlayer": -1,
+    "highestBidders": [],
+    "phase": "move",
+    "options": {
+        "beginner": true
+    },
+    "log": [
+        {
+            "type": "event",
+            "event": {
+                "name": "Game Start!"
+            }
+        },
+        {
+            "type": "move",
+            "player": 2,
+            "move": {
+                "name": "buyFactory",
+                "data": "tan",
+                "extraData": {
+                    "id": "F22",
+                    "color": "tan"
+                }
+            },
+            "simple": "mglyer buys a tan factory for $6",
+            "pretty": "<span style=\"background-color: yellow; font-weight: bold; padding: 0 3px;\">mglyer</span> buys a <span style=\"background-color: tan; font-weight: bold; border: 1px solid black; padding: 0 3px;\">tan</span> factory for $6"
+        },
+        {
+            "type": "move",
+            "player": 2,
+            "move": {
+                "name": "buyWarehouse",
+                "data": true,
+                "extraData": {
+                    "id": "W19"
+                }
+            },
+            "simple": "mglyer buys a warehouse for $4",
+            "pretty": "<span style=\"background-color: yellow; font-weight: bold; padding: 0 3px;\">mglyer</span> buys a warehouse for $4"
+        },
+        {
+            "type": "move",
+            "player": 2,
+            "move": {
+                "name": "pass",
+                "data": true
+            },
+            "simple": "mglyer passes",
+            "pretty": "<span style=\"background-color: yellow; font-weight: bold; padding: 0 3px;\">mglyer</span> passes"
+        },
+        {
+            "type": "move",
+            "player": 3,
+            "move": {
+                "name": "buyFactory",
+                "data": "white",
+                "extraData": {
+                    "id": "F14",
+                    "color": "white"
+                }
+            },
+            "simple": "trojanrabbit buys a white factory for $6",
+            "pretty": "<span style=\"background-color: limegreen; font-weight: bold; padding: 0 3px;\">trojanrabbit</span> buys a <span style=\"background-color: white; font-weight: bold; border: 1px solid black; padding: 0 3px;\">white</span> factory for $6"
+        },
+        {
+            "type": "move",
+            "player": 3,
+            "move": {
+                "name": "produce",
+                "data": "white",
+                "extraData": {
+                    "piece": {
+                        "id": "C59",
+                        "color": "white"
+                    },
+                    "price": 2
+                }
+            },
+            "simple": "trojanrabbit produces a white container, price is $2",
+            "pretty": "<span style=\"background-color: limegreen; font-weight: bold; padding: 0 3px;\">trojanrabbit</span> produces a <span style=\"background-color: white; font-weight: bold; border: 1px solid black; padding: 0 3px;\">white</span> container, price is $2"
+        },
+        {
+            "type": "move",
+            "player": 3,
+            "move": {
+                "name": "produce",
+                "data": "orange",
+                "extraData": {
+                    "piece": {
+                        "id": "C15",
+                        "color": "orange"
+                    },
+                    "price": 2
+                }
+            },
+            "simple": "trojanrabbit produces a orange container, price is $2",
+            "pretty": "<span style=\"background-color: limegreen; font-weight: bold; padding: 0 3px;\">trojanrabbit</span> produces a <span style=\"background-color: orange; font-weight: bold; border: 1px solid black; padding: 0 3px;\">orange</span> container, price is $2"
+        },
+        {
+            "type": "move",
+            "player": 3,
+            "move": {
+                "name": "pass",
+                "data": true
+            },
+            "simple": "trojanrabbit passes",
+            "pretty": "<span style=\"background-color: limegreen; font-weight: bold; padding: 0 3px;\">trojanrabbit</span> passes"
+        },
+        {
+            "type": "move",
+            "player": 4,
+            "move": {
+                "name": "buyWarehouse",
+                "data": true,
+                "extraData": {
+                    "id": "W18"
+                }
+            },
+            "simple": "Sveinung buys a warehouse for $4",
+            "pretty": "<span style=\"background-color: mediumorchid; font-weight: bold; padding: 0 3px;\">Sveinung</span> buys a warehouse for $4"
+        },
+        {
+            "type": "move",
+            "player": 4,
+            "move": {
+                "name": "buyFromFactory",
+                "data": {
+                    "player": 3,
+                    "piece": {
+                        "id": "C0",
+                        "color": "orange"
+                    }
+                },
+                "extraData": {
+                    "price": 3
+                }
+            },
+            "simple": "Sveinung buys a orange container from trojanrabbit for $2, new price is $3",
+            "pretty": "<span style=\"background-color: mediumorchid; font-weight: bold; padding: 0 3px;\">Sveinung</span> buys a <span style=\"background-color: orange; font-weight: bold; border: 1px solid black; padding: 0 3px;\">orange</span> container from <span style=\"background-color: limegreen; font-weight: bold; padding: 0 3px;\">trojanrabbit</span> for $2, new price is $3"
+        },
+        {
+            "type": "move",
+            "player": 4,
+            "move": {
+                "name": "buyFromFactory",
+                "data": {
+                    "player": 3,
+                    "piece": {
+                        "id": "C15",
+                        "color": "orange"
+                    }
+                },
+                "extraData": {
+                    "price": 3
+                }
+            },
+            "simple": "Sveinung buys a orange container from trojanrabbit for $2, new price is $3",
+            "pretty": "<span style=\"background-color: mediumorchid; font-weight: bold; padding: 0 3px;\">Sveinung</span> buys a <span style=\"background-color: orange; font-weight: bold; border: 1px solid black; padding: 0 3px;\">orange</span> container from <span style=\"background-color: limegreen; font-weight: bold; padding: 0 3px;\">trojanrabbit</span> for $2, new price is $3"
+        },
+        {
+            "type": "move",
+            "player": 4,
+            "move": {
+                "name": "pass",
+                "data": true
+            },
+            "simple": "Sveinung passes",
+            "pretty": "<span style=\"background-color: mediumorchid; font-weight: bold; padding: 0 3px;\">Sveinung</span> passes"
+        }
+    ],
+    "hiddenLog": [],
+    "seed": "X1zCI9szrv8Nvb1ffXm5iEjN3l/iHtYVG5PWwUTnt2s=",
+    "round": 1
+}
