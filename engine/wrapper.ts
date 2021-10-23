@@ -21,6 +21,10 @@ export async function move(G: GameState, move: Move, player: number) {
     return G;
 }
 
+export function factions(G: GameState) {
+    return G.players.map((pl) => engine.playerColors[pl.id]);
+}
+
 export { ended, scores, stripSecret } from './src/engine';
 
 export function rankings(G: GameState) {

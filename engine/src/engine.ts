@@ -18,7 +18,7 @@ import { GameEventName, LogItem } from './log';
 import { Move, MoveName, Moves } from './move';
 import { asserts, shuffle } from './utils';
 
-const playerColors = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'];
+export const playerColors = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'];
 
 export function setup(numPlayers: number, { beginner = true }: GameOptions, seed?: string): GameState {
     seed = seed ?? Math.random().toString();
