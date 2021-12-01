@@ -28,6 +28,9 @@ function launch(selector: string) {
     params.emitter.on('move', (move: Move) => item.emit('move', move));
     params.emitter.on('addLog', (data: string[]) => item.emit('addLog', data));
     params.emitter.on('replaceLog', (data: string[]) => item.emit('replaceLog', data));
+    params.emitter.on('update:preference', (data: { name: string; value: any }) =>
+        item.emit('update:preference', data)
+    );
 
     item.addListener('state', (data) => {
         params.state = data;
