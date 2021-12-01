@@ -1506,6 +1506,7 @@ export default class Game extends Vue {
 }
 
 #scene {
+    width: 100%;
     margin-top: 40px;
     max-height: 100%;
     flex-grow: 1;
