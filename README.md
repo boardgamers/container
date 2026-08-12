@@ -1,7 +1,5 @@
 # Container
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/boardgamers/container)
-
 Mono repo containing the viewer & the engine for Gaia Container
 
 Checkout their READMEs:
