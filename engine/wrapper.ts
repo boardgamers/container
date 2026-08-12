@@ -25,7 +25,7 @@ export function factions(G: GameState) {
     return G.players.map((pl) => engine.playerColors[pl.id]);
 }
 
-export { ended, scores, stripSecret } from './src/engine';
+export { ended, moveAI, scores, stripSecret } from './src/engine';
 
 export function rankings(G: GameState) {
     const sortedPlayers = cloneDeep(G.players)
