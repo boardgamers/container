@@ -5,7 +5,11 @@
     "main": "dist/index.js",
     "types": "index.ts",
     "source": "index.ts",
-    "repository": "git@github.com:LucasAMello/container-engine.git",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/boardgamers/container.git",
+        "directory": "engine"
+    },
     "publishConfig": {
         "access": "public"
     },
