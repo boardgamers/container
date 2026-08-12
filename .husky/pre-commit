@@ -1,4 +1,11 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-pnpm run lint-staged
+# The system pnpm is a corepack shim running pnpm 11, which fails on this repo's
+# old (v5) lockfile. Prefer a repo-local pnpm 5 if one is installed.
+PNPM="$(git rev-parse --git-dir)/pnpm-local.sh"
+if [ ! -x "$PNPM" ]; then
+    PNPM="pnpm"
+fi
+
+"$PNPM" run lint-staged
