@@ -553,7 +553,7 @@ import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-prope
 import { MoveName, ended, move as engineMove } from 'container-engine';
 import type { GameState, Move } from 'container-engine';
 import { EventEmitter } from 'events';
-import { groupBy } from 'lodash';
+import { groupBy, isEqual } from 'lodash';
 import { ContainerState, DropZoneType, Piece, PieceType, ShipType, UIData, Preferences } from '../types/ui-data';
 import { ContainerColor, ShipPosition } from 'container-engine/src/gamestate';
 import { Container, Factory, Warehouse, Ship, LoanCard, Piece as PieceComponent } from './pieces';
@@ -651,9 +651,38 @@ export default class Game extends Vue {
             // progress, echoed back by the server — keep the buffer for those.
             this.committedState = JSON.parse(JSON.stringify(state));
             this.turnMoves = [];
+        } else if (state && !this.matchesTurnBuffer(state)) {
+            // Stale tentative echo: server responses can arrive after the buffer has
+            // changed (a move was undone — possibly down to an empty buffer, which
+            // re-emits nothing — or another move was made before the echo landed).
+            // Applying it would transiently show a phantom or regressed move; the echo
+            // for the current buffer (if any) will follow, so just drop this one.
+            return;
         }
 
         this.replaceState(state, false);
+    }
+
+    /**
+     * A tentative state is a valid preview only if it is the server's replay of
+     * exactly the current turn buffer: the visible log must extend the committed log
+     * by precisely the buffered moves, in order. (All tentative moves are visible-log
+     * moves — bids and bid-phase loans go to the hidden log but commit immediately.)
+     */
+    matchesTurnBuffer(state: GameState): boolean {
+        if (!this.committedState) {
+            return false;
+        }
+
+        const committedLength = this.committedState.log.length;
+
+        if (state.log.length !== committedLength + this.turnMoves.length) {
+            return false;
+        }
+
+        return state.log
+            .slice(committedLength)
+            .every((item, i) => item.type === 'move' && isEqual(item.move, this.turnMoves[i]));
     }
 
     replaceState(state: GameState, fake: boolean) {
