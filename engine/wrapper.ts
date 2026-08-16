@@ -122,7 +122,13 @@ export function replay(G: GameState) {
         G.players[i].name = oldPlayers[i].name;
     }
 
-    for (const move of oldG.log.filter((event) => event.type === 'move')) {
+    // The visible log freezes during the bid phase: bids and bid-phase loans go to
+    // `G.hiddenLog` and are only flushed to `G.log` when the accept/decline phase
+    // starts. A state saved mid-bid therefore keeps its newest moves in `hiddenLog`,
+    // and whenever `hiddenLog` is non-empty it holds exactly the moves made after the
+    // last visible entry, in order — so replaying the visible log followed by the
+    // hidden log reproduces the state faithfully.
+    for (const move of [...oldG.log, ...(oldG.hiddenLog ?? [])].filter((event) => event.type === 'move')) {
         asserts<LogMove>(move);
 
         G = engine.move(G, move.move, move.player);
@@ -174,7 +180,10 @@ export function logSlice(G: GameState, options?: { player?: number; start?: numb
             options?.end === undefined
                 ? stripped.players.map((pl) => pl.availableMoves)
                 : engine
-                      .stripSecret(replay({ ...G, log: G.log.slice(0, options!.end) }), options!.player)
+                      // Replaying a *truncated* log reconstructs a historical state, so
+                      // the hidden log (whose moves all come after the full visible log)
+                      // must not be appended to it.
+                      .stripSecret(replay({ ...G, log: G.log.slice(0, options!.end), hiddenLog: [] }), options!.player)
                       .players.map((pl) => pl.availableMoves),
     };
 }

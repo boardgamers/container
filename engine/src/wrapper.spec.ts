@@ -408,6 +408,24 @@ describe('wrapper (tentative turns)', () => {
         expect(platform.saved.currentPlayers).to.deep.equal([B]);
     });
 
+    it('should replay a state saved mid-bid-phase without dropping hidden log moves', async () => {
+        const platform = new Platform(3, 'wrapper-test-replay');
+        const { B, C } = await playToBidPhase(platform);
+
+        // One bid placed, plus a bid-phase loan: both live in the hidden log of the
+        // saved state (they are only flushed once the accept/decline phase starts)
+        await platform.send([{ name: MoveName.Bid, data: true, extraData: { price: 3 } }], B);
+        await platform.send([getLoan], C);
+        expect(platform.saved.hiddenLog).to.have.length(2);
+        expect(platform.saved.phase).to.equal(Phase.Bid);
+
+        // An admin full-replay of that save must reproduce it exactly, hidden bids included
+        const replayed = wrapper.replay(cloneDeep(platform.saved));
+        expect(JSON.parse(JSON.stringify(replayed))).to.deep.equal(JSON.parse(JSON.stringify(platform.saved)));
+        expect(replayed.players[B].bid).to.equal(3);
+        expect(replayed.players[C].loans).to.have.length(1);
+    });
+
     it('should always produce committed states from moveAI', async () => {
         let G = setup(2, {}, 'wrapper-test-ai');
         G.players.forEach((player, i) => {
