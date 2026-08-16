@@ -1,8 +1,9 @@
 import { ContainerPiece, ShipPosition } from 'container-engine/src/gamestate';
-import PieceComponent from '../components/pieces/Piece.vue';
+import Vue from 'vue';
 
 export interface UIData {
-    dragged?: PieceComponent | null;
+    /** The Piece component instance (Piece.vue) currently being dragged, if any */
+    dragged?: (Vue & { pieceType: PieceType; pieceId: string }) | null;
     waitingAnimations: number;
 }
 
