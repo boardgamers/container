@@ -1,3 +1,12 @@
 packages:
     - 'viewer'
     - 'engine'
+# Dependency build scripts are not needed: everything installs and builds with them
+# skipped (core-js/ejs postinstalls are ads, @parcel/watcher ships prebuilds, yorkie
+# is superseded by husky). Explicit so pnpm doesn't error on unreviewed builds.
+allowBuilds:
+    '@parcel/watcher': false
+    core-js: false
+    ejs: false
+    nodent-runtime: false
+    yorkie: false
