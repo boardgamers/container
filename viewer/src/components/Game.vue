@@ -551,7 +551,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
 import { MoveName, ended, move as engineMove } from 'container-engine';
-import type { GameState } from 'container-engine';
+import type { GameState, Move } from 'container-engine';
 import { EventEmitter } from 'events';
 import { groupBy } from 'lodash';
 import { ContainerState, DropZoneType, Piece, PieceType, ShipType, UIData, Preferences } from '../types/ui-data';
@@ -633,8 +633,26 @@ export default class Game extends Vue {
 
     totalBid: number = 0;
 
+    // Tentative-turn buffer: the moves of the current, not-yet-committed turn. The full
+    // buffer is (re)sent to the platform on every action and replayed server-side from
+    // the last committed state; undo simply pops the last move from it.
+    turnMoves: Move[] = [];
+
+    // Last committed state received from the platform. Undoing replays the shortened
+    // turn buffer from this state; when the buffer empties, the preview resets to it
+    // without any server call (the platform's saved state IS the turn start).
+    committedState: GameState | null = null;
+
     @Watch('state', { immediate: true })
     onStateChanged(state: GameState) {
+        if (state && state.newTurn !== false) {
+            // Committed state: the previous turn is final, clear the turn buffer.
+            // Tentative states (newTurn === false) are only ever our own turn in
+            // progress, echoed back by the server — keep the buffer for those.
+            this.committedState = JSON.parse(JSON.stringify(state));
+            this.turnMoves = [];
+        }
+
         this.replaceState(state, false);
     }
 
@@ -1016,7 +1034,26 @@ export default class Game extends Vue {
     }
 
     undo() {
-        this.sendMove({ name: MoveName.Undo, data: true });
+        if (this.turnMoves.length === 0 || !this.committedState) {
+            return;
+        }
+
+        this.turnMoves.pop();
+
+        // Rebuild the local preview by replaying the shortened buffer from the last
+        // committed state (fake mode: no side effects like upkeep or game end).
+        let state: GameState = JSON.parse(JSON.stringify(this.committedState));
+        for (const move of this.turnMoves) {
+            state = engineMove(state, move, this.player!, true);
+        }
+
+        this.replaceState(state, true);
+
+        if (this.turnMoves.length > 0) {
+            // Resend the shortened turn so the server echoes the matching tentative state
+            this.emitter.emit('move', [...this.turnMoves]);
+        }
+        // Empty buffer: nothing to send — nothing was ever persisted for this turn
     }
 
     loan(event) {
@@ -1061,9 +1098,20 @@ export default class Game extends Vue {
     }
 
     sendMove(move) {
-        this.emitter.emit('move', move);
+        // Send the WHOLE turn so far: the platform is stateless between calls and
+        // replays the buffer from the last committed (saved) state.
+        this.turnMoves.push(move);
+        this.emitter.emit('move', [...this.turnMoves]);
 
-        this.replaceState(engineMove(this.G!, move, this.player!, true), true);
+        const preview = engineMove(this.G!, move, this.player!, true);
+
+        if (preview.newTurn !== false) {
+            // This move completed the turn — it can no longer be undone. The server
+            // persists and broadcasts the committed state.
+            this.turnMoves = [];
+        }
+
+        this.replaceState(preview, true);
     }
 
     gameEnded(G: GameState) {
@@ -1184,10 +1232,8 @@ export default class Game extends Vue {
     canUndo() {
         if (!this.canMove) return false;
 
-        const currentPlayer = this.G!.players[this.player!];
-        const availableMoves = currentPlayer.availableMoves!;
-
-        return !!availableMoves[MoveName.Undo];
+        // Undo scope = the current tentative turn: anything still in the buffer
+        return this.turnMoves.length > 0;
     }
 
     canDecline() {

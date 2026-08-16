@@ -26,11 +26,24 @@ function launchSelfContained(selector = '#app') {
         playerIndex = AbstractJudge.currentPlayers[0];
     }
 
-    emitter.on('move', async (move: Move) => {
-        console.log('move received', move);
-        gameState = execMove(gameState, move, playerIndex);
-        console.log('new game state', gameState);
+    emitter.on('move', async (moves: Move | Move[]) => {
+        console.log('moves received', moves);
 
+        // Mimic the platform: replay the whole turn buffer from the last committed
+        // state; only keep (persist) the result once the turn is committed.
+        let newState = cloneDeep(gameState);
+        for (const move of Array.isArray(moves) ? moves : [moves]) {
+            newState = execMove(newState, move, playerIndex);
+        }
+        console.log('new game state', newState);
+
+        if (newState.newTurn === false) {
+            // Tentative: just echo the state back to the acting player
+            emitter.emit('state', cloneDeep(strip ? stripSecret(newState, playerIndex) : newState));
+            return;
+        }
+
+        gameState = newState;
         emitter.emit('state', cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState));
 
         let delay = 800;
