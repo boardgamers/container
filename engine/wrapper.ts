@@ -1,8 +1,9 @@
 import { cloneDeep } from 'lodash';
 import type { GameState } from './index';
 import * as engine from './src/engine';
+import { Phase } from './src/gamestate';
 import type { LogMove } from './src/log';
-import { Move } from './src/move';
+import { Move, MoveName } from './src/move';
 import { asserts } from './src/utils';
 
 export async function init(nbPlayers: number, expansions: string[], options: {}, seed?: string): Promise<GameState> {
@@ -144,10 +145,34 @@ export function round(G: GameState) {
 export async function dropPlayer(G: GameState, player: number) {
     G.players[player].isDropped = true;
 
-    engine.nextPlayer(G);
+    // Auto-play only the dropped player's own pending decision, if any. Everything
+    // else — in particular the other simultaneous bidders' turns during an auction —
+    // stays untouched: from here on the engine itself skips dropped players
+    // (`nextPlayer` recursion, the `!isDropped` filters in the auction logic).
+    if (G.currentPlayers.includes(player)) {
+        switch (G.phase) {
+            case Phase.Bid:
+                // A dropped bidder bids nothing (also covers the additional-bid round)
+                G = engine.move(G, { name: MoveName.Bid, data: true, extraData: { price: 0 } }, player);
+                break;
+
+            case Phase.AcceptDecline:
+                // A dropped auctioneer accepts the highest bid (Accept is always
+                // available; Decline requires enough money to pay the bid)
+                G = engine.move(G, { name: MoveName.Accept, data: G.highestBidders[0] }, player);
+                break;
+
+            default:
+                // Move phase: the dropped player simply passes, which advances the
+                // turn through the regular path (upkeep, next player's actions, ...)
+                G = engine.move(G, { name: MoveName.Pass, data: true }, player);
+                break;
+        }
+    }
 
     // Dropping a player always yields a committed state: tentative states are never
-    // persisted, so `G` was committed to begin with and the drop simply advances the turn.
+    // persisted, so `G` was committed to begin with, and the auto-played moves above
+    // (Bid / Accept / Pass) are all turn-boundary moves.
     G.newTurn = true;
 
     return G;

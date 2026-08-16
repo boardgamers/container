@@ -451,5 +451,49 @@ describe('wrapper (tentative turns)', () => {
         expect(wrapper.toSave(result)).to.not.be.undefined;
         expect(result.players[dropped].isDropped).to.be.true;
         expect(result.currentPlayers).to.not.include(dropped);
+        // The drop played the pending turn through the regular path: the next player
+        // got their upkeep (actions, available moves) and can actually play
+        expect(result.players[result.currentPlayers[0]].availableMoves).to.not.be.null;
+        expect(result.players[result.currentPlayers[0]].actions).to.equal(2);
+    });
+
+    it('should only auto-play the dropped bidder and keep the other bidders current', async () => {
+        const platform = new Platform(3, 'wrapper-test-drop-bid');
+        const { A, B, C } = await playToBidPhase(platform);
+
+        // Both B and C are deciding on their bids; dropping C must auto-play only C's
+        // pending bid and leave B's turn untouched
+        platform.saved = await wrapper.dropPlayer(platform.saved, C);
+        expect(wrapper.toSave(platform.saved)).to.not.be.undefined;
+        expect(platform.saved.phase).to.equal(Phase.Bid);
+        expect(platform.saved.currentPlayers).to.deep.equal([B]);
+        expect(platform.saved.players[B].availableMoves).to.not.be.null;
+
+        // B's bid then resolves the auction normally, with the dropped bidder excluded
+        const bid = await platform.send([{ name: MoveName.Bid, data: true, extraData: { price: 3 } }], B);
+        expect(bid.saved).to.be.true;
+        expect(platform.saved.phase).to.equal(Phase.AcceptDecline);
+        expect(platform.saved.currentPlayers).to.deep.equal([A]);
+        expect(platform.saved.highestBidders).to.deep.equal([B]);
+    });
+
+    it('should not advance the turn when dropping a player who is not up', async () => {
+        const platform = new Platform(3, 'wrapper-test-drop-idle');
+        const { A, B, C } = await playToBidPhase(platform);
+
+        // B has already bid; C is still deciding
+        await platform.send([{ name: MoveName.Bid, data: true, extraData: { price: 3 } }], B);
+        expect(platform.saved.currentPlayers).to.deep.equal([C]);
+
+        // Dropping B (not a current player) must not touch C's pending turn
+        platform.saved = await wrapper.dropPlayer(platform.saved, B);
+        expect(platform.saved.currentPlayers).to.deep.equal([C]);
+        expect(platform.saved.players[C].availableMoves).to.not.be.null;
+
+        // C's lower bid wins because dropped players are excluded from the auction
+        await platform.send([{ name: MoveName.Bid, data: true, extraData: { price: 2 } }], C);
+        expect(platform.saved.phase).to.equal(Phase.AcceptDecline);
+        expect(platform.saved.highestBidders).to.deep.equal([C]);
+        expect(platform.saved.currentPlayers).to.deep.equal([A]);
     });
 });

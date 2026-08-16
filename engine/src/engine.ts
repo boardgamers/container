@@ -475,10 +475,11 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                         .forEach((p) => {
                             p.showBid = true;
                         });
-                    const highestBid = Math.max(...G.players.map((p) => p.bid));
-                    const highestBidders = G.players
-                        .filter((p) => p.id != G.auctioningPlayer && !p.isDropped && p.bid === highestBid)
-                        .map((p) => p.id);
+                    // Only players still in the game can win the auction, so a dropped
+                    // player's bid must not enter the maximum either.
+                    const eligible = G.players.filter((p) => p.id != G.auctioningPlayer && !p.isDropped);
+                    const highestBid = Math.max(...eligible.map((p) => p.bid));
+                    const highestBidders = eligible.filter((p) => p.bid === highestBid).map((p) => p.id);
                     G.highestBidders = highestBidders;
                     if (highestBidders.length > 1) {
                         G.currentPlayers = highestBidders;
@@ -487,11 +488,10 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                         G.phase = Phase.AcceptDecline;
                     }
                 } else {
-                    const highestBid = Math.max(...G.players.map((p) => p.bid + p.additionalBid));
-                    const highestBidders = G.players
-                        .filter(
-                            (p) => p.id != G.auctioningPlayer && !p.isDropped && p.bid + p.additionalBid === highestBid
-                        )
+                    const eligible = G.players.filter((p) => p.id != G.auctioningPlayer && !p.isDropped);
+                    const highestBid = Math.max(...eligible.map((p) => p.bid + p.additionalBid));
+                    const highestBidders = eligible
+                        .filter((p) => p.bid + p.additionalBid === highestBid)
                         .map((p) => p.id);
                     G.highestBidders = highestBidders;
                     G.players.forEach((p) => {
