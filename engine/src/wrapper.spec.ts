@@ -107,6 +107,56 @@ describe('wrapper (tentative turns)', () => {
         expect(JSON.parse(JSON.stringify(truncated))).to.deep.equal(JSON.parse(JSON.stringify(shortened)));
     });
 
+    it('should reject a malformed buffer without leaking anything half-applied', async () => {
+        const platform = new Platform();
+        const A = platform.saved.currentPlayers[0];
+        const before = JSON.parse(JSON.stringify(platform.saved));
+
+        // A third loan is illegal (two loans per player at most): the buffer must be
+        // rejected even though its first two moves are legal.
+        let error: Error | null = null;
+        try {
+            await platform.send([getLoan, getLoan, getLoan], A);
+        } catch (err) {
+            error = err as Error;
+        }
+        expect(error, 'an illegal move mid-buffer must reject the whole buffer').to.not.be.null;
+
+        // Nothing half-applied leaked into the platform's saved state...
+        expect(JSON.parse(JSON.stringify(platform.saved))).to.deep.equal(before);
+
+        // ...and a valid buffer from that same state still works
+        const ok = await platform.send([getLoan, payLoan, pass], A);
+        expect(ok.saved).to.be.true;
+    });
+
+    it('should reject a buffer that keeps playing past a turn boundary', async () => {
+        // Degenerate case: the only other player is dropped, so the same player is up
+        // again right after passing — [Pass, Pass] is a sequence of individually legal
+        // moves that spans TWO turns. It must not commit both for one time increment.
+        const platform = new Platform();
+        const A = platform.saved.currentPlayers[0];
+        const B = 1 - A;
+        platform.saved = await wrapper.dropPlayer(platform.saved, B);
+
+        const before = JSON.parse(JSON.stringify(platform.saved));
+
+        let error: Error | null = null;
+        try {
+            await platform.send([pass, pass], A);
+        } catch (err) {
+            error = err as Error;
+        }
+        expect(error).to.not.be.null;
+        expect(error!.message).to.match(/turn boundary/);
+        expect(JSON.parse(JSON.stringify(platform.saved))).to.deep.equal(before);
+
+        // A buffer ending exactly on the turn boundary is still fine
+        const ok = await platform.send([getLoan, pass], A);
+        expect(ok.saved).to.be.true;
+        expect(platform.saved.currentPlayers).to.deep.equal([A]);
+    });
+
     it('should play a full auction with the right commit points and a never-shrinking log', async () => {
         const platform = new Platform();
         const A = platform.saved.currentPlayers[0];

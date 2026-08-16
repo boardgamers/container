@@ -38,8 +38,17 @@ export async function move(G: GameState, move: Move | Move[] | null | undefined,
         return { ...G, newTurn: false };
     }
 
-    for (const m of moves) {
-        G = engine.move(G, m, player);
+    for (let i = 0; i < moves.length; i++) {
+        G = engine.move(G, moves[i], player);
+
+        // The buffer must describe at most ONE turn: committing is what grants the
+        // mover their per-turn time increment. Without this guard a buffer like
+        // `[..., Pass, ...more]` — legal in the degenerate case where the same player
+        // is up again because everyone else dropped — would replay across the turn
+        // boundary and commit several turns for a single increment.
+        if (G.newTurn !== false && i < moves.length - 1) {
+            throw new Error('The turn buffer continues past a turn boundary: only one turn may be played per call');
+        }
     }
 
     return G;
@@ -77,7 +86,11 @@ export function moveAI(G: GameState, player: number): GameState {
     // Safety net — should be unreachable (Pass is always available in the move phase
     // and commits the turn). The state is consistent (every atomic move was legal and
     // logged), it just did not reach a turn boundary; persisting it keeps the game
-    // going instead of wedging it.
+    // going instead of wedging it. Shout so a would-be livelock is visible in the
+    // server logs instead of being silently masked.
+    console.error(
+        `moveAI: force-committing after 500 moves without reaching a turn boundary (player ${player}, phase ${G.phase}, round ${G.round})`
+    );
     G.newTurn = true;
 
     return G;
