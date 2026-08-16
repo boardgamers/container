@@ -916,6 +916,12 @@ export function nextPlayer(G: GameState) {
 }
 
 function doUpkeep(G: GameState) {
+    // Container seizures must be reproducible: the platform guarantees that the same
+    // seed yields the same game, and `wrapper.replay` re-runs upkeep from the log. The
+    // seed comes from the persisted state, and the visible log length uniquely
+    // identifies this upkeep within the game (each upkeep immediately follows its own
+    // Pass/Accept/Decline log entry), so together they pin a per-upkeep random stream.
+    const rng = seedrandom(`${G.seed}:upkeep:${G.log.length}`);
     const player = G.players[G.currentPlayers[0]];
     const loanCount = player.loans.length;
     const interest: string[] = [];
@@ -924,7 +930,7 @@ function doUpkeep(G: GameState) {
             player.money--;
             interest.push('money');
         } else if (player.containersOnIsland.length > 0) {
-            const container = removeRandom(player.containersOnIsland);
+            const container = removeRandom(player.containersOnIsland, rng);
             G.log.push({
                 type: 'event',
                 event: {
@@ -936,32 +942,32 @@ function doUpkeep(G: GameState) {
             });
         } else if (player.containersOnWarehouseStore.length + player.containersOnFactoryStore.length > 0) {
             if (player.containersOnWarehouseStore.length >= 2) {
-                const c1 = removeRandom(player.containersOnWarehouseStore);
-                const c2 = removeRandom(player.containersOnWarehouseStore);
+                const c1 = removeRandom(player.containersOnWarehouseStore, rng);
+                const c2 = removeRandom(player.containersOnWarehouseStore, rng);
                 G.log.push({
                     type: 'event',
                     event: {
                         name: GameEventName.Upkeep,
                         interest: `The bank seizes a ${containerColorHTML(
-                            c1.color
-                        )} container and a ${containerColorHTML(c2.color)} container from ${playerNameHTML(
+                            c1.piece.color
+                        )} container and a ${containerColorHTML(c2.piece.color)} container from ${playerNameHTML(
                             player
                         )}'s warehouses`,
                     },
                 });
             } else if (player.containersOnWarehouseStore.length == 1) {
-                const c1 = removeRandom(player.containersOnWarehouseStore);
+                const c1 = removeRandom(player.containersOnWarehouseStore, rng);
                 if (player.containersOnFactoryStore.length >= 1) {
-                    const c2 = removeRandom(player.containersOnFactoryStore);
+                    const c2 = removeRandom(player.containersOnFactoryStore, rng);
                     G.log.push({
                         type: 'event',
                         event: {
                             name: GameEventName.Upkeep,
                             interest: `The bank seizes a ${containerColorHTML(
-                                c1.color
-                            )} container from ${playerNameHTML(player)}'s warehouses and a ${
-                                c2.color
-                            } container from ${playerNameHTML(player)}'s factory`,
+                                c1.piece.color
+                            )} container from ${playerNameHTML(player)}'s warehouses and a ${containerColorHTML(
+                                c2.piece.color
+                            )} container from ${playerNameHTML(player)}'s factory`,
                         },
                     });
                 } else {
@@ -970,22 +976,22 @@ function doUpkeep(G: GameState) {
                         event: {
                             name: GameEventName.Upkeep,
                             interest: `The bank seizes a ${containerColorHTML(
-                                c1.color
+                                c1.piece.color
                             )} container from ${playerNameHTML(player)}'s warehouses`,
                         },
                     });
                 }
             } else {
-                const c1 = removeRandom(player.containersOnFactoryStore);
+                const c1 = removeRandom(player.containersOnFactoryStore, rng);
                 if (player.containersOnFactoryStore.length >= 1) {
-                    const c2 = removeRandom(player.containersOnFactoryStore);
+                    const c2 = removeRandom(player.containersOnFactoryStore, rng);
                     G.log.push({
                         type: 'event',
                         event: {
                             name: GameEventName.Upkeep,
                             interest: `The bank seizes a ${containerColorHTML(
-                                c1.color
-                            )} container and a ${containerColorHTML(c2.color)} container from ${playerNameHTML(
+                                c1.piece.color
+                            )} container and a ${containerColorHTML(c2.piece.color)} container from ${playerNameHTML(
                                 player
                             )}'s factory`,
                         },
@@ -996,7 +1002,7 @@ function doUpkeep(G: GameState) {
                         event: {
                             name: GameEventName.Upkeep,
                             interest: `The bank seizes a ${containerColorHTML(
-                                c1.color
+                                c1.piece.color
                             )} container from ${playerNameHTML(player)}'s factory`,
                         },
                     });
@@ -1044,8 +1050,8 @@ function remove(array, value) {
     return array.splice(array.indexOf(aux), 1);
 }
 
-function removeRandom(array) {
-    return array.splice(Math.floor(Math.random() * array.length), 1)[0];
+function removeRandom<T>(array: T[], rng: () => number): T {
+    return array.splice(Math.floor(rng() * array.length), 1)[0];
 }
 
 function prettyShipPosition(G: GameState, data: ShipPosition, simple = false): string {
