@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { chunk, cloneDeep, groupBy, isEqual, range, zip } from 'lodash';
+import { chunk, groupBy, isEqual, range, zip } from 'lodash';
 import seedrandom from 'seedrandom';
 import { availableMoves } from './available-moves';
 import pointCards from './cards';
@@ -880,29 +880,6 @@ function calculateEndScore(G: GameState) {
 
 export function scores(G: GameState): number[] {
     return ended(G) ? G.players.map((p) => p.money) : G.players.map((_) => 0);
-}
-
-export function reconstructState(initialState: GameState, log: LogItem[]): GameState {
-    const G = cloneDeep(initialState);
-
-    for (const item of log) {
-        switch (item.type) {
-            case 'event': {
-                break;
-            }
-
-            case 'phase': {
-                break;
-            }
-
-            case 'move': {
-                move(G, item.move, item.player);
-                break;
-            }
-        }
-    }
-
-    return G;
 }
 
 function playerBefore(player: Player, G: GameState) {
