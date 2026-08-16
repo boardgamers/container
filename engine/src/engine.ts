@@ -85,6 +85,7 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         hiddenLog: [],
         seed,
         round: 1,
+        newTurn: true,
     } as GameState;
 
     const colors = shuffle(containerColors, rng() + '');
@@ -608,18 +609,6 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
             break;
         }
-
-        case MoveName.Undo: {
-            asserts<Moves.MoveUndo>(move);
-
-            const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == 'move' && G.currentPlayers.includes(lastLog.player) && !fake) {
-                G.log.pop();
-                G = reconstructState(getBaseState(G), G.log);
-            }
-
-            return G;
-        }
     }
 
     player.availableMoves = null;
@@ -627,6 +616,22 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
     if (move.name != MoveName.GetLoan && move.name != MoveName.PayLoan) player.lastMove = move;
 
     G.currentPlayers.forEach((p) => (G.players[p].availableMoves = availableMoves(G, G.players[p])));
+
+    // Tentative-turn bookkeeping: the state is committed (`newTurn`) once the mover can
+    // no longer undo. This mirrors the old undo-availability rule — undo was offered
+    // whenever the last visible log entry was a move by a player still in
+    // `currentPlayers` — with turn-boundary moves committing unconditionally:
+    // - Pass / Accept / Decline end the turn (even in the edge case where the same
+    //   player is up again because everyone else is dropped);
+    // - Bid (and loans taken during the bid phase) go to the hidden log and were never
+    //   undoable: bids are single-move committed turns.
+    const lastLog = G.log[G.log.length - 1];
+    const turnBoundary =
+        move.name === MoveName.Pass ||
+        move.name === MoveName.Accept ||
+        move.name === MoveName.Decline ||
+        move.name === MoveName.Bid;
+    G.newTurn = turnBoundary || !(lastLog?.type === 'move' && G.currentPlayers.includes(lastLog.player));
 
     return G;
 }
@@ -682,7 +687,7 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
 
             data = dataArr[Math.floor(Math.random() * dataArr.length)];
 
-            if (moveName == MoveName.Undo || moveName == MoveName.GetLoan || moveName == MoveName.PayLoan) {
+            if (moveName == MoveName.GetLoan || moveName == MoveName.PayLoan) {
                 moveName = null;
             } else if (moveName == MoveName.Sail) {
                 if (data == ShipPosition.Island) {
@@ -1041,16 +1046,6 @@ function remove(array, value) {
 
 function removeRandom(array) {
     return array.splice(Math.floor(Math.random() * array.length), 1)[0];
-}
-
-function getBaseState(G: GameState): GameState {
-    const baseState = setup(G.players.length, G.options, G.seed);
-    baseState.players.forEach((player, i) => {
-        player.name = G.players[i].name;
-        player.isAI = G.players[i].isAI;
-    });
-
-    return baseState;
 }
 
 function prettyShipPosition(G: GameState, data: ShipPosition, simple = false): string {
