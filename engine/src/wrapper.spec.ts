@@ -107,6 +107,117 @@ describe('wrapper (tentative turns)', () => {
         expect(JSON.parse(JSON.stringify(truncated))).to.deep.equal(JSON.parse(JSON.stringify(shortened)));
     });
 
+    /**
+     * Scripted 3-player opening: plays committed turns until the starting player A has
+     * sailed to the island with one container, starting an auction where B and C (the
+     * next players in turn order) are the simultaneous bidders.
+     */
+    async function playToBidPhase(platform: Platform): Promise<{ A: number; B: number; C: number }> {
+        const A = platform.saved.currentPlayers[0];
+        const B = (A + 1) % 3;
+        const C = (A + 2) % 3;
+
+        // A buys from B's factory; B buys from A's factory (so B's warehouse store
+        // holds a container A can later pick up); C just passes.
+        await platform.send(
+            [
+                {
+                    name: MoveName.BuyFromFactory,
+                    data: { player: B, piece: platform.saved.players[B].containersOnFactoryStore[0].piece },
+                    extraData: { price: 2 },
+                },
+                pass,
+            ],
+            A
+        );
+        await platform.send(
+            [
+                {
+                    name: MoveName.BuyFromFactory,
+                    data: { player: A, piece: platform.saved.players[A].containersOnFactoryStore[0].piece },
+                    extraData: { price: 2 },
+                },
+                pass,
+            ],
+            B
+        );
+        await platform.send([pass], C);
+
+        // A picks up a container from B's warehouse...
+        await platform.send(
+            [
+                { name: MoveName.Sail, data: `playerHarbor${B}1` as ShipPosition },
+                {
+                    name: MoveName.BuyFromWarehouse,
+                    data: { player: B, piece: platform.saved.players[B].containersOnWarehouseStore[0].piece },
+                },
+                pass,
+            ],
+            A
+        );
+        await platform.send([pass], B);
+        await platform.send([pass], C);
+
+        // ...and sails to the island, starting the auction
+        await platform.send(
+            [
+                { name: MoveName.Sail, data: ShipPosition.OpenSea },
+                { name: MoveName.Sail, data: ShipPosition.Island },
+            ],
+            A
+        );
+
+        expect(platform.saved.phase).to.equal(Phase.Bid);
+        expect(platform.saved.currentPlayers).to.have.members([B, C]);
+
+        return { A, B, C };
+    }
+
+    it('should play a 3-player auction with a bid tie and an additional-bid round', async () => {
+        const platform = new Platform(3, 'wrapper-test-3p');
+        const { A, B, C } = await playToBidPhase(platform);
+
+        // Each bid is a single-move committed turn (bids live in the hidden log)
+        const bidB = await platform.send([{ name: MoveName.Bid, data: true, extraData: { price: 3 } }], B);
+        expect(bidB.saved).to.be.true;
+        expect(platform.saved.phase).to.equal(Phase.Bid);
+        expect(platform.saved.currentPlayers).to.deep.equal([C]);
+
+        // C matches B's bid: tie → additional-bid round between the tied bidders
+        const bidC = await platform.send([{ name: MoveName.Bid, data: true, extraData: { price: 3 } }], C);
+        expect(bidC.saved).to.be.true;
+        expect(platform.saved.phase).to.equal(Phase.Bid);
+        expect(platform.saved.highestBidders).to.have.members([B, C]);
+        expect(platform.saved.currentPlayers).to.have.members([B, C]);
+        // The bids are still hidden: nothing was flushed to the visible log yet
+        expect(platform.saved.hiddenLog).to.have.length(2);
+
+        // Additional bids, again one committed turn each; B outbids C
+        const addB = await platform.send([{ name: MoveName.Bid, data: true, extraData: { price: 2 } }], B);
+        expect(addB.saved).to.be.true;
+        expect(platform.saved.phase).to.equal(Phase.Bid);
+        expect(platform.saved.currentPlayers).to.deep.equal([C]);
+
+        const addC = await platform.send([{ name: MoveName.Bid, data: true, extraData: { price: 0 } }], C);
+        expect(addC.saved).to.be.true;
+
+        // The additional-bid round resolved the tie: the auctioneer decides, and the
+        // hidden bid moves surfaced in the visible log
+        expect(platform.saved.phase).to.equal(Phase.AcceptDecline);
+        expect(platform.saved.currentPlayers).to.deep.equal([A]);
+        expect(platform.saved.highestBidders).to.deep.equal([B]);
+        expect(platform.saved.hiddenLog).to.have.length(0);
+
+        const moneyA = platform.saved.players[A].money;
+        const moneyB = platform.saved.players[B].money;
+        const accept = await platform.send([{ name: MoveName.Accept, data: B }], A);
+        expect(accept.saved).to.be.true;
+        expect(platform.saved.phase).to.equal(Phase.Move);
+        expect(platform.saved.players[B].containersOnIsland).to.have.length(1);
+        expect(platform.saved.players[B].money).to.equal(moneyB - 5);
+        expect(platform.saved.players[A].money).to.equal(moneyA + 10);
+    });
+
     it('should reject a malformed buffer without leaking anything half-applied', async () => {
         const platform = new Platform();
         const A = platform.saved.currentPlayers[0];
