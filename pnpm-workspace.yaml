@@ -15,3 +15,13 @@ allowBuilds:
 # (vue 3) peer and the cli-plugin-typescript shim crashes the viewer build (CI-only,
 # fresh installs). vue-template-compiler is the correct vue2 path.
 autoInstallPeers: false
+
+# The cli-plugin-typescript fork-ts-checker shim does a bare
+# require('@vue/compiler-sfc') expecting the vue-3 parse shape ({descriptor}).
+# It declares no such dependency, so resolution falls back to pnpm's hidden
+# hoist, where EITHER 3.5.41 (works) or vue 2.7's 2.7.16 (legacy shape,
+# crashes the build) may win depending on layout. Pin it explicitly.
+packageExtensions:
+    '@vue/cli-plugin-typescript':
+        dependencies:
+            '@vue/compiler-sfc': ^3.5.41
