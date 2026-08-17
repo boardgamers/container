@@ -38,8 +38,10 @@ function launchSelfContained(selector = '#app') {
         console.log('new game state', newState);
 
         if (newState.newTurn === false) {
-            // Tentative: just echo the state back to the acting player
-            emitter.emit('state', cloneDeep(strip ? stripSecret(newState, playerIndex) : newState));
+            // Tentative: just echo the state back to the acting player. Delayed like on
+            // the real platform, where the echo arrives over the network mid-animation.
+            const echo = cloneDeep(strip ? stripSecret(newState, playerIndex) : newState);
+            setTimeout(() => emitter.emit('state', echo), 300);
             return;
         }
 

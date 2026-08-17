@@ -658,6 +658,16 @@ export default class Game extends Vue {
             // Applying it would transiently show a phantom or regressed move; the echo
             // for the current buffer (if any) will follow, so just drop this one.
             return;
+        } else if (state) {
+            // Matching tentative echo: the server replayed exactly the current turn
+            // buffer, which the local preview already painted synchronously when the
+            // move was made (sendMove/undo). Replacing the state again would rebuild
+            // every piece while the drop animation is still in flight — the piece
+            // shows at its destination instantly AND tweens there from the drop point.
+            // Only play the move sound the replace would have played (local previews
+            // are silent, see replaceState's fake flag).
+            this.playMoveSound();
+            return;
         }
 
         this.replaceState(state, false);
@@ -690,7 +700,13 @@ export default class Game extends Vue {
 
         this.createPieces();
 
-        if (!fake && this.preferences.sound && this.G?.log[this.G?.log.length - 1].type == 'move') {
+        if (!fake) {
+            this.playMoveSound();
+        }
+    }
+
+    playMoveSound() {
+        if (this.preferences.sound && this.G?.log[this.G?.log.length - 1].type == 'move') {
             const move = (this.G?.log[this.G?.log.length - 1] as LogMove).move;
             if (move.name == MoveName.Pass && this.G.currentPlayers.includes(this.player!)) {
                 (document.getElementById('notification')!.cloneNode(true) as HTMLAudioElement).play();
