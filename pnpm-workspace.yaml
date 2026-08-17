@@ -10,3 +10,8 @@ allowBuilds:
     ejs: false
     nodent-runtime: false
     yorkie: false
+
+# vue2 project: without this, pnpm auto-installs @vue/cli's optional @vue/compiler-sfc
+# (vue 3) peer and the cli-plugin-typescript shim crashes the viewer build (CI-only,
+# fresh installs). vue-template-compiler is the correct vue2 path.
+autoInstallPeers: false
