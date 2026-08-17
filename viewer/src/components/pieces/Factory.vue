@@ -13,7 +13,7 @@ import Piece from './Piece.vue';
 @Component({
     created(this: Factory) {
         this.pieceType = PieceType.Factory;
-    }
+    },
 })
 export default class Factory extends Mixins(Piece) {
     @Prop()

@@ -1,8 +1,9 @@
 import { cloneDeep } from 'lodash';
 import type { GameState } from './index';
 import * as engine from './src/engine';
+import { Phase } from './src/gamestate';
 import type { LogMove } from './src/log';
-import { Move } from './src/move';
+import { Move, MoveName } from './src/move';
 import { asserts } from './src/utils';
 
 export async function init(nbPlayers: number, expansions: string[], options: {}, seed?: string): Promise<GameState> {
@@ -15,17 +16,86 @@ export function setPlayerMetaData(G: GameState, player: number, metaData: { name
     return G;
 }
 
-export async function move(G: GameState, move: Move, player: number) {
-    G = engine.move(G, move, player);
+/**
+ * Execute the current turn of `player` so far.
+ *
+ * The payload is the **whole turn buffer**: an array of atomic moves accumulated by the
+ * viewer since the last committed state. `G` is always a committed state (tentative
+ * states are never persisted by the platform), so the buffer is replayed from it in
+ * order. A bare move object is also accepted and treated as a one-element buffer.
+ *
+ * While the resulting state is still tentative (the mover could undo, i.e.
+ * `G.newTurn === false`), `toSave` returns `undefined`: the platform then sends the
+ * tentative state back to the acting player without persisting it or granting a time
+ * increment. Undo is implemented by the viewer replaying a shortened buffer — or, when
+ * the buffer empties, by doing nothing at all, since the saved state *is* the turn start.
+ */
+export async function move(G: GameState, move: Move | Move[] | null | undefined, player: number) {
+    const moves: Move[] = move == null ? [] : Array.isArray(move) ? move : [move];
+
+    if (moves.length === 0) {
+        // Nothing to apply — flag the result as tentative so nothing gets persisted
+        // and no time increment is granted.
+        return { ...G, newTurn: false };
+    }
+
+    for (let i = 0; i < moves.length; i++) {
+        G = engine.move(G, moves[i], player);
+
+        // The buffer must describe at most ONE turn: committing is what grants the
+        // mover their per-turn time increment. Without this guard a buffer like
+        // `[..., Pass, ...more]` — legal in the degenerate case where the same player
+        // is up again because everyone else dropped — would replay across the turn
+        // boundary and commit several turns for a single increment.
+        if (G.newTurn !== false && i < moves.length - 1) {
+            throw new Error('The turn buffer continues past a turn boundary: only one turn may be played per call');
+        }
+    }
 
     return G;
+}
+
+/**
+ * Only committed states are persisted. Tentative states (mid-turn, still undoable)
+ * return `undefined` so the platform neither saves them nor grants a time increment.
+ */
+export function toSave(G: GameState): GameState | undefined {
+    return G.newTurn === false ? undefined : G;
 }
 
 export function factions(G: GameState) {
     return G.players.map((pl) => engine.playerColors[pl.id]);
 }
 
-export { ended, moveAI, scores, stripSecret } from './src/engine';
+export { ended, scores, stripSecret } from './src/engine';
+
+/**
+ * Play a full turn for `player`. The engine's own `moveAI` plays one atomic move at a
+ * time, which can leave the state tentative (`toSave` would refuse to persist it); the
+ * platform's bot driver and `dropPlayer` auto-play both require committed states, so we
+ * keep playing until the turn commits.
+ */
+export function moveAI(G: GameState, player: number): GameState {
+    for (let i = 0; i < 500 && !engine.ended(G) && G.currentPlayers.includes(player); i++) {
+        G = engine.moveAI(G, player);
+
+        if (G.newTurn !== false) {
+            return G;
+        }
+    }
+
+    // Safety net — should be unreachable (Pass is always available in the move phase
+    // and commits the turn). The state is consistent (every atomic move was legal and
+    // logged), it just did not reach a turn boundary; persisting it keeps the game
+    // going instead of wedging it. Shout so a would-be livelock is visible in the
+    // server logs instead of being silently masked.
+    console.error(
+        `moveAI: force-committing after 500 moves without reaching a turn boundary (player ${player}, phase ${G.phase}, round ${G.round})`
+    );
+    G.newTurn = true;
+
+    return G;
+}
 
 export function rankings(G: GameState) {
     const sortedPlayers = cloneDeep(G.players)
@@ -53,7 +123,13 @@ export function replay(G: GameState) {
         G.players[i].name = oldPlayers[i].name;
     }
 
-    for (const move of oldG.log.filter((event) => event.type === 'move')) {
+    // The visible log freezes during the bid phase: bids and bid-phase loans go to
+    // `G.hiddenLog` and are only flushed to `G.log` when the accept/decline phase
+    // starts. A state saved mid-bid therefore keeps its newest moves in `hiddenLog`,
+    // and whenever `hiddenLog` is non-empty it holds exactly the moves made after the
+    // last visible entry, in order — so replaying the visible log followed by the
+    // hidden log reproduces the state faithfully.
+    for (const move of [...oldG.log, ...(oldG.hiddenLog ?? [])].filter((event) => event.type === 'move')) {
         asserts<LogMove>(move);
 
         G = engine.move(G, move.move, move.player);
@@ -69,7 +145,35 @@ export function round(G: GameState) {
 export async function dropPlayer(G: GameState, player: number) {
     G.players[player].isDropped = true;
 
-    engine.nextPlayer(G);
+    // Auto-play only the dropped player's own pending decision, if any. Everything
+    // else — in particular the other simultaneous bidders' turns during an auction —
+    // stays untouched: from here on the engine itself skips dropped players
+    // (`nextPlayer` recursion, the `!isDropped` filters in the auction logic).
+    if (G.currentPlayers.includes(player)) {
+        switch (G.phase) {
+            case Phase.Bid:
+                // A dropped bidder bids nothing (also covers the additional-bid round)
+                G = engine.move(G, { name: MoveName.Bid, data: true, extraData: { price: 0 } }, player);
+                break;
+
+            case Phase.AcceptDecline:
+                // A dropped auctioneer accepts the highest bid (Accept is always
+                // available; Decline requires enough money to pay the bid)
+                G = engine.move(G, { name: MoveName.Accept, data: G.highestBidders[0] }, player);
+                break;
+
+            default:
+                // Move phase: the dropped player simply passes, which advances the
+                // turn through the regular path (upkeep, next player's actions, ...)
+                G = engine.move(G, { name: MoveName.Pass, data: true }, player);
+                break;
+        }
+    }
+
+    // Dropping a player always yields a committed state: tentative states are never
+    // persisted, so `G` was committed to begin with, and the auto-played moves above
+    // (Bid / Accept / Pass) are all turn-boundary moves.
+    G.newTurn = true;
 
     return G;
 }
@@ -92,12 +196,19 @@ export function logLength(G: GameState, _player?: number) {
 export function logSlice(G: GameState, options?: { player?: number; start?: number; end?: number }) {
     const stripped = engine.stripSecret(G, options?.player);
     return {
+        // The full (stripped) state. This is how the acting player's viewer receives
+        // tentative states: they are never persisted or broadcast, only returned in the
+        // move response's log slice.
+        state: stripped,
         log: stripped.log.slice(options?.start, options?.end),
         availableMoves:
             options?.end === undefined
                 ? stripped.players.map((pl) => pl.availableMoves)
                 : engine
-                      .stripSecret(replay({ ...G, log: G.log.slice(0, options!.end) }), options!.player)
+                      // Replaying a *truncated* log reconstructs a historical state, so
+                      // the hidden log (whose moves all come after the full visible log)
+                      // must not be appended to it.
+                      .stripSecret(replay({ ...G, log: G.log.slice(0, options!.end), hiddenLog: [] }), options!.player)
                       .players.map((pl) => pl.availableMoves),
     };
 }

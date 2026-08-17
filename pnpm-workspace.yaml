@@ -1,3 +1,27 @@
 packages:
     - 'viewer'
     - 'engine'
+# Dependency build scripts are not needed: everything installs and builds with them
+# skipped (core-js/ejs postinstalls are ads, @parcel/watcher ships prebuilds, yorkie
+# is superseded by husky). Explicit so pnpm doesn't error on unreviewed builds.
+allowBuilds:
+    '@parcel/watcher': false
+    core-js: false
+    ejs: false
+    nodent-runtime: false
+    yorkie: false
+
+# vue2 project: without this, pnpm auto-installs @vue/cli's optional @vue/compiler-sfc
+# (vue 3) peer and the cli-plugin-typescript shim crashes the viewer build (CI-only,
+# fresh installs). vue-template-compiler is the correct vue2 path.
+autoInstallPeers: false
+
+# The cli-plugin-typescript fork-ts-checker shim does a bare
+# require('@vue/compiler-sfc') expecting the vue-3 parse shape ({descriptor}).
+# It declares no such dependency, so resolution falls back to pnpm's hidden
+# hoist, where EITHER 3.5.41 (works) or vue 2.7's 2.7.16 (legacy shape,
+# crashes the build) may win depending on layout. Pin it explicitly.
+packageExtensions:
+    '@vue/cli-plugin-typescript':
+        dependencies:
+            '@vue/compiler-sfc': ^3.5.41

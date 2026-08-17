@@ -13,10 +13,14 @@ function launch(selector: string) {
     } = {
         state: null,
         emitter: new EventEmitter(),
-        preferences: {
+        // Observable so preference changes update the UI immediately: Game receives
+        // this object as a prop, and Vue 2 does not deep-observe prop values coming
+        // from a non-reactive parent — plain-object mutations (the in-game sound/help
+        // toggles, platform preference pushes) would only paint on the next re-render.
+        preferences: Vue.observable({
             sound: true,
             disableHelp: false,
-        },
+        }),
     };
 
     const app = new Vue({
@@ -25,7 +29,9 @@ function launch(selector: string) {
 
     const item: EventEmitter = new EventEmitter();
 
-    params.emitter.on('move', (move: Move) => item.emit('move', move));
+    // The move payload is the whole current turn so far (an array of atomic moves),
+    // replayed by the engine wrapper from the last committed state.
+    params.emitter.on('move', (moves: Move[]) => item.emit('move', moves));
     params.emitter.on('addLog', (data: string[]) => item.emit('addLog', data));
     params.emitter.on('replaceLog', (data: string[]) => item.emit('replaceLog', data));
     params.emitter.on('update:preference', (data: { name: string; value: any }) =>
@@ -43,10 +49,21 @@ function launch(selector: string) {
         app.$forceUpdate();
     });
     item.addListener('preferences', (data) => {
-        params.preferences = { ...params.preferences, ...data };
+        // Mutate (don't replace) the observable object so the update stays reactive
+        Object.assign(params.preferences, data);
         app.$forceUpdate();
     });
-    item.addListener('gamelog', (_) => item.emit('fetchState'));
+    item.addListener('gamelog', (logData) => {
+        if (logData?.data?.state) {
+            // Move responses carry the (possibly tentative) resulting state. Tentative
+            // states are never persisted or broadcast by the platform — this is the only
+            // way they reach the acting player's viewer.
+            params.state = logData.data.state;
+            app.$forceUpdate();
+        } else {
+            item.emit('fetchState');
+        }
+    });
 
     return item;
 }

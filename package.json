@@ -10,7 +10,7 @@
         "husky": "^5.0.9",
         "lint-staged": "^10.5.4",
         "prettier": "^2.2.1",
-        "prettier-plugin-organize-imports": "^1.1.1",
+        "prettier-plugin-organize-imports": "^3.2.4",
         "typescript": "^4.1.5"
     },
     "lint-staged": {

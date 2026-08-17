@@ -12,8 +12,7 @@ import Piece from './Piece.vue';
 @Component({
     created(this: Warehouse) {
         this.pieceType = PieceType.Warehouse;
-    }
+    },
 })
-export default class Warehouse extends Mixins(Piece) {
-}
+export default class Warehouse extends Mixins(Piece) {}
 </script>

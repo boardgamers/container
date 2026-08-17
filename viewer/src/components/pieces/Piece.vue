@@ -6,7 +6,7 @@ import { PieceType, UIData } from '@/types/ui-data';
 
 @Component({
     created(this: Piece) {
-        this.$on('draggedTo', (coords: { x: number, y: number }) => {
+        this.$on('draggedTo', (coords: { x: number; y: number }) => {
             [this.currentX, this.currentY] = [coords.x, coords.y];
 
             this.$nextTick(() => {
@@ -19,14 +19,14 @@ import { PieceType, UIData } from '@/types/ui-data';
     },
     beforeDestroy(this: Piece) {
         this.onTransitionEnd();
-    }
+    },
 })
 export default class Piece extends Draggable {
     @Prop({ default: () => ({ x: 20, y: 20, rotate: 0 }) })
     targetState!: {
-        x: number,
-        y: number,
-        rotate: number
+        x: number;
+        y: number;
+        rotate: number;
     };
 
     @Prop()
@@ -84,7 +84,7 @@ export default class Piece extends Draggable {
                 this.startTransitioning();
             } else {
                 this.moving = true;
-                setTimeout(() => this.moving = false, 800);
+                setTimeout(() => (this.moving = false), 800);
             }
         }
 
@@ -121,7 +121,7 @@ export default class Piece extends Draggable {
     }
 
     get elId() {
-        return this.dragging ? 'dragged' : (this.transitioning || this.moving ? 'moving' : undefined);
+        return this.dragging ? 'dragged' : this.transitioning || this.moving ? 'moving' : undefined;
     }
 }
 </script>

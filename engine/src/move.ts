@@ -88,11 +88,6 @@ export declare namespace Moves {
         name: MoveName.Pass;
         data: boolean;
     }
-
-    export interface MoveUndo {
-        name: MoveName.Undo;
-        data: boolean;
-    }
 }
 
 export type Move =
@@ -110,7 +105,6 @@ export type Move =
     | Moves.MoveAccept
     | Moves.MoveDecline
     | Moves.MovePass
-    | Moves.MoveUndo
     | Moves.MoveDomesticSale;
 
 export enum MoveName {
@@ -129,5 +123,4 @@ export enum MoveName {
     Accept = 'accept',
     Decline = 'decline',
     Pass = 'pass',
-    Undo = 'undo',
 }

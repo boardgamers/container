@@ -16,7 +16,7 @@ import Piece from './Piece.vue';
 @Component({
     created(this: LoanCard) {
         this.pieceType = PieceType.Loan;
-    }
+    },
 })
 export default class LoanCard extends Mixins(Piece) {
     @Prop()

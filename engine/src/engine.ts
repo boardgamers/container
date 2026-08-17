@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { chunk, cloneDeep, groupBy, isEqual, range, zip } from 'lodash';
+import { chunk, groupBy, isEqual, range, zip } from 'lodash';
 import seedrandom from 'seedrandom';
 import { availableMoves } from './available-moves';
 import pointCards from './cards';
@@ -85,6 +85,7 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         hiddenLog: [],
         seed,
         round: 1,
+        newTurn: true,
     } as GameState;
 
     const colors = shuffle(containerColors, rng() + '');
@@ -474,10 +475,11 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                         .forEach((p) => {
                             p.showBid = true;
                         });
-                    const highestBid = Math.max(...G.players.map((p) => p.bid));
-                    const highestBidders = G.players
-                        .filter((p) => p.id != G.auctioningPlayer && !p.isDropped && p.bid === highestBid)
-                        .map((p) => p.id);
+                    // Only players still in the game can win the auction, so a dropped
+                    // player's bid must not enter the maximum either.
+                    const eligible = G.players.filter((p) => p.id != G.auctioningPlayer && !p.isDropped);
+                    const highestBid = Math.max(...eligible.map((p) => p.bid));
+                    const highestBidders = eligible.filter((p) => p.bid === highestBid).map((p) => p.id);
                     G.highestBidders = highestBidders;
                     if (highestBidders.length > 1) {
                         G.currentPlayers = highestBidders;
@@ -486,11 +488,10 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                         G.phase = Phase.AcceptDecline;
                     }
                 } else {
-                    const highestBid = Math.max(...G.players.map((p) => p.bid + p.additionalBid));
-                    const highestBidders = G.players
-                        .filter(
-                            (p) => p.id != G.auctioningPlayer && !p.isDropped && p.bid + p.additionalBid === highestBid
-                        )
+                    const eligible = G.players.filter((p) => p.id != G.auctioningPlayer && !p.isDropped);
+                    const highestBid = Math.max(...eligible.map((p) => p.bid + p.additionalBid));
+                    const highestBidders = eligible
+                        .filter((p) => p.bid + p.additionalBid === highestBid)
                         .map((p) => p.id);
                     G.highestBidders = highestBidders;
                     G.players.forEach((p) => {
@@ -608,18 +609,6 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
             break;
         }
-
-        case MoveName.Undo: {
-            asserts<Moves.MoveUndo>(move);
-
-            const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == 'move' && G.currentPlayers.includes(lastLog.player) && !fake) {
-                G.log.pop();
-                G = reconstructState(getBaseState(G), G.log);
-            }
-
-            return G;
-        }
     }
 
     player.availableMoves = null;
@@ -627,6 +616,22 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
     if (move.name != MoveName.GetLoan && move.name != MoveName.PayLoan) player.lastMove = move;
 
     G.currentPlayers.forEach((p) => (G.players[p].availableMoves = availableMoves(G, G.players[p])));
+
+    // Tentative-turn bookkeeping: the state is committed (`newTurn`) once the mover can
+    // no longer undo. This mirrors the old undo-availability rule — undo was offered
+    // whenever the last visible log entry was a move by a player still in
+    // `currentPlayers` — with turn-boundary moves committing unconditionally:
+    // - Pass / Accept / Decline end the turn (even in the edge case where the same
+    //   player is up again because everyone else is dropped);
+    // - Bid (and loans taken during the bid phase) go to the hidden log and were never
+    //   undoable: bids are single-move committed turns.
+    const lastLog = G.log[G.log.length - 1];
+    const turnBoundary =
+        move.name === MoveName.Pass ||
+        move.name === MoveName.Accept ||
+        move.name === MoveName.Decline ||
+        move.name === MoveName.Bid;
+    G.newTurn = turnBoundary || !(lastLog?.type === 'move' && G.currentPlayers.includes(lastLog.player));
 
     return G;
 }
@@ -682,7 +687,7 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
 
             data = dataArr[Math.floor(Math.random() * dataArr.length)];
 
-            if (moveName == MoveName.Undo || moveName == MoveName.GetLoan || moveName == MoveName.PayLoan) {
+            if (moveName == MoveName.GetLoan || moveName == MoveName.PayLoan) {
                 moveName = null;
             } else if (moveName == MoveName.Sail) {
                 if (data == ShipPosition.Island) {
@@ -877,29 +882,6 @@ export function scores(G: GameState): number[] {
     return ended(G) ? G.players.map((p) => p.money) : G.players.map((_) => 0);
 }
 
-export function reconstructState(initialState: GameState, log: LogItem[]): GameState {
-    const G = cloneDeep(initialState);
-
-    for (const item of log) {
-        switch (item.type) {
-            case 'event': {
-                break;
-            }
-
-            case 'phase': {
-                break;
-            }
-
-            case 'move': {
-                move(G, item.move, item.player);
-                break;
-            }
-        }
-    }
-
-    return G;
-}
-
 function playerBefore(player: Player, G: GameState) {
     return player.id === 0 ? G.players[G.players.length - 1] : G.players[player.id - 1];
 }
@@ -911,6 +893,12 @@ export function nextPlayer(G: GameState) {
 }
 
 function doUpkeep(G: GameState) {
+    // Container seizures must be reproducible: the platform guarantees that the same
+    // seed yields the same game, and `wrapper.replay` re-runs upkeep from the log. The
+    // seed comes from the persisted state, and the visible log length uniquely
+    // identifies this upkeep within the game (each upkeep immediately follows its own
+    // Pass/Accept/Decline log entry), so together they pin a per-upkeep random stream.
+    const rng = seedrandom(`${G.seed}:upkeep:${G.log.length}`);
     const player = G.players[G.currentPlayers[0]];
     const loanCount = player.loans.length;
     const interest: string[] = [];
@@ -919,7 +907,7 @@ function doUpkeep(G: GameState) {
             player.money--;
             interest.push('money');
         } else if (player.containersOnIsland.length > 0) {
-            const container = removeRandom(player.containersOnIsland);
+            const container = removeRandom(player.containersOnIsland, rng);
             G.log.push({
                 type: 'event',
                 event: {
@@ -931,32 +919,32 @@ function doUpkeep(G: GameState) {
             });
         } else if (player.containersOnWarehouseStore.length + player.containersOnFactoryStore.length > 0) {
             if (player.containersOnWarehouseStore.length >= 2) {
-                const c1 = removeRandom(player.containersOnWarehouseStore);
-                const c2 = removeRandom(player.containersOnWarehouseStore);
+                const c1 = removeRandom(player.containersOnWarehouseStore, rng);
+                const c2 = removeRandom(player.containersOnWarehouseStore, rng);
                 G.log.push({
                     type: 'event',
                     event: {
                         name: GameEventName.Upkeep,
                         interest: `The bank seizes a ${containerColorHTML(
-                            c1.color
-                        )} container and a ${containerColorHTML(c2.color)} container from ${playerNameHTML(
+                            c1.piece.color
+                        )} container and a ${containerColorHTML(c2.piece.color)} container from ${playerNameHTML(
                             player
                         )}'s warehouses`,
                     },
                 });
             } else if (player.containersOnWarehouseStore.length == 1) {
-                const c1 = removeRandom(player.containersOnWarehouseStore);
+                const c1 = removeRandom(player.containersOnWarehouseStore, rng);
                 if (player.containersOnFactoryStore.length >= 1) {
-                    const c2 = removeRandom(player.containersOnFactoryStore);
+                    const c2 = removeRandom(player.containersOnFactoryStore, rng);
                     G.log.push({
                         type: 'event',
                         event: {
                             name: GameEventName.Upkeep,
                             interest: `The bank seizes a ${containerColorHTML(
-                                c1.color
-                            )} container from ${playerNameHTML(player)}'s warehouses and a ${
-                                c2.color
-                            } container from ${playerNameHTML(player)}'s factory`,
+                                c1.piece.color
+                            )} container from ${playerNameHTML(player)}'s warehouses and a ${containerColorHTML(
+                                c2.piece.color
+                            )} container from ${playerNameHTML(player)}'s factory`,
                         },
                     });
                 } else {
@@ -965,22 +953,22 @@ function doUpkeep(G: GameState) {
                         event: {
                             name: GameEventName.Upkeep,
                             interest: `The bank seizes a ${containerColorHTML(
-                                c1.color
+                                c1.piece.color
                             )} container from ${playerNameHTML(player)}'s warehouses`,
                         },
                     });
                 }
             } else {
-                const c1 = removeRandom(player.containersOnFactoryStore);
+                const c1 = removeRandom(player.containersOnFactoryStore, rng);
                 if (player.containersOnFactoryStore.length >= 1) {
-                    const c2 = removeRandom(player.containersOnFactoryStore);
+                    const c2 = removeRandom(player.containersOnFactoryStore, rng);
                     G.log.push({
                         type: 'event',
                         event: {
                             name: GameEventName.Upkeep,
                             interest: `The bank seizes a ${containerColorHTML(
-                                c1.color
-                            )} container and a ${containerColorHTML(c2.color)} container from ${playerNameHTML(
+                                c1.piece.color
+                            )} container and a ${containerColorHTML(c2.piece.color)} container from ${playerNameHTML(
                                 player
                             )}'s factory`,
                         },
@@ -991,7 +979,7 @@ function doUpkeep(G: GameState) {
                         event: {
                             name: GameEventName.Upkeep,
                             interest: `The bank seizes a ${containerColorHTML(
-                                c1.color
+                                c1.piece.color
                             )} container from ${playerNameHTML(player)}'s factory`,
                         },
                     });
@@ -1039,18 +1027,8 @@ function remove(array, value) {
     return array.splice(array.indexOf(aux), 1);
 }
 
-function removeRandom(array) {
-    return array.splice(Math.floor(Math.random() * array.length), 1)[0];
-}
-
-function getBaseState(G: GameState): GameState {
-    const baseState = setup(G.players.length, G.options, G.seed);
-    baseState.players.forEach((player, i) => {
-        player.name = G.players[i].name;
-        player.isAI = G.players[i].isAI;
-    });
-
-    return baseState;
+function removeRandom<T>(array: T[], rng: () => number): T {
+    return array.splice(Math.floor(rng() * array.length), 1)[0];
 }
 
 function prettyShipPosition(G: GameState, data: ShipPosition, simple = false): string {

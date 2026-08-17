@@ -135,4 +135,11 @@ export interface GameState {
     hiddenLog: LogItem[];
     seed: string;
     round: number;
+    /**
+     * Tentative-turn marker. `true` (or `undefined`, for robustness) when the state is
+     * committed: the last mover can no longer undo and the state can be persisted.
+     * `false` while a player's turn is still in progress (mid-turn moves can be undone
+     * by the viewer by replaying a shortened turn buffer from the last committed state).
+     */
+    newTurn?: boolean;
 }

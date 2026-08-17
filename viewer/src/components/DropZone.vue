@@ -136,7 +136,7 @@ export default class DropZone extends Vue {
                         if (!this.availableMoves[MoveName.DomesticSale]?.find((c) => c.id === container.pieceId)) {
                             return false;
                         }
-                    } else  if (this.data.type != DropZoneType.FactoryStore) {
+                    } else if (this.data.type != DropZoneType.FactoryStore) {
                         return false;
                     }
                 } else {
@@ -148,7 +148,7 @@ export default class DropZone extends Vue {
                         if (!this.availableMoves[MoveName.DomesticSale]?.find((c) => c.id === container.pieceId)) {
                             return false;
                         }
-                    } else  if (this.data.type != DropZoneType.WarehouseStore) {
+                    } else if (this.data.type != DropZoneType.WarehouseStore) {
                         return false;
                     }
                 } else {

@@ -7,8 +7,8 @@ import { Vue, Component, Prop } from 'vue-property-decorator';
             const endDrag = () => this.endDrag();
             const drag = (event: MouseEvent | TouchEvent) => this.drag(event);
 
-            this.htmlElement.addEventListener('mousedown', event => this.startDrag(event));
-            this.htmlElement.addEventListener('touchstart', event => this.startDrag(event));
+            this.htmlElement.addEventListener('mousedown', (event) => this.startDrag(event));
+            this.htmlElement.addEventListener('touchstart', (event) => this.startDrag(event));
 
             this.svgElement.addEventListener('touchmove', drag);
             this.svgElement.addEventListener('touchend', endDrag);
@@ -28,7 +28,7 @@ import { Vue, Component, Prop } from 'vue-property-decorator';
             this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('mouseup', endDrag));
             this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('mousemove', drag));
         });
-    }
+    },
 })
 export default class Draggable extends Vue {
     @Prop()
@@ -48,8 +48,7 @@ export default class Draggable extends Vue {
     }
 
     startDrag(evt: MouseEvent | TouchEvent) {
-        if (!this.canDrag)
-            return;
+        if (!this.canDrag) return;
 
         this.dragging = true;
 
@@ -87,7 +86,9 @@ export default class Draggable extends Vue {
     endDrag() {
         this.dragging = false;
         if (Date.now() - this._dragStart! < 100) {
-            this.$nextTick(() => { this.$emit('fastClick', this); });
+            this.$nextTick(() => {
+                this.$emit('fastClick', this);
+            });
         }
     }
 
@@ -99,7 +100,7 @@ export default class Draggable extends Vue {
         const CTM = this.svgElement.getScreenCTM()!;
         return {
             x: ((evt as any).clientX - CTM.e) / CTM.a,
-            y: ((evt as any).clientY - CTM.f) / CTM.d
+            y: ((evt as any).clientY - CTM.f) / CTM.d,
         };
     }
 }

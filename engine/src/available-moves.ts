@@ -24,7 +24,6 @@ export interface AvailableMoves {
     [MoveName.Accept]?: number[];
     [MoveName.Decline]?: boolean[];
     [MoveName.Pass]?: boolean[];
-    [MoveName.Undo]?: boolean[];
 }
 
 export function availableMoves(G: GameState, player: Player): AvailableMoves {
@@ -35,10 +34,6 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
             };
 
             if (player.loans.length < 2) moves[MoveName.GetLoan] = [true];
-
-            // Undo
-            const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == 'move' && G.currentPlayers.includes(lastLog.player)) moves[MoveName.Undo] = [true];
 
             return moves;
         }
@@ -52,10 +47,6 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
 
             const highestBidder = G.players[G.highestBidders[0]];
             if (player.money >= highestBidder.bid + highestBidder.additionalBid) moves[MoveName.Decline] = [true];
-
-            // Undo
-            const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == 'move' && G.currentPlayers.includes(lastLog.player)) moves[MoveName.Undo] = [true];
 
             return moves;
         }
@@ -300,10 +291,6 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
                     }
                 }
             }
-
-            // Undo
-            const lastLog = G.log[G.log.length - 1];
-            if (lastLog.type == 'move' && G.currentPlayers.includes(lastLog.player)) moves[MoveName.Undo] = [true];
 
             return moves;
         }
