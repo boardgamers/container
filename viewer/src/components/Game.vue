@@ -1713,6 +1713,10 @@ text {
 .modal-content {
     border-radius: 5px;
     background-color: #fefefe;
+    // Explicit text color: the platform's dark mode sets a light text color on the
+    // page, which would render white-on-light here (the modal keeps its own light
+    // backgrounds). Like the rest of the viewer, use fixed colors for both themes.
+    color: #212121;
     margin: auto;
     padding: 10px 20px 20px 20px;
     border: 1px solid #888;
