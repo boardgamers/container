@@ -28,7 +28,7 @@ jobs:
                   node-version: ${{ env.node_version }}
                   # registry-url is required so npm publish targets the public npm registry
                   registry-url: 'https://registry.npmjs.org'
-            - run: npm install -g pnpm@5.17.1
+            - run: npm install -g pnpm@11
             - run: pnpm install
             - run: git config --global user.name github-actions
             - run: git config --global user.email bot@github.com

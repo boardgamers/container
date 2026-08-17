@@ -196,7 +196,7 @@ import DropZone from './DropZone.vue';
 @Component({
     components: {
         DropZone,
-    }
+    },
 })
 export default class PlayerBoard extends Vue {
     @Prop()
@@ -233,7 +233,7 @@ export default class PlayerBoard extends Vue {
                 name += ' (Bid: $' + this.player.bid + ')';
             }
         } else if (this.ended) {
-            name += ' (Score: $' + (this.player.money) + ')';
+            name += ' (Score: $' + this.player.money + ')';
         }
 
         return name;

@@ -17,7 +17,7 @@ import Piece from './Piece.vue';
 @Component({
     created(this: Container) {
         this.pieceType = PieceType.Container;
-    }
+    },
 })
 export default class Container extends Mixins(Piece) {
     @Prop()

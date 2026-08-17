@@ -55,7 +55,7 @@
 </template>
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator';
-import type { PointCard as PointCardInfo } from 'container-engine'
+import type { PointCard as PointCardInfo } from 'container-engine';
 
 @Component
 export default class PointCard extends Vue {
