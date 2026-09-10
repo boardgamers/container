@@ -30,10 +30,16 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
 .bgs-game-chat button:disabled{color:#788786;border-color:#b0bcb8;background:#dce3df;cursor:default}
 .bgs-game-chat .chat-status{font-size:12px;margin-top:6px}
 .bgs-game-chat .chat-status:empty{display:none}
+.chat-shortcut{position:fixed;right:16px;bottom:16px;z-index:900;padding:7px 12px;border:1px solid #6a8589;border-radius:3px;background:#203a45;color:#fff;font:600 14px Arial,sans-serif;cursor:pointer;box-shadow:0 2px 6px #0003}
+.chat-shortcut[hidden]{display:none}
+.chat-shortcut:hover{background:#315966}
+.chat-shortcut:focus-visible{outline:2px solid #fff;outline-offset:2px}
 
 `;
     panel.append(style);
-    host.insertAdjacentElement('afterend', panel);
+    const slot = host.querySelector('.chat-host');
+    if (slot) slot.append(panel);
+    else host.insertAdjacentElement('afterend', panel);
     const list = panel.querySelector('.chat-messages') as HTMLDivElement;
     const input = panel.querySelector('input') as HTMLInputElement;
     const button = panel.querySelector('button') as HTMLButtonElement;
@@ -58,6 +64,50 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
     let watermark = '';
     let candidate = '';
     let following = true;
+    const unread = new Set<string>();
+    const summary = panel.querySelector('summary')!;
+    const shortcut = document.createElement('button');
+    shortcut.type = 'button';
+    shortcut.className = 'chat-shortcut';
+    shortcut.hidden = true;
+    panel.insertAdjacentElement('afterend', shortcut);
+    let chatVisible = false;
+    function updateShortcut(): void {
+        const count = unread.size;
+        const label = count ? `Chat · ${count} unread` : 'Chat';
+        shortcut.textContent = label;
+        shortcut.setAttribute('aria-label', `Open ${label}`);
+        summary.textContent = label;
+        shortcut.hidden = chatVisible;
+    }
+    shortcut.onclick = () => {
+        panel.open = true;
+        requestAnimationFrame(() => {
+            const firstUnread = Array.from(list.children).find((row) =>
+                unread.has((row as HTMLElement).dataset.id || '')
+            );
+            if (firstUnread) firstUnread.scrollIntoView({ block: 'center' });
+            else panel.scrollIntoView({ block: 'center' });
+            summary.focus({ preventScroll: true });
+            read();
+        });
+    };
+    const visibility = new IntersectionObserver(
+        (entries) => {
+            for (const entry of entries) {
+                if (entry.target === panel) {
+                    chatVisible =
+                        entry.isIntersecting &&
+                        entry.intersectionRect.height >=
+                            Math.min(panel.open ? 80 : 20, entry.boundingClientRect.height);
+                }
+            }
+            updateShortcut();
+            read();
+        },
+        { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
+    );
+    visibility.observe(panel);
     function controls(): void {
         button.disabled = !canSend || disabled || !!pending || !input.value.trim();
         input.disabled = !canSend || disabled;
@@ -71,6 +121,8 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
             const r = el.getBoundingClientRect();
             return r.bottom <= Math.min(bounds.bottom, window.innerHeight) + 1 && r.top >= Math.max(bounds.top, 0);
         });
+        for (const row of visible) unread.delete((row as HTMLElement).dataset.id || '');
+        updateShortcut();
         const id = (visible[visible.length - 1] as HTMLElement)?.dataset.id || '';
         if (!/^[a-f0-9]{24}$/i.test(id) || id.toLowerCase() <= watermark) {
             return;
@@ -79,7 +131,12 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
         if (!readTimer) {
             readTimer = setTimeout(() => {
                 readTimer = undefined;
-                if (candidate > watermark) {
+                if (
+                    panel.open &&
+                    document.visibilityState === 'visible' &&
+                    document.hasFocus() &&
+                    candidate > watermark
+                ) {
                     watermark = candidate;
                     emitter.emit('chat:read', { messageId: watermark });
                 }
@@ -116,6 +173,7 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
         if (following) {
             list.scrollTop = list.scrollHeight;
         }
+        updateShortcut();
         read();
     }
     emitter.on('chat:messages', (data: ChatMessage[]) => {
@@ -126,6 +184,8 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
         for (const message of data || []) {
             if (!message._id || !messages.some((m) => m._id === message._id)) {
                 messages.push(message);
+                const own = message.playerIndex !== undefined && message.playerIndex === localPlayer;
+                if (message._id && !own && message.author !== 'You') unread.add(message._id);
             }
         }
         render();
@@ -141,6 +201,7 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
     });
     emitter.on('chat:deleted', (ids: string[]) => {
         messages = messages.filter((m) => !ids.includes(m._id || ''));
+        ids.forEach((id) => unread.delete(id));
         render();
     });
     emitter.on('chat:disabled', (value: boolean) => {
@@ -214,6 +275,12 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
     };
     window.addEventListener('scroll', read, { passive: true });
     window.addEventListener('focus', read);
+    window.addEventListener('resize', read);
+    const sizing = new ResizeObserver(() => {
+        updateShortcut();
+        read();
+    });
+    sizing.observe(panel);
     document.addEventListener('visibilitychange', read);
     status.textContent = reason;
     controls();

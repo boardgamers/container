@@ -481,7 +481,10 @@
                 <use xlink:href="#dragged" />
             </svg>
 
-            <InlineLog v-if="G" :entries="logReversed.slice().reverse()" />
+            <div class="journal-and-chat">
+                <InlineLog v-if="G" :entries="logReversed.slice().reverse()" />
+                <div class="chat-host"></div>
+            </div>
         </div>
 
         <div v-if="G" :class="['modal', { visible: logVisible }]">
@@ -1794,6 +1797,23 @@ text {
 </style>
 
 <style>
+.journal-and-chat {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+    align-items: start;
+}
+.journal-and-chat > * {
+    min-width: 0;
+}
+.journal-and-chat .bgs-game-chat {
+    margin: 0;
+}
+@media (min-width: 1000px) {
+    .journal-and-chat {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+}
 .board-and-journal {
     width: 100%;
     min-width: 0;
