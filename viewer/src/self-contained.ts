@@ -2,12 +2,16 @@ import { GameState, move as execMove, Move, setup, stripSecret } from 'container
 import { moveAI } from 'container-engine/src/engine';
 import { cloneDeep } from 'lodash';
 import AbstractJudge from '../../engine/src/fixtures/Abstract-judge-7215.json';
+import { installLocalChat } from './game-chat';
 import launch from './launch';
+import { mountSoundTests } from './sounds';
 
 function launchSelfContained(selector = '#app') {
     const strip = false;
 
     const emitter = launch(selector);
+    mountSoundTests(emitter);
+    installLocalChat(emitter);
 
     let gameState = setup(5, {});
 

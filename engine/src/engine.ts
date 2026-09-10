@@ -1056,8 +1056,10 @@ function containerColorHTML(containerColor: ContainerColor) {
         case ContainerColor.Orange:
         case ContainerColor.Tan:
         case ContainerColor.White:
-            return `<span style="background-color: ${containerColor}; font-weight: bold; border: 1px solid black; padding: 0 3px;">${containerColor}</span>`;
+            return `<span style="background-color: ${containerColor}; color: ${
+                containerColor === ContainerColor.Brown ? '#fff' : '#111'
+            }; font-weight: bold; border: 1px solid black; padding: 0 3px;">${containerColor}</span>`;
         case ContainerColor.Black:
-            return '<span style="background-color: #2F4F4F; font-weight: bold; border: 1px solid black; padding: 0 3px;">darkslategray</span>';
+            return '<span style="background-color: #2F4F4F; color: #fff; font-weight: bold; border: 1px solid black; padding: 0 3px;">darkslategray</span>';
     }
 }

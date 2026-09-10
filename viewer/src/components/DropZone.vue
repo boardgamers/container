@@ -1,5 +1,10 @@
 <template>
-    <g :class="['placeholder', { showDrop }]">
+    <g
+        :class="['placeholder', { showDrop, canClick: ui.selected && canDrop }]"
+        @click.stop="clickDestination"
+        @mousedown="prepareClick"
+        @touchstart="prepareClick"
+    >
         <rect :width="width" :height="height" fill="black" />
         <title v-if="data && data.type == 'playerHarbor'">Harbor</title>
         <title v-else-if="data && data.type == 'factoryStore'">Factory Store</title>
@@ -105,18 +110,33 @@ export default class DropZone extends Vue {
         }
     }
 
-    get canDrop() {
-        if (!this.enabled || !this.ui.dragged || this.accepts?.indexOf(this.ui.dragged.pieceType) == -1) return false;
+    get activePiece() {
+        return this.ui.dragged || (this.ui.selected?.canDrag ? this.ui.selected : null);
+    }
 
-        if (this.ui.dragged.pieceType == PieceType.Loan) {
-            const loan = this.ui.dragged as LoanCard;
+    prepareClick(event: Event) {
+        if (this.ui.selected && this.canDrop) event.stopPropagation();
+    }
+
+    clickDestination() {
+        if (this.ui.selected && this.canDrop) {
+            this.communicator.emit('pieceDrop', this.ui.selected, this.data);
+            this.ui.selected = null;
+        }
+    }
+
+    get canDrop() {
+        if (!this.enabled || !this.activePiece || this.accepts?.indexOf(this.activePiece.pieceType) == -1) return false;
+
+        if (this.activePiece.pieceType == PieceType.Loan) {
+            const loan = this.activePiece as LoanCard;
             if (loan.owner == this.player) {
                 if (this.data.type == DropZoneType.GetLoan) return false;
             } else {
                 if (this.data.type == DropZoneType.PayLoan) return false;
             }
-        } else if (this.ui.dragged.pieceType == PieceType.Ship) {
-            const ship = this.ui.dragged as Ship;
+        } else if (this.activePiece.pieceType == PieceType.Ship) {
+            const ship = this.activePiece as Ship;
             if (ship.position == ShipPosition.OpenSea) {
                 if (this.data.type == DropZoneType.OpenSea) return false;
 
@@ -126,8 +146,8 @@ export default class DropZone extends Vue {
             } else {
                 if (this.data.type != DropZoneType.OpenSea) return false;
             }
-        } else if (this.ui.dragged.pieceType == PieceType.Container) {
-            const container = this.ui.dragged as Container;
+        } else if (this.activePiece.pieceType == PieceType.Container) {
+            const container = this.activePiece as Container;
             if (container.state == ContainerState.OnBoard) {
                 if (this.data.type != DropZoneType.FactoryStore) return false;
             } else if (container.state == ContainerState.OnFactoryStore) {
@@ -161,7 +181,7 @@ export default class DropZone extends Vue {
     }
 
     get showDrop() {
-        return !this.preferences.disableHelp && this.canDrop;
+        return (!!this.ui.selected || !this.preferences.disableHelp) && this.canDrop;
     }
 }
 </script>
@@ -174,13 +194,24 @@ g.placeholder {
 
     &.showDrop {
         rect {
-            stroke: blue;
-            stroke-width: 2px;
+            stroke: #1b6c87;
+            stroke-width: 1.3px;
+            rx: 3px;
         }
     }
 
     &.canClick {
         cursor: pointer;
     }
+}
+</style>
+
+<style>
+.piece.click-selected {
+    filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 2px #203a45);
+}
+g.placeholder.canClick rect {
+    fill: #1b6c8722;
+    stroke-dasharray: 4 3;
 }
 </style>

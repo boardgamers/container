@@ -2,6 +2,8 @@ import type { GameState, Move } from 'container-engine';
 import { EventEmitter } from 'events';
 import Vue from 'vue';
 import Game from './components/Game.vue';
+import { mountGameChat } from './game-chat';
+import { installActionSounds } from './sounds';
 import type { Preferences } from './types/ui-data';
 
 function launch(selector: string) {
@@ -65,6 +67,8 @@ function launch(selector: string) {
         }
     });
 
+    installActionSounds(item);
+    mountGameChat(item, app.$el);
     return item;
 }
 

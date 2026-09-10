@@ -4,7 +4,9 @@
         :class="['piece', { dragging, canDrag }]"
         :transform="`translate(${currentX}, ${currentY}) rotate(${rotate}, 10, 5)`"
     >
-        <rect width="20" height="10" :fill="color" stroke="black" />
+        <rect width="20" height="10" rx=".8" :fill="color" stroke="#21343b" />
+        <path d="M4 2V8 M8 2V8 M12 2V8 M16 2V8" stroke="#10252b" stroke-opacity=".3" stroke-width=".7" />
+        <path d="M1 1H19" stroke="white" stroke-opacity=".5" />
 
         <title>Container</title>
     </g>

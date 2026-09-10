@@ -4,6 +4,7 @@ import Vue from 'vue';
 export interface UIData {
     /** The Piece component instance (Piece.vue) currently being dragged, if any */
     dragged?: (Vue & { pieceType: PieceType; pieceId: string }) | null;
+    selected?: (Vue & { pieceType: PieceType; pieceId: string; canDrag: boolean }) | null;
     waitingAnimations: number;
 }
 

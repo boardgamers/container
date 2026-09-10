@@ -6,6 +6,11 @@ import { PieceType, UIData } from '@/types/ui-data';
 
 @Component({
     created(this: Piece) {
+        this.$on('fastClick', () => {
+            if (this.canDrag && this.pieceType !== PieceType.Loan) {
+                this.ui.selected = this.ui.selected === this ? null : this;
+            }
+        });
         this.$on('draggedTo', (coords: { x: number; y: number }) => {
             [this.currentX, this.currentY] = [coords.x, coords.y];
 
@@ -16,6 +21,7 @@ import { PieceType, UIData } from '@/types/ui-data';
     },
     mounted(this: Piece) {
         this.mounted = true;
+        this.$el.addEventListener('click', (event) => event.stopPropagation());
     },
     beforeDestroy(this: Piece) {
         this.onTransitionEnd();
@@ -105,11 +111,22 @@ export default class Piece extends Draggable {
     @Watch('dragging')
     onDraggingChanged() {
         if (this.dragging) {
+            this.ui.selected = null;
             this.ui.dragged = this;
         } else {
             this.ui.dragged = null;
             this.communicator.emit('draggedPosChanged', this);
         }
+    }
+
+    @Watch('canDrag')
+    onAvailabilityChanged() {
+        if (!this.canDrag && this.ui.selected === this) this.ui.selected = null;
+    }
+
+    @Watch('ui.selected')
+    onSelectionChanged() {
+        this.$el.classList.toggle('click-selected', this.ui.selected === this);
     }
 
     onTransitionEnd() {

@@ -4,7 +4,15 @@
         :class="['piece', { dragging, canDrag }]"
         :transform="`translate(${currentX}, ${currentY}) rotate(${rotate}, 15, 40)`"
     >
-        <path d="M15 0 L30 10 L30 80 L0 80 L0 10Z" :fill="color" stroke="black" />
+        <path
+            d="M15 0 Q29 7 30 17 L30 72 Q30 80 23 80 H7 Q0 80 0 72 V17 Q1 7 15 0Z"
+            :fill="color"
+            stroke="#203a45"
+            stroke-width="1.5"
+        />
+        <path d="M15 6 L25 16 V71 H5 V16Z" fill="#eef1e6" fill-opacity=".8" />
+        <path d="M5 68 H25 V76 H5Z" fill="#344954" />
+        <path d="M8 70 H12 M17 70 H21" stroke="#c4e4e8" stroke-width="2" />
         <Container
             v-for="(container, i) in containers"
             :key="container.id"

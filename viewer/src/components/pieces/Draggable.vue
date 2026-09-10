@@ -38,6 +38,7 @@ export default class Draggable extends Vue {
     _offset = { x: 0, y: 0 };
     _transform?: SVGTransform;
     _dragStart?: number;
+    _press?: { x: number; y: number };
 
     get svgElement() {
         return document.querySelector('#scene') as SVGSVGElement;
@@ -50,7 +51,8 @@ export default class Draggable extends Vue {
     startDrag(evt: MouseEvent | TouchEvent) {
         if (!this.canDrag) return;
 
-        this.dragging = true;
+        if (evt instanceof MouseEvent && evt.button !== 0) return;
+        this._press = this.getMousePosition(evt);
 
         this._offset = this.getMousePosition(evt);
         // Get all the transforms currently on this element
@@ -72,24 +74,25 @@ export default class Draggable extends Vue {
     }
 
     drag(evt: MouseEvent | TouchEvent) {
-        if (!this.dragging) {
+        if (!this._press) {
             return;
         }
 
-        evt.preventDefault();
         const coord = this.getMousePosition(evt);
+        if (!this.dragging && Math.hypot(coord.x - this._press.x, coord.y - this._press.y) < 5) return;
+        this.dragging = true;
+        evt.preventDefault();
         this._transform!.setTranslate(coord.x - this._offset.x, coord.y - this._offset.y);
 
         this.$emit('draggedTo', { x: coord.x - this._offset.x, y: coord.y - this._offset.y });
     }
 
     endDrag() {
+        if (!this._press) return;
+        const clicked = !this.dragging;
+        this._press = undefined;
         this.dragging = false;
-        if (Date.now() - this._dragStart! < 100) {
-            this.$nextTick(() => {
-                this.$emit('fastClick', this);
-            });
-        }
+        if (clicked) this.$nextTick(() => this.$emit('fastClick', this));
     }
 
     getMousePosition(evt: MouseEvent | TouchEvent) {
