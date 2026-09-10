@@ -30,7 +30,7 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
 .bgs-game-chat button:disabled{color:#788786;border-color:#b0bcb8;background:#dce3df;cursor:default}
 .bgs-game-chat .chat-status{font-size:12px;margin-top:6px}
 .bgs-game-chat .chat-status:empty{display:none}
-.chat-shortcut{position:fixed;right:16px;bottom:16px;z-index:900;padding:7px 12px;border:1px solid #6a8589;border-radius:3px;background:#203a45;color:#fff;font:600 14px Arial,sans-serif;cursor:pointer;box-shadow:0 2px 6px #0003}
+.chat-shortcut{position:fixed;left:16px;bottom:max(16px,env(safe-area-inset-bottom));z-index:900;padding:7px 12px;border:1px solid #6a8589;border-radius:3px;background:#203a45;color:#fff;font:600 14px Arial,sans-serif;cursor:pointer;box-shadow:0 2px 6px #0003}
 .chat-shortcut[hidden]{display:none}
 .chat-shortcut:hover{background:#315966}
 .chat-shortcut:focus-visible{outline:2px solid #fff;outline-offset:2px}
