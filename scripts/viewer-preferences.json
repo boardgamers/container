@@ -1,4 +1,0 @@
-{
-    "viewer": { "chat": true },
-    "preferences": [{ "name": "sound", "label": "Game action sounds", "type": "checkbox", "default": true }]
-}
