@@ -9,7 +9,7 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
     panel.className = 'bgs-game-chat';
     panel.open = true;
     panel.innerHTML =
-        '<summary>Chat</summary><div class="chat-messages" role="log" aria-label="Game chat"></div><form><input type="text" aria-label="Chat message" placeholder="Message…" autocomplete="off"><button type="submit">Send</button></form><div class="chat-status" role="status"></div>';
+        '<summary>Chat</summary><div class="chat-messages" role="log" aria-label="Game chat"></div><div class="chat-composer"><input type="text" aria-label="Chat message" placeholder="Message…" autocomplete="off"><button type="button">Send</button></div><div class="chat-status" role="status"></div>';
     const style = document.createElement('style');
     style.textContent = `
 .bgs-game-chat{box-sizing:border-box;font:14px/1.4 Arial,sans-serif;border:1px solid #9eb4b5;border-radius:3px;margin:8px 0;padding:8px 12px;background:var(--bg-panel,#e5eeea);color:var(--text,#203a45)}
@@ -21,7 +21,7 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
 .bgs-game-chat article strong{padding:0 3px;font-weight:bold}
 .bgs-game-chat article:last-child{border-bottom:0}
 .bgs-game-chat time{font-size:12px;color:#536e77;margin-left:8px;white-space:nowrap}
-.bgs-game-chat form{display:flex;gap:6px;align-items:center;margin:0}
+.bgs-game-chat .chat-composer{display:flex;gap:6px;align-items:center;margin:0}
 .bgs-game-chat input{flex:1;min-width:0;box-sizing:border-box;height:30px;background:#f2f4ee;color:#203a45;border:1px solid #899997;border-radius:2px;padding:4px 7px;font:14px Arial,sans-serif}
 .bgs-game-chat input::placeholder{color:#637477}
 .bgs-game-chat input:focus{outline:2px solid #527f89;outline-offset:1px}
@@ -239,15 +239,14 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
         pending = undefined;
         controls();
     });
-    panel.querySelector('form')!.onsubmit = (event) => {
-        event.preventDefault();
+    function sendMessage(): void {
         if (button.disabled) {
             return;
         }
         pending = { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, text: input.value };
         controls();
         status.textContent = 'Sending…';
-        emitter.emit('chat:send', { text: pending.text.trim(), requestId: pending.id });
+        const sending = pending;
         timeout = setTimeout(() => {
             if (pending) {
                 pending = undefined;
@@ -255,12 +254,15 @@ export function mountGameChat(emitter: ChatEmitter, host: Element): void {
                 controls();
             }
         }, 20000);
-    };
+        emitter.emit('chat:send', { text: sending.text.trim(), requestId: sending.id });
+    }
+    button.onclick = sendMessage;
     input.oninput = controls;
     input.onkeydown = (event) => {
         if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
             event.preventDefault();
-            panel.querySelector('form')!.requestSubmit();
+            event.stopPropagation();
+            sendMessage();
         }
     };
     list.onscroll = () => {
