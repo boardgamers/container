@@ -1,3 +1,4 @@
+import { createViewer } from '@boardgamers/protocol/viewer';
 import type { GameState, Move } from 'container-engine';
 import { EventEmitter } from 'events';
 import Vue from 'vue';
@@ -6,7 +7,14 @@ import { mountGameChat } from './game-chat';
 import { installActionSounds } from './sounds';
 import type { Preferences } from './types/ui-data';
 
+let dispose: (() => void) | undefined;
+
 function launch(selector: string) {
+    const target = document.querySelector(selector);
+    if (!target) throw new Error(`Viewer mount point not found: ${selector}`);
+    dispose?.();
+    const mountPoint = document.createElement('div');
+    target.append(mountPoint);
     let params: {
         state: null | GameState;
         player?: number;
@@ -27,48 +35,50 @@ function launch(selector: string) {
 
     const app = new Vue({
         render: (h) => h(Game, { props: params }, []),
-    }).$mount(selector);
+    }).$mount(mountPoint);
 
-    const item: EventEmitter = new EventEmitter();
-
-    // The move payload is the whole current turn so far (an array of atomic moves),
-    // replayed by the engine wrapper from the last committed state.
-    params.emitter.on('move', (moves: Move[]) => item.emit('move', moves));
-    params.emitter.on('addLog', (data: string[]) => item.emit('addLog', data));
-    params.emitter.on('replaceLog', (data: string[]) => item.emit('replaceLog', data));
-    params.emitter.on('update:preference', (data: { name: string; value: any }) =>
-        item.emit('update:preference', data)
-    );
-
-    item.addListener('state', (data) => {
-        params.state = data;
-        app.$forceUpdate();
-        app.$nextTick().then(() => item.emit('ready'));
-    });
-    item.addListener('state:updated', () => item.emit('fetchState'));
-    item.addListener('player', (data) => {
-        params.player = data.index;
-        app.$forceUpdate();
-    });
-    item.addListener('preferences', (data) => {
-        // Mutate (don't replace) the observable object so the update stays reactive
-        Object.assign(params.preferences, data);
-        app.$forceUpdate();
-    });
-    item.addListener('gamelog', (logData) => {
-        if (logData?.data?.state) {
-            // Move responses carry the (possibly tentative) resulting state. Tentative
-            // states are never persisted or broadcast by the platform — this is the only
-            // way they reach the acting player's viewer.
-            params.state = logData.data.state;
+    const viewer = createViewer<GameState, Move[]>({
+        async onState(data) {
+            params.state = data;
             app.$forceUpdate();
-        } else {
-            item.emit('fetchState');
-        }
+            await app.$nextTick();
+        },
+        onPlayer(data) {
+            params.player = data.index;
+            app.$forceUpdate();
+        },
+        onPreferences(data) {
+            Object.assign(params.preferences, data);
+            app.$forceUpdate();
+        },
+        async onLog(logData) {
+            const data = logData.data as { state?: GameState } | undefined;
+            // Tentative purchases are echoed only to the acting viewer.
+            if (data?.state) {
+                params.state = data.state;
+                app.$forceUpdate();
+                await app.$nextTick();
+            } else viewer.fetchState();
+        },
     });
-
+    const item = viewer.emitter;
+    params.emitter.on('move', (moves: Move[]) => viewer.move(moves));
+    params.emitter.on('fetchState', () => viewer.fetchState());
+    params.emitter.on('addLog', (data: string[]) => viewer.addLog(data));
+    params.emitter.on('replaceLog', (data: string[]) => viewer.replaceLog(data));
+    params.emitter.on('replay:info', (info) => viewer.setReplayInfo(info));
+    params.emitter.on('update:preference', ({ name, value }) => viewer.updatePreference(name, value));
     installActionSounds(item);
-    mountGameChat(item, app.$el);
+    const removeChat = mountGameChat(item, app.$el);
+    app.$once('hook:beforeDestroy', () => {
+        removeChat();
+        viewer.destroy();
+        params.emitter.removeAllListeners();
+    });
+    dispose = () => {
+        app.$destroy();
+        target.replaceChildren();
+    };
     return item;
 }
 

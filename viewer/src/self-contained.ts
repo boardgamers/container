@@ -66,7 +66,7 @@ function launchSelfContained(selector = '#app') {
         console.log('available moves', gameState.players[playerIndex].availableMoves);
     });
 
-    emitter.on('fetchSate', () =>
+    emitter.on('fetchState', () =>
         emitter.emit('state', cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState))
     );
 

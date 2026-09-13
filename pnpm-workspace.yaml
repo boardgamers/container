@@ -8,6 +8,7 @@ allowBuilds:
     '@parcel/watcher': false
     core-js: false
     ejs: false
+    fsevents: false
     nodent-runtime: false
     yorkie: false
 
@@ -15,6 +16,9 @@ allowBuilds:
 # (vue 3) peer and the cli-plugin-typescript shim crashes the viewer build (CI-only,
 # fresh installs). vue-template-compiler is the correct vue2 path.
 autoInstallPeers: false
+
+minimumReleaseAgeExclude:
+    - '@boardgamers/protocol@0.1.0'
 
 # The cli-plugin-typescript fork-ts-checker shim does a bare
 # require('@vue/compiler-sfc') expecting the vue-3 parse shape ({descriptor}).
