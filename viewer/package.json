@@ -15,7 +15,7 @@
         "test:browser": "node scripts/protocol-smoke.mjs"
     },
     "dependencies": {
-        "@boardgamers/protocol": "0.2.1",
+        "@boardgamers/protocol": "0.2.2",
         "container-engine": "workspace:../engine",
         "core-js": "^3.6.5",
         "lodash": "^4.17.19",
