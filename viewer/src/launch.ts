@@ -9,10 +9,16 @@ import type { Preferences } from './types/ui-data';
 
 let dispose: (() => void) | undefined;
 
+export function destroyViewer() {
+    const cleanup = dispose;
+    dispose = undefined;
+    cleanup?.();
+}
+
 function launch(selector: string) {
     const target = document.querySelector(selector);
     if (!target) throw new Error(`Viewer mount point not found: ${selector}`);
-    dispose?.();
+    destroyViewer();
     const mountPoint = document.createElement('div');
     target.append(mountPoint);
     let params: {

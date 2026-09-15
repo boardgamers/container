@@ -146,6 +146,6 @@ export function installLocalChat(emitter: ChatEmitter): void {
                 createdAt: new Date().toISOString(),
             },
         ]);
-        emitter.emit('chat:result', { requestId, ok: true });
+        if (requestId) emitter.emit('chat:result', { requestId, ok: true });
     });
 }

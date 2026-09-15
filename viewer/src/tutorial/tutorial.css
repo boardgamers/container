@@ -1,0 +1,303 @@
+.container-tutorial {
+    max-width: 1600px;
+    margin: auto;
+    padding: 20px;
+    color: #203a45;
+    font: 16px/1.5 system-ui, sans-serif;
+    box-sizing: border-box;
+}
+.container-tutorial * {
+    box-sizing: border-box;
+}
+.tutorial-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+.container-tutorial h2 {
+    font-size: 20px;
+    margin: 0 0 12px;
+}
+.container-tutorial h3 {
+    font-size: 14px;
+    margin: 0 0 8px;
+}
+.container-tutorial button {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid #8aadb4;
+    border-radius: 6px;
+    padding: 8px 12px;
+    background: #f3f8f5;
+    color: #203a45;
+    min-height: 40px;
+}
+.container-tutorial button:hover {
+    background: #c4dce0;
+}
+.container-tutorial button:focus-visible,
+.container-tutorial input:focus-visible {
+    outline: 3px solid #126d8c;
+    outline-offset: 3px;
+}
+.container-tutorial button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+.bgs-tutorial-guide {
+    border-top: 4px solid #337b8b;
+    background: #f5f8ee;
+    border-radius: 8px;
+    padding: 18px 20px;
+}
+.bgs-tutorial-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.bgs-tutorial-heading strong {
+    font-size: 20px;
+}
+.bgs-tutorial-body p {
+    margin: 14px 0;
+    max-width: 75ch;
+}
+.bgs-tutorial-body [role='alert'] {
+    color: #a52916;
+    font-weight: 600;
+}
+.bgs-tutorial-controls,
+.bgs-tutorial-playback {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.bgs-tutorial-playback,
+.bgs-tutorial-help {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+}
+.container-tutorial .bgs-tutorial-transport {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    flex: 0 0 40px;
+}
+.bgs-tutorial-help:empty {
+    display: none;
+}
+.bgs-tutorial-body small {
+    display: block;
+    color: #49656d;
+    margin-top: 12px;
+}
+.tutorial-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+    width: fit-content;
+    max-width: 100%;
+}
+.tutorial-actions[hidden],
+.tutorial-result[hidden] {
+    display: none;
+}
+.tutorial-actions button {
+    background: #245969;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.tutorial-actions button:hover {
+    background: #32778b;
+}
+.tutorial-bid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+.tutorial-bid label {
+    font-weight: 650;
+}
+.tutorial-bid input {
+    font: inherit;
+    background: white;
+    color: #203a45;
+    border: 1px solid #8aadb4;
+    border-radius: 5px;
+    width: 90px;
+    min-height: 42px;
+    padding: 7px;
+}
+.tutorial-summary {
+    border-left: 1px solid #8aadb4;
+    padding-left: 24px;
+}
+.tutorial-summary h2 {
+    font-size: 18px;
+}
+.tutorial-values,
+.tutorial-cargo,
+.tutorial-auction,
+.tutorial-island {
+    margin: 14px 0;
+}
+.tutorial-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0 12px 6px 0;
+}
+.tutorial-container {
+    display: inline-block;
+    width: 28px;
+    height: 15px;
+    border: 1px solid #243a42;
+    border-radius: 2px;
+    background-image: repeating-linear-gradient(90deg, transparent 0 5px, #0002 5px 6px);
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+.tutorial-cargo .tutorial-container {
+    margin-right: 5px;
+}
+.tutorial-auction p {
+    margin: 3px 0;
+    font-variant-numeric: tabular-nums;
+}
+.tutorial-island-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+}
+.tutorial-island-row.discarded > span {
+    opacity: 0.45;
+    text-decoration: line-through;
+}
+.tutorial-island-row strong {
+    font-size: 13px;
+    color: #97351f;
+}
+.tutorial-muted {
+    color: #506c75;
+    font-size: 14px;
+}
+.container-tutorial .bgs-tutorial-highlight {
+    outline: 3px solid #bf790f;
+    outline-offset: 3px;
+    border-radius: 3px;
+}
+.tutorial-result {
+    padding: 22px 0;
+    max-width: 800px;
+    margin: auto;
+}
+.tutorial-result table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #f5f8ee;
+}
+.tutorial-result th,
+.tutorial-result td {
+    padding: 9px 14px;
+    text-align: left;
+    border-bottom: 1px solid #c3d3d0;
+}
+.tutorial-result th {
+    font-weight: 500;
+}
+.tutorial-result td {
+    text-align: right;
+}
+.tutorial-total {
+    font-weight: 750;
+    background: #c3dfd2;
+}
+@media (max-width: 700px) {
+    .container-tutorial {
+        padding: 12px;
+    }
+    .tutorial-top {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .tutorial-summary {
+        border-left: 0;
+        border-top: 1px solid #8aadb4;
+        margin-top: 16px;
+        width: fit-content;
+        max-width: 100%;
+    }
+    .bgs-tutorial-guide {
+        padding: 14px;
+    }
+    .bgs-tutorial-heading strong {
+        font-size: 17px;
+    }
+    .bgs-tutorial-body p {
+        font-size: 15px;
+    }
+    .bgs-tutorial-playback {
+        margin-left: 0;
+    }
+    .container-tutorial .statusBar {
+        font-size: 13px;
+        height: auto;
+        min-height: 40px;
+        line-height: 1.4;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+    }
+    .tutorial-result {
+        font-size: 13px;
+    }
+    .tutorial-result th,
+    .tutorial-result td {
+        padding: 7px;
+    }
+}
+
+/* SVG use copies do not follow the source's CSS transform transition. */
+.container-tutorial #scene > use {
+    display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    .container-tutorial .piece {
+        transition: none !important;
+    }
+}
+
+.tutorial-business table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.tutorial-business th,
+.tutorial-business td {
+    text-align: left;
+    padding: 8px 10px 8px 0;
+    vertical-align: top;
+    border-bottom: 1px solid #8aadb455;
+}
+.tutorial-business small {
+    display: block;
+    color: #506c75;
+}
+.tutorial-business .tutorial-container {
+    margin: 5px 3px 0 0;
+}

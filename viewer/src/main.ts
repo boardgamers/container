@@ -1,3 +1,6 @@
 import launchSelfContained from './self-contained';
+import { launchTutorial } from './wrapper';
 
-launchSelfContained();
+const chapter = new URLSearchParams(location.search).get('chapter');
+if (chapter) void launchTutorial('#app', { chapter });
+else launchSelfContained();

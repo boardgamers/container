@@ -176,6 +176,11 @@
                                 :transform="`translate(140, ${450 + 40 * i})`"
                                 :width="130"
                                 :text="'Accept ' + getName(bidder)"
+                                :tooltip="`Accept ${getName(bidder)}: receive $${
+                                    2 * (G.players[bidder].bid + G.players[bidder].additionalBid)
+                                } ($${
+                                    G.players[bidder].bid + G.players[bidder].additionalBid
+                                } bid + matching bank subsidy)`"
                                 @click="accept(bidder)"
                             />
                         </template>
@@ -193,7 +198,8 @@
                         <Button
                             :transform="`translate(140, ${450 + 40 * G.highestBidders.length})`"
                             :width="130"
-                            :text="'Decline'"
+                            :text="`Keep for $${highestOffer}`"
+                            :tooltip="`Decline all bids: pay $${highestOffer} to the bank and keep the cargo. No subsidy.`"
                             :enabled="canDecline()"
                             @click="decline()"
                         />
@@ -616,6 +622,12 @@ export default class Game extends Vue {
 
     @Prop()
     emitter!: EventEmitter;
+
+    @Prop()
+    tutorialMove?: (move: Move) => void;
+
+    @Prop({ default: false })
+    interactionDisabled!: boolean;
 
     @Prop()
     @ProvideReactive()
@@ -1128,6 +1140,10 @@ export default class Game extends Vue {
     }
 
     sendMove(move) {
+        if (this.tutorialMove) {
+            if (!this.interactionDisabled) this.tutorialMove(move);
+            return;
+        }
         // Send the WHOLE turn so far: the platform is stateless between calls and
         // replays the buffer from the last committed (saved) state.
         this.turnMoves.push(move);
@@ -1150,6 +1166,7 @@ export default class Game extends Vue {
 
     get canMove() {
         return (
+            !this.interactionDisabled &&
             this.player != null &&
             this.G &&
             this.G.currentPlayers.includes(this.player!) &&
@@ -1260,10 +1277,16 @@ export default class Game extends Vue {
     }
 
     canUndo() {
+        if (this.tutorialMove) return false;
         if (!this.canMove) return false;
 
         // Undo scope = the current tentative turn: anything still in the buffer
         return this.turnMoves.length > 0;
+    }
+
+    get highestOffer() {
+        const bidder = this.G?.players[this.G.highestBidders[0]];
+        return bidder ? bidder.bid + bidder.additionalBid : 0;
     }
 
     canDecline() {
@@ -1294,7 +1317,7 @@ export default class Game extends Vue {
     }
 
     getStatusMessage() {
-        if (!this.G || this.G.currentPlayers == []) {
+        if (!this.G || ended(this.G)) {
             return 'Game ended!';
         } else if (this.player !== undefined && this.G?.currentPlayers.includes(this.player)) {
             if (this.G.players[this.player].availableMoves![MoveName.Bid]) {

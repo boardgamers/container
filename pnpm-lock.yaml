@@ -86,8 +86,8 @@ importers:
     viewer:
         dependencies:
             '@boardgamers/protocol':
-                specifier: 0.2.2
-                version: 0.2.2
+                specifier: 0.3.1
+                version: 0.3.1
             container-engine:
                 specifier: workspace:../engine
                 version: link:../engine
@@ -134,6 +134,9 @@ importers:
             '@types/node':
                 specifier: ^13.13.52
                 version: 13.13.52
+            '@types/webpack-env':
+                specifier: ^1.18.8
+                version: 1.18.8
             '@typescript-eslint/parser':
                 specifier: ^4.26.1
                 version: 4.33.0(eslint@7.32.0(supports-color@6.1.0))(supports-color@6.1.0)(typescript@5.9.3)
@@ -179,6 +182,9 @@ importers:
             vue-template-compiler:
                 specifier: ^2.6.11
                 version: 2.7.16
+            zod:
+                specifier: ^4.6.2
+                version: 4.6.2
 
 packages:
     '@achrinza/node-ipc@9.2.2':
@@ -1036,10 +1042,10 @@ packages:
             }
         engines: { node: '>=6.9.0' }
 
-    '@boardgamers/protocol@0.2.2':
+    '@boardgamers/protocol@0.3.1':
         resolution:
             {
-                integrity: sha512-5o5nPZW6CN6PysF0i90OR+B30djiFhAGutCZe5RKJV6h3RgqE36HA7l0pOpvhdHz8uYtqE0nmaPlc+2ZtYiM/A==,
+                integrity: sha512-FF8OUEvAZ+BKjZZ3Ab8Dw7oQh6TJOKMNkmRHqoabeE4clSp8lMRnHGGEakZdi7DplDJpstnya2fgBk2hX82UrA==,
             }
 
     '@cspotcode/source-map-support@0.8.1':
@@ -11580,7 +11586,7 @@ snapshots:
             '@babel/helper-string-parser': 7.29.7
             '@babel/helper-validator-identifier': 7.29.7
 
-    '@boardgamers/protocol@0.2.2':
+    '@boardgamers/protocol@0.3.1':
         dependencies:
             zod: 4.6.2
 

@@ -18,7 +18,7 @@ allowBuilds:
 autoInstallPeers: false
 
 minimumReleaseAgeExclude:
-    - '@boardgamers/protocol@0.2.2'
+    - '@boardgamers/protocol@0.2.2 || 0.3.0 || 0.3.1'
 
 # The cli-plugin-typescript fork-ts-checker shim does a bare
 # require('@vue/compiler-sfc') expecting the vue-3 parse shape ({descriptor}).

@@ -2,7 +2,7 @@
     <g :class="['button', { enabled }]" @click="enabled && $emit('click')">
         <rect :width="width" height="30" fill="gainsboro" stroke="black" rx="2" />
         <text text-anchor="middle" fill="black" :x="width / 2" y="16">{{ getText() }}</text>
-        <title>{{ text }}</title>
+        <title>{{ tooltip || text }}</title>
     </g>
 </template>
 <script lang="ts">
@@ -12,6 +12,9 @@ import { Vue, Component, Prop } from 'vue-property-decorator';
 export default class Button extends Vue {
     @Prop()
     text?: string;
+
+    @Prop()
+    tooltip?: string;
 
     @Prop()
     width?: number;

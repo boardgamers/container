@@ -137,6 +137,8 @@ try {
             host.emit('chat:appended', [incoming]);
         }, incoming);
         assert.match(await panel.locator('summary').textContent(), /1 unread/);
+        // Visibility follows the chat panel's animation-frame measurement.
+        await page.locator('.chat-shortcut').waitFor({ state: 'visible' });
         assert.equal(await page.locator('.chat-shortcut').isVisible(), true, 'unread messages show the shortcut');
         assert.equal(await list.locator('article').count(), 36, 'duplicate append is ignored');
         await page.evaluate((messages) => host.emit('chat:messages', messages), [...messages, incoming]);
