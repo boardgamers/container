@@ -77,7 +77,7 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
         const count = chat.unread;
         const label = count ? `Chat · ${count} unread` : 'Chat';
         shortcut.textContent = label;
-        shortcut.hidden = chatVisible;
+        shortcut.hidden = count === 0 || chatVisible;
         shortcut.setAttribute('aria-label', `Open ${label}`);
     }
     shortcut.onclick = () => {
