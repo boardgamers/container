@@ -121,7 +121,9 @@ test('the keep-or-sell questions compare the net value before the actual choice'
     await c.continue();
     await c.play(actionFor(lesson, c.snapshot));
     await c.play({ kind: 'watch' });
+    while (c.snapshot.canContinue) await c.continue();
     assert.equal(await c.play({ kind: 'answer', answer: '30' }), false, 'Keeping must subtract the payment');
+    assert.match(c.snapshot.error, /Not quite.*minus the \$6/);
     assert.equal(await c.play({ kind: 'answer', answer: '24' }), true);
     assert.equal(await c.play({ kind: 'answer', answer: '6' }), false, 'Selling includes the matching subsidy');
     assert.equal(await c.play({ kind: 'answer', answer: '12' }), true);

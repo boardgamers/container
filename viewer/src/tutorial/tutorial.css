@@ -108,8 +108,23 @@
     max-width: 100%;
 }
 .tutorial-actions[hidden],
+.tutorial-answer-feedback[hidden],
 .tutorial-result[hidden] {
     display: none;
+}
+.tutorial-answer-feedback {
+    margin: 0 0 12px;
+    padding: 12px 16px;
+    border-left: 4px solid #34784c;
+    border-radius: 6px;
+    background: #e7f3e7;
+    color: #205332;
+    font-weight: 600;
+}
+.tutorial-value-help {
+    font-size: 13px;
+    color: #49656d;
+    margin: 8px 0;
 }
 .tutorial-actions button {
     background: #245969;

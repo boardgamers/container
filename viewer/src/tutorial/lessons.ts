@@ -14,6 +14,7 @@ export interface Choice {
     label: string;
     action: TutorialAction;
     color?: string;
+    correct?: string;
 }
 export interface Lesson extends Omit<TutorialOptions<LessonState, TutorialAction>, 'move'> {
     title: string;
@@ -174,10 +175,31 @@ function actionStep(
     };
 }
 const isMove = (name: MoveName) => (action: TutorialAction) => action.kind === 'move' && action.move.name === name;
+function questionStep(
+    id: string,
+    title: string,
+    text: string,
+    answer: string,
+    hint: string
+): TutorialStep<LessonState, TutorialAction> {
+    return {
+        id,
+        title,
+        text,
+        hint,
+        complete: (state) => state.answer === answer,
+        validateMove: (_state, action) =>
+            action.kind !== 'answer'
+                ? 'Choose one of the answers below.'
+                : action.answer === answer
+                ? undefined
+                : `Not quite. ${hint}`,
+    };
+}
 const isWatch = (action: TutorialAction) => action.kind === 'watch';
 const choice = (label: string, move: Move): Choice => ({ label, action: play(move) });
 const watchChoice = (label: string): Choice[] => [{ label, action: watch }];
-const shell = (id: string) => ({ game: 'container', id, version: id === 'keep-cargo' ? 2 : 1, move: run(id) });
+const shell = (id: string) => ({ game: 'container', id, version: id === 'keep-cargo' ? 3 : 1, move: run(id) });
 
 const supply: Lesson = {
     ...shell('supply-chain'),
@@ -429,8 +451,8 @@ const bidding: Lesson = {
         {
             id: 'intro',
             title: 'Now you are the buyer',
-            text: 'Ada has brought two white containers and one tan container to the island. On your secret card they are worth $26 before the most-numerous-colour discard. Bid for the whole shipment, and remember the seller may keep it. Your cash and value card are private.',
-            target: 'value-card',
+            text: 'Ada is auctioning two white containers and one tan container as a single shipment. Bid for all three, and remember she may keep them instead. You can ignore your value card for now: this chapter teaches bidding. The next chapters explain how containers score.',
+            target: 'cargo',
         },
         actionStep(
             'bid',
@@ -478,7 +500,7 @@ const bidding: Lesson = {
     ],
     completion: {
         title: 'You won the cargo, not the game yet',
-        text: 'You have $10 cash and three island containers. Ada received $20 including the subsidy. Future purchases determine which colour you discard at scoring: collecting lots of valuable white containers without balancing your colours can wipe out their value.',
+        text: 'You have $10 cash and three island containers. Ada received $20 including the subsidy. At the end of the game, every container of your most numerous island colour is removed. For example, with five white containers and four of each other colour, all five white containers are removed and score $0. The next chapters explain the rest of scoring.',
     },
     choices(_state, step) {
         return ['reveal', 'second-reveal'].includes(step)
@@ -517,20 +539,30 @@ const keeping: Lesson = {
             isWatch,
             (state) => state.game.phase === Phase.AcceptDecline
         ),
-        actionStep(
+        {
+            id: 'private-values',
+            title: 'Your own values, hidden from others',
+            text: 'Each player has a private value card. The same colour can be worth different amounts to different players, and you cannot see their cards. These are the final scoring values of island containers, not their buying prices. On your card, white is worth $10 each.',
+            target: 'value-card',
+        },
+        {
+            id: 'set-and-discard',
+            title: 'The $5 or $10 bonus, then the discard',
+            text: 'Orange is marked $5/10 on your card: each orange scores $10 if your island has all five colours, or $5 otherwise. Then remove every container of your most numerous colour. Keeping this cargo gives you all five colours; your three dark-green containers will be removed and score $0.',
+            target: 'score-preview',
+        },
+        questionStep(
             'keep-value',
             'What does keeping add?',
             'The two white containers are worth $20. The orange is worth $10 because it completes your five-colour set. Keeping adds $30 in containers, but costs $6 paid to the bank. What is the net gain?',
-            (action) => action.kind === 'answer' && action.answer === '24',
-            (state) => state.answer === '24',
+            '24',
             '$30 in containers minus the $6 payment.'
         ),
-        actionStep(
+        questionStep(
             'sell-value',
             'What does selling earn?',
             'Ada pays her $6 bid and the bank matches it. How much cash do you receive in total?',
-            (action) => action.kind === 'answer' && action.answer === '12',
-            (state) => state.answer === '12',
+            '12',
             'Add the $6 bid and the $6 bank subsidy.'
         ),
         actionStep(
@@ -543,14 +575,21 @@ const keeping: Lesson = {
     ],
     completion: {
         title: 'Cargo instead of cash',
-        text: 'You have $14 left and a full five-colour set. Your orange 5/10 container now qualifies for $10; the three dark-green containers are your most numerous colour and will be discarded. You must afford the highest bid to keep a shipment. Loans provide $10, cost $1 interest each turn and leave an $11 deduction each if unpaid at the end.',
+        text: 'You have $14 left and all five colours on your island. Each orange now qualifies for $10. At final scoring, remove all three dark-green containers: they are your most numerous colour and score $0. To keep a shipment, you must be able to pay the highest bid. Loans give you $10, cost $1 interest each turn and deduct $11 each from your final score if unpaid.',
     },
     choices(_state, step) {
         if (step === 'island') return [choice('Sail to the island', sail(ShipPosition.Island))];
         if (step === 'bids') return watchChoice('Reveal the bids');
         if (step === 'keep-value' || step === 'sell-value') {
             const answers = step === 'keep-value' ? ['24', '30', '36'] : ['6', '12', '18'];
-            return answers.map((answer) => ({ label: `$${answer}`, action: { kind: 'answer', answer } }));
+            return answers.map((answer) => ({
+                label: `$${answer}`,
+                action: { kind: 'answer', answer },
+                correct:
+                    step === 'keep-value'
+                        ? 'Correct! $30 in containers − $6 paid to the bank = $24 gained.'
+                        : 'Correct! Ada’s $6 + the bank’s $6 = $12 received.',
+            }));
         }
         return step === 'decline' ? [choice('Keep cargo · pay $6', { name: MoveName.Decline, data: true })] : [];
     },
@@ -564,23 +603,22 @@ const scoring: Lesson = {
         {
             id: 'intro',
             title: 'The last turn',
-            text: 'Two colours in the supply are now empty. That ends the game after the current player finishes their turn. Your island has 3 dark green, 2 white, 1 orange, 1 tan and 1 brown. Your secret card determines their value, not what you paid at auction.',
+            text: 'Two colours in the supply are empty, so the game ends after this turn. Your island has 3 dark green, 2 white, 1 orange, 1 tan and 1 brown. Each player has a private card with different values for these colours. Your card determines your final score; the prices you paid at auction do not.',
             target: 'score-preview',
         },
-        actionStep(
+        questionStep(
             'set',
             'Check all five colours first',
-            'You have every colour before discarding. What is each orange 5/10 container worth: $5 or $10?',
-            (action) => action.kind === 'answer' && action.answer === '10',
-            (state) => state.answer === '10',
-            'The full-set bonus is checked before removing the most numerous colour.'
+            'The orange row says $5/10: each orange scores $10 if you have all five colours on your island, or $5 otherwise. Check this before removing any containers. You have all five colours. What is each orange worth?',
+            '10',
+            'All five colours are present, so use the higher value on the card.'
         ),
-        actionStep(
+        questionStep(
             'discard',
             'Which entire colour is removed?',
-            'Choose the colour you have the most of on your island. Every container of that colour scores $0. Count the containers, regardless of their value. If several colours tie, the 5/10 colour must go if involved; otherwise BGS removes the lowest-valued tied colour.',
-            (action) => action.kind === 'answer' && action.answer === Color.Black,
-            (state) => state.answer === Color.Black
+            'At final scoring, remove every container of your most numerous island colour. All containers of that colour score $0, regardless of their card value. If colours tie, remove your $5/10 colour if it is tied; otherwise the game removes the lowest-valued tied colour. Which colour must you remove here?',
+            Color.Black,
+            'You have 3 dark green, 2 white, and 1 of each other colour. Remove the colour with the most containers.'
         ),
         actionStep(
             'finish',
@@ -596,12 +634,17 @@ const scoring: Lesson = {
     },
     choices(_state, step) {
         if (step === 'set')
-            return ['5', '10'].map((answer) => ({ label: `$${answer}`, action: { kind: 'answer', answer } }));
+            return ['5', '10'].map((answer) => ({
+                label: `$${answer}`,
+                action: { kind: 'answer', answer },
+                correct: 'Correct! All five colours are present, so each orange scores $10.',
+            }));
         if (step === 'discard')
             return colors.map((color) => ({
                 label: colorName(color),
                 color,
                 action: { kind: 'answer', answer: color },
+                correct: 'Correct! Remove all 3 dark-green containers. All three score $0.',
             }));
         return step === 'finish' ? [choice('Done · score the game', pass)] : [];
     },

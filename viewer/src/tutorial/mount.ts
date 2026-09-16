@@ -22,11 +22,15 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
     }
     const top = element('div', 'tutorial-top');
     const guide = element('div', 'tutorial-guide');
+    const feedback = element('p', 'tutorial-answer-feedback');
+    feedback.setAttribute('role', 'status');
+    feedback.setAttribute('aria-atomic', 'true');
+    feedback.hidden = true;
     const controls = element('div', 'tutorial-actions');
     controls.dataset.tutorial = 'lesson-actions';
     controls.setAttribute('aria-label', 'Lesson actions');
     const left = element('div');
-    left.append(guide, controls);
+    left.append(feedback, guide, controls);
     const summary = element('aside', 'tutorial-summary');
     const gameHost = element('div', 'tutorial-game');
     const result = element('section', 'tutorial-result');
@@ -111,19 +115,36 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
         );
         const values = element('div', 'tutorial-values');
         values.dataset.tutorial = 'value-card';
-        values.append(element('h3', '', 'Your secret value card'));
+        values.append(element('h3', '', 'Your private value card'));
+        values.append(
+            element(
+                'p',
+                'tutorial-value-help',
+                'Final scoring values per island container. Other players have different values and cannot see your card.'
+            )
+        );
         for (const entry of you.pointCard!.containerValues) {
             const item = element('span', 'tutorial-value');
             item.append(
                 swatch(entry.containerColor),
-                document.createTextNode(entry.baseValue === 5 ? '$5/10' : `$${entry.baseValue}`)
+                document.createTextNode(entry.baseValue === 5 ? '$5 or $10' : `$${entry.baseValue}`)
             );
             item.title = `${colorName(entry.containerColor)}: ${
                 entry.baseValue === 5 ? '$10 with all five colours; otherwise $5' : `$${entry.baseValue} each`
             }`;
             values.append(item);
         }
-        if (!['supply-chain', 'buildings'].includes(lesson.id)) summary.append(values);
+        const bonus = you.pointCard!.containerValues.find((entry) => entry.baseValue === 5)!;
+        values.append(
+            element(
+                'p',
+                'tutorial-value-help',
+                `${colorName(
+                    bonus.containerColor
+                )}: $10 each with all five colours on your island; $5 each otherwise. Check before removing your most numerous colour.`
+            )
+        );
+        if (['keep-cargo', 'scoring'].includes(lesson.id)) summary.append(values);
         if (['supply-chain', 'buildings'].includes(lesson.id)) {
             const business = element('div', 'tutorial-business');
             business.dataset.tutorial = 'business';
@@ -244,6 +265,17 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
     let controlStep = -1;
     function renderControls(snapshot: TutorialSnapshot<LessonState>) {
         const step = lesson.steps[snapshot.step]?.id ?? '';
+        const answeredStep = lesson.steps[snapshot.step - 1]?.id ?? '';
+        const answered =
+            snapshot.state.answer === undefined
+                ? undefined
+                : lesson
+                      .choices(snapshot.state, answeredStep)
+                      .find(
+                          (choice) => choice.action.kind === 'answer' && choice.action.answer === snapshot.state.answer
+                      );
+        feedback.textContent = answered?.correct ?? '';
+        feedback.hidden = !feedback.textContent || !!snapshot.error;
         // Preserve the typed bid and focus when validation reports an error.
         if (controlStep !== snapshot.step) {
             controls.replaceChildren();
