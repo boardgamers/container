@@ -14,7 +14,6 @@ export interface Choice {
     label: string;
     action: TutorialAction;
     color?: string;
-    correct?: string;
 }
 export interface Lesson extends Omit<TutorialOptions<LessonState, TutorialAction>, 'move'> {
     title: string;
@@ -180,13 +179,15 @@ function questionStep(
     title: string,
     text: string,
     answer: string,
-    hint: string
+    hint: string,
+    success: string
 ): TutorialStep<LessonState, TutorialAction> {
     return {
         id,
         title,
         text,
         hint,
+        success,
         complete: (state) => state.answer === answer,
         validateMove: (_state, action) =>
             action.kind !== 'answer'
@@ -556,14 +557,16 @@ const keeping: Lesson = {
             'What does keeping add?',
             'The two white containers are worth $20. The orange is worth $10 because it completes your five-colour set. Keeping adds $30 in containers, but costs $6 paid to the bank. What is the net gain?',
             '24',
-            '$30 in containers minus the $6 payment.'
+            '$30 in containers minus the $6 payment.',
+            'Correct! $30 in containers − $6 paid to the bank = $24 gained.'
         ),
         questionStep(
             'sell-value',
             'What does selling earn?',
             'Ada pays her $6 bid and the bank matches it. How much cash do you receive in total?',
             '12',
-            'Add the $6 bid and the $6 bank subsidy.'
+            'Add the $6 bid and the $6 bank subsidy.',
+            'Correct! Ada’s $6 + the bank’s $6 = $12 received.'
         ),
         actionStep(
             'decline',
@@ -585,10 +588,6 @@ const keeping: Lesson = {
             return answers.map((answer) => ({
                 label: `$${answer}`,
                 action: { kind: 'answer', answer },
-                correct:
-                    step === 'keep-value'
-                        ? 'Correct! $30 in containers − $6 paid to the bank = $24 gained.'
-                        : 'Correct! Ada’s $6 + the bank’s $6 = $12 received.',
             }));
         }
         return step === 'decline' ? [choice('Keep cargo · pay $6', { name: MoveName.Decline, data: true })] : [];
@@ -611,14 +610,16 @@ const scoring: Lesson = {
             'Check all five colours first',
             'The orange row says $5/10: each orange scores $10 if you have all five colours on your island, or $5 otherwise. Check this before removing any containers. You have all five colours. What is each orange worth?',
             '10',
-            'All five colours are present, so use the higher value on the card.'
+            'All five colours are present, so use the higher value on the card.',
+            'Correct! All five colours are present, so each orange scores $10.'
         ),
         questionStep(
             'discard',
             'Which entire colour is removed?',
             'At final scoring, remove every container of your most numerous island colour. All containers of that colour score $0, regardless of their card value. If colours tie, remove your $5/10 colour if it is tied; otherwise the game removes the lowest-valued tied colour. Which colour must you remove here?',
             Color.Black,
-            'You have 3 dark green, 2 white, and 1 of each other colour. Remove the colour with the most containers.'
+            'You have 3 dark green, 2 white, and 1 of each other colour. Remove the colour with the most containers.',
+            'Correct! Remove all 3 dark-green containers. All three score $0.'
         ),
         actionStep(
             'finish',
@@ -637,14 +638,12 @@ const scoring: Lesson = {
             return ['5', '10'].map((answer) => ({
                 label: `$${answer}`,
                 action: { kind: 'answer', answer },
-                correct: 'Correct! All five colours are present, so each orange scores $10.',
             }));
         if (step === 'discard')
             return colors.map((color) => ({
                 label: colorName(color),
                 color,
                 action: { kind: 'answer', answer: color },
-                correct: 'Correct! Remove all 3 dark-green containers. All three score $0.',
             }));
         return step === 'finish' ? [choice('Done · score the game', pass)] : [];
     },

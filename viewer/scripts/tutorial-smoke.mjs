@@ -53,18 +53,24 @@ try {
                     await page.locator('.tutorial-bid input').fill(heading.includes('add $2') ? '2' : '8');
                     await page.locator('.tutorial-bid button').click();
                 } else if (heading.includes('What does keeping') || heading.includes('What does selling')) {
-                    assert.equal(await guide.getByRole('button', { name: 'Show me', exact: true }).isVisible(), false);
+                    assert.equal(
+                        await guide.getByRole('button', { name: 'Show area', exact: true }).isVisible(),
+                        false
+                    );
                     await page
                         .locator('.tutorial-actions')
                         .getByRole('button', { name: heading.includes('keeping') ? '$24' : '$12', exact: true })
                         .click();
                     await page.getByRole('status').filter({ hasText: 'Correct!' }).waitFor();
                     assert.match(
-                        await page.locator('.tutorial-answer-feedback').innerText(),
+                        await page.locator('.bgs-tutorial-feedback').innerText(),
                         heading.includes('keeping') ? /\$24 gained/ : /\$12 received/
                     );
                 } else if (heading.includes('Check all five')) {
-                    assert.equal(await guide.getByRole('button', { name: 'Show me', exact: true }).isVisible(), false);
+                    assert.equal(
+                        await guide.getByRole('button', { name: 'Show area', exact: true }).isVisible(),
+                        false
+                    );
                     await page.locator('.tutorial-actions').getByRole('button', { name: '$5', exact: true }).click();
                     await guide.getByRole('alert').waitFor();
                     assert.equal(await guide.locator('.bgs-tutorial-heading strong').innerText(), heading);

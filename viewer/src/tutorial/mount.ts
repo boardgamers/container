@@ -9,7 +9,7 @@ import Game from '../components/Game.vue';
 import { colorName, colors, lessons, LessonState, TutorialAction } from './lessons';
 import './tutorial.css';
 
-export const mountTutorial: TutorialMount = async (target, { chapter, onProgress }) => {
+export const mountTutorial: TutorialMount = async (target, { chapter, onProgress, nextChapter }) => {
     const found = lessons.find((entry) => entry.id === chapter);
     if (!found) throw Error('Unknown Container chapter');
     const lesson = found;
@@ -22,15 +22,11 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
     }
     const top = element('div', 'tutorial-top');
     const guide = element('div', 'tutorial-guide');
-    const feedback = element('p', 'tutorial-answer-feedback');
-    feedback.setAttribute('role', 'status');
-    feedback.setAttribute('aria-atomic', 'true');
-    feedback.hidden = true;
     const controls = element('div', 'tutorial-actions');
     controls.dataset.tutorial = 'lesson-actions';
     controls.setAttribute('aria-label', 'Lesson actions');
     const left = element('div');
-    left.append(feedback, guide, controls);
+    left.append(guide, controls);
     const summary = element('aside', 'tutorial-summary');
     const gameHost = element('div', 'tutorial-game');
     const result = element('section', 'tutorial-result');
@@ -265,17 +261,6 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
     let controlStep = -1;
     function renderControls(snapshot: TutorialSnapshot<LessonState>) {
         const step = lesson.steps[snapshot.step]?.id ?? '';
-        const answeredStep = lesson.steps[snapshot.step - 1]?.id ?? '';
-        const answered =
-            snapshot.state.answer === undefined
-                ? undefined
-                : lesson
-                      .choices(snapshot.state, answeredStep)
-                      .find(
-                          (choice) => choice.action.kind === 'answer' && choice.action.answer === snapshot.state.answer
-                      );
-        feedback.textContent = answered?.correct ?? '';
-        feedback.hidden = !feedback.textContent || !!snapshot.error;
         // Preserve the typed bid and focus when validation reports an error.
         if (controlStep !== snapshot.step) {
             controls.replaceChildren();
@@ -351,7 +336,7 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
         app.$forceUpdate();
         renderControls(snapshot);
     });
-    const removeGuide = mountTutorialGuide(guide, controller);
+    const removeGuide = mountTutorialGuide(guide, controller, { nextChapter });
     return () => {
         destroyed = true;
         clearTimeout(animationTimer);
