@@ -13,8 +13,18 @@ import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 export default class InlineLog extends Vue {
     @Prop({ default: () => [] }) entries!: string[];
     follow = true;
+    resizeObserver?: ResizeObserver;
     mounted() {
-        this.scrollToLatest();
+        this.$nextTick(this.scrollToLatest);
+        // A viewer can mount while its iframe is still hidden. Follow the end
+        // once the feed is visible and its scroll dimensions are available.
+        this.resizeObserver = new ResizeObserver(() => {
+            if (this.follow) this.scrollToLatest();
+        });
+        this.resizeObserver.observe(this.$refs.feed as HTMLElement);
+    }
+    beforeDestroy() {
+        this.resizeObserver?.disconnect();
     }
     @Watch('entries') changed() {
         if (this.follow) {
@@ -29,6 +39,7 @@ export default class InlineLog extends Vue {
     }
     onScroll() {
         const feed = this.$refs.feed as HTMLElement;
+        if (!feed.clientHeight) return;
         this.follow = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 32;
     }
 }
@@ -37,20 +48,21 @@ export default class InlineLog extends Vue {
 .inline-game-log {
     box-sizing: border-box;
     width: 100%;
-    padding: 10px 14px;
+    padding: 8px 12px;
     border: 1px solid #75818d66;
     border-radius: 6px;
     background: #e5eeea;
     color: #203a45;
-    font: 14px system-ui;
+    font: 14px/1.4 system-ui;
 }
 summary {
     cursor: pointer;
     font-weight: 600;
 }
 .journal-feed {
-    max-height: 220px;
+    height: var(--game-panel-content-height, 300px);
     overflow: auto;
+    overflow-anchor: none;
     overscroll-behavior: contain;
     margin-top: 8px;
 }

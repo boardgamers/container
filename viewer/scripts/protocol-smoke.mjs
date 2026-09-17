@@ -9,6 +9,7 @@ const game = 'container';
 const require = createRequire(import.meta.url);
 const repo = new URL('../../', import.meta.url);
 const engine = require(fileURLToPath(new URL('engine/dist/index.js', repo)));
+const journalEntry = (text) => ({ type: 'move', move: { name: 'pass' }, pretty: text, simple: text });
 const html =
     '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/bundle.css"><div id="app"></div><script src="/vue.js"></script>' +
     '<script src="/bundle.js"></script>';
@@ -47,9 +48,13 @@ try {
         assert.deepEqual(errors, [], 'bundle loads without browser errors');
         let state = engine.setup(3, {}, '17');
         state = JSON.parse(JSON.stringify(state));
+        state.newTurn = true;
         state.players.forEach((player, index) => {
             player.name = ['You', 'Ada Lovelace', 'Bob'][index];
         });
+        state.log = Array.from({ length: 50 }, (_, index) =>
+            journalEntry(`Journal entry ${index + 1}: Ada buys containers from Bob's warehouse.`)
+        );
         const id = (value) => value.toString(16).padStart(24, '0');
         const messages = Array.from({ length: 35 }, (_, i) => ({
             _id: id(i + 1),
@@ -59,6 +64,8 @@ try {
             text: `Earlier message ${i + 1}`,
             createdAt: '2026-09-13T12:00:00Z',
         }));
+        // BGS can load the viewer before revealing its iframe.
+        await page.locator('#app').evaluate((el) => (el.style.display = 'none'));
         await page.evaluate(
             ({ game, state, messages }) => {
                 window.globalName = game;
@@ -89,9 +96,42 @@ try {
             { game, state, messages }
         );
         await page.waitForFunction(() => readyCount === 1);
+        await page.locator('#app').evaluate((el) => (el.style.display = ''));
         const panel = page.locator('.bgs-game-chat');
         const input = panel.locator('input');
         const list = panel.locator('.chat-messages');
+        const journal = page.locator('.journal-feed');
+        const assertJournalAtEnd = () =>
+            page.waitForFunction(
+                () => {
+                    const el = document.querySelector('.journal-feed');
+                    return el && el.clientHeight > 0 && Math.abs(el.scrollHeight - el.scrollTop - el.clientHeight) < 3;
+                },
+                null,
+                { timeout: 3000 }
+            );
+        await assertJournalAtEnd();
+        const journalHeight = await page
+            .locator('.inline-game-log')
+            .evaluate((el) => el.getBoundingClientRect().height);
+        const chatHeight = await panel.evaluate((el) => el.getBoundingClientRect().height);
+        assert.ok(Math.abs(journalHeight - chatHeight) < 2, 'journal and chat have the same height');
+        await journal.evaluate((el) => {
+            el.scrollTop = 0;
+            el.dispatchEvent(new Event('scroll'));
+        });
+        state.log.push(journalEntry('New entry while reading older moves.'));
+        await page.evaluate((state) => host.emit('state', state), state);
+        await journal.locator('.journal-entry').last().getByText('New entry while reading older moves.').waitFor();
+        assert.equal(await journal.evaluate((el) => el.scrollTop), 0, 'new moves preserve the reading position');
+        await journal.evaluate((el) => {
+            el.scrollTop = el.scrollHeight;
+            el.dispatchEvent(new Event('scroll'));
+        });
+        state.log.push(journalEntry('New entry while following the journal.'));
+        await page.evaluate((state) => host.emit('state', state), state);
+        await journal.locator('.journal-entry').last().getByText('New entry while following the journal.').waitFor();
+        await assertJournalAtEnd();
         await panel.scrollIntoViewIfNeeded();
         await page.waitForFunction(() => {
             const el = document.querySelector('.chat-messages');
@@ -212,6 +252,14 @@ try {
         );
         assert.equal(await page.locator('.bgs-game-chat').count(), 1);
         assert.equal(await page.locator('.chat-messages article').count(), 0, 'relaunch detaches old chat');
+        await assertJournalAtEnd();
+        await page.reload();
+        await page.evaluate((state) => {
+            const host = window.container.launch('#app');
+            host.emit('preferences', { sound: false });
+            host.emit('state', state);
+        }, state);
+        await assertJournalAtEnd();
         assert.deepEqual(errors, [], 'no browser errors');
         await page.close();
         console.log(`${game} ${width}px: protocol/chat smoke passed`);

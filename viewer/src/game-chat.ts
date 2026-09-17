@@ -17,7 +17,9 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
 .bgs-game-chat .chat-day{display:flex;align-items:center;gap:8px;margin:12px 0 6px;font-size:.85em;opacity:.8}
 .bgs-game-chat .chat-day::before,.bgs-game-chat .chat-day::after{content:"";flex:1;border-top:1px solid currentColor;opacity:.3}
 .bgs-game-chat .chat-day time{margin:0;color:inherit;font-size:inherit}
-.bgs-game-chat .chat-messages{max-height:250px;overflow:auto;overscroll-behavior:contain;margin:6px 0 8px}
+.bgs-game-chat .chat-body{height:var(--game-panel-content-height,300px);display:flex;flex-direction:column;margin-top:8px}
+.bgs-game-chat .chat-body > :not(.chat-messages){flex-shrink:0}
+.bgs-game-chat .chat-messages{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;margin:0 0 8px}
 .bgs-game-chat article{padding:5px 0;border-bottom:1px solid #75818d26;white-space:pre-wrap;overflow-wrap:anywhere}
 .bgs-game-chat article strong{padding:0 3px;font-weight:bold}
 .bgs-game-chat article:last-child{border-bottom:0}
@@ -61,6 +63,12 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
             updateShortcut();
         },
     });
+    // Keep the message list flexible so the composer, suggestions and status
+    // fit inside the same panel height as the journal.
+    const body = document.createElement('div');
+    body.className = 'chat-body';
+    body.append(...Array.from(view.element.children).filter((child) => child.tagName !== 'SUMMARY'));
+    view.element.append(body);
     function renderAuthor(message: ChatMessage): Node {
         const author = document.createElement('strong');
         author.textContent = message.author || 'Game';
