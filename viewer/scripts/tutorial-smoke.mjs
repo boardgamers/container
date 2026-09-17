@@ -87,14 +87,12 @@ async function playOnBoard(page, move) {
     );
     assert.ok(zone >= 0, 'destination available for ' + move.name + ' ' + type);
     const bounds = await zones.nth(zone).boundingBox();
-    await zones
-        .nth(zone)
-        .click({
-            position: {
-                x: bounds.width * (type === 'factory' || type === 'warehouse' ? 0.4 : 0.15),
-                y: bounds.height * 0.4,
-            },
-        });
+    await zones.nth(zone).click({
+        position: {
+            x: bounds.width * (type === 'factory' || type === 'warehouse' ? 0.4 : 0.15),
+            y: bounds.height * 0.4,
+        },
+    });
     if (await page.locator('.modal.visible').isVisible())
         await page.locator('.modal.visible').getByRole('button', { name: 'Confirm', exact: true }).click();
 }
