@@ -8,6 +8,7 @@
                 @click="ui.selected = null"
                 @keydown.esc="ui.selected = null"
                 id="scene"
+                data-tutorial="game-board"
                 viewBox="0 0 1250 650"
                 height="650"
             >
@@ -25,7 +26,7 @@
                 <rect width="100%" height="100" x="0" y="0" fill="#c6c6b8" />
                 <rect width="390" height="220" x="860" y="430" fill="#c6c6b8" />
 
-                <PassButton transform="translate(1105, 5)" :enabled="canPass()" @click="pass()" />
+                <PassButton data-tutorial="turn" transform="translate(1105, 5)" :enabled="canPass()" @click="pass()" />
                 <UndoButton transform="translate(1105, 36)" :enabled="canUndo()" @click="undo()" />
                 <LogButton transform="translate(1105, 67)" @click="showLog()" />
                 <SoundButton transform="translate(1200, 15)" :isOn="preferences.sound" @click="toggleSound()" />
@@ -216,7 +217,7 @@
                             stroke-width="2px"
                             rx="2px"
                         />
-                        <Calculator transform="translate(140, 430)" @bid="bid($event)" />
+                        <Calculator data-tutorial="bid" transform="translate(140, 430)" @bid="bid($event)" />
                     </template>
                 </template>
 

@@ -5,6 +5,12 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 const require = createRequire(import.meta.url);
+require('../../engine/node_modules/ts-node').register({
+    transpileOnly: true,
+    compilerOptions: { module: 'CommonJS', moduleResolution: 'Node', target: 'ES2022', importHelpers: false },
+});
+const { lessons } = require('../src/tutorial/lessons');
+
 const viewer = new URL('../', import.meta.url);
 const files = {
     '/bundle.js': fileURLToPath(new URL('dist/container-viewer.umd.min.js', viewer)),
@@ -33,14 +39,77 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
+async function playOnBoard(page, move) {
+    if (move.name === 'pass') return page.locator('[data-tutorial="turn"]').click();
+    if (move.name === 'bid') {
+        const keys = [7, 8, 9, 4, 5, 6, 1, 2, 3, 0, 'Del', 'Bid'];
+        for (const digit of String(move.extraData.price))
+            await page
+                .locator('.calculator rect.button')
+                .nth(keys.indexOf(Number(digit)))
+                .click();
+        await page.locator('.calculator rect.button').last().click();
+        if (await page.locator('.modal.visible').isVisible())
+            await page.locator('.modal.visible').getByRole('button', { name: 'Confirm', exact: true }).click();
+        return;
+    }
+    if (move.name === 'accept') return page.locator('g.button').filter({ hasText: 'Accept Ada' }).click();
+    if (move.name === 'decline') return page.locator('g.button').filter({ hasText: 'Keep for $6' }).click();
+    const id = move.name === 'produce' ? move.extraData.piece.id : move.data?.piece?.id ?? move.extraData?.id;
+    const pieces = page.locator('.piece.canDrag');
+    const index = await pieces.evaluateAll(
+        (els, { id, sail, factory }) =>
+            els.findLastIndex((el) =>
+                sail
+                    ? el.__vue__.pieceType === 'ship' && el.__vue__.owner === 0
+                    : factory
+                    ? el.__vue__.pieceType === 'factory' && el.__vue__.color === factory
+                    : el.__vue__.pieceId === id
+            ),
+        { id, sail: move.name === 'sail', factory: move.name === 'buyFactory' ? move.data : undefined }
+    );
+    assert.ok(index >= 0, 'piece available for ' + move.name);
+    await pieces.nth(index).click();
+    const zones = page.locator('.placeholder.canClick');
+    const type = {
+        produce: 'factoryStore',
+        buyFromFactory: 'warehouseStore',
+        buyFactory: 'factory',
+        buyWarehouse: 'warehouse',
+        sail: move.data === 'sea' ? 'openSea' : 'islandHarbor',
+    }[move.name];
+    const zone = await zones.evaluateAll(
+        (els, { type, price }) =>
+            els.findIndex(
+                (el) => el.__vue__.data.type === type && (price === undefined || el.__vue__.data.price === price)
+            ),
+        { type, price: move.extraData?.price }
+    );
+    assert.ok(zone >= 0, 'destination available for ' + move.name + ' ' + type);
+    const bounds = await zones.nth(zone).boundingBox();
+    await zones
+        .nth(zone)
+        .click({
+            position: {
+                x: bounds.width * (type === 'factory' || type === 'warehouse' ? 0.4 : 0.15),
+                y: bounds.height * 0.4,
+            },
+        });
+    if (await page.locator('.modal.visible').isVisible())
+        await page.locator('.modal.visible').getByRole('button', { name: 'Confirm', exact: true }).click();
+}
+
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
 try {
-    for (const width of [1400, 390]) {
+    for (const width of process.env.WIDTH ? [Number(process.env.WIDTH)] : [1400, 390]) {
         const context = await browser.newContext({ viewport: { width, height: 950 }, reducedMotion: 'reduce' });
         const page = await context.newPage();
         const errors = [];
         page.on('pageerror', (error) => errors.push(error.message));
-        for (const chapter of ['supply-chain', 'buildings', 'selling', 'bidding', 'keep-cargo', 'scoring']) {
+        for (const lesson of lessons.filter((l) => !process.env.CHAPTER || l.id === process.env.CHAPTER)) {
+            const chapter = lesson.id;
+            let state = lesson.initialState();
+            console.log(`START ${chapter} ${width}`);
             await page.goto(`${origin}/?chapter=${chapter}`);
             const guide = page.locator('.bgs-tutorial-guide');
             await guide.waitFor();
@@ -49,10 +118,7 @@ try {
                 if (heading === 'Chapter complete') break;
                 const next = guide.getByRole('button', { name: 'Continue', exact: true });
                 if (await next.isEnabled()) await next.click();
-                else if (await page.locator('.tutorial-bid').count()) {
-                    await page.locator('.tutorial-bid input').fill(heading.includes('add $2') ? '2' : '8');
-                    await page.locator('.tutorial-bid button').click();
-                } else if (heading.includes('What does keeping') || heading.includes('What does selling')) {
+                else if (heading.includes('What does keeping') || heading.includes('What does selling')) {
                     assert.equal(
                         await guide.getByRole('button', { name: 'Show area', exact: true }).isVisible(),
                         false
@@ -81,7 +147,25 @@ try {
                         .locator('.tutorial-actions')
                         .getByRole('button', { name: 'dark green', exact: true })
                         .click();
-                else await page.locator('.tutorial-actions button').first().click();
+                else {
+                    const stepId = await page.locator('.container-tutorial').getAttribute('data-step');
+                    let action = lesson.choices(state, stepId)[0]?.action;
+                    if (chapter === 'bidding' && ['bid', 'raise'].includes(stepId))
+                        action = {
+                            kind: 'move',
+                            move: { name: 'bid', data: true, extraData: { price: stepId === 'bid' ? 8 : 2 } },
+                        };
+                    assert.ok(action, `action for ${chapter}/${stepId}`);
+                    if (action.kind === 'move') {
+                        assert.equal(
+                            await page.locator('.tutorial-actions button:visible').count(),
+                            0,
+                            'no ready-made game actions'
+                        );
+                        await playOnBoard(page, action.move);
+                    } else await page.locator('.tutorial-actions button').first().click();
+                    state = lesson.move(state, action);
+                }
                 await page.waitForFunction(
                     (previous) => document.querySelector('.bgs-tutorial-heading strong')?.textContent !== previous,
                     heading
@@ -112,16 +196,14 @@ try {
         const embeddedGuide = embedded.locator('.bgs-tutorial-guide');
         await embeddedGuide.getByRole('button', { name: 'Back to start', exact: true }).click();
         await embeddedGuide.getByRole('button', { name: 'Continue', exact: true }).click();
-        await embedded.locator('.tutorial-bid input').fill('8');
-        await embedded.locator('.tutorial-bid button').click();
+        await playOnBoard(embedded, { name: 'bid', extraData: { price: 8 } });
         await embedded
             .locator('.tutorial-actions')
             .getByRole('button', { name: 'Reveal the bids', exact: true })
             .click();
-        await embedded.locator('.tutorial-bid input').fill('2');
-        await embedded.locator('.tutorial-bid button').click();
+        await playOnBoard(embedded, { name: 'bid', extraData: { price: 2 } });
         await embeddedGuide.getByText('5/7 · Reveal the additional bids', { exact: true }).waitFor();
-        console.log(`Sandboxed auction ${width}px: additional bid submitted`);
+        console.log(`Sandboxed native auction ${width}px passed`);
         await page.goto(`${origin}/?chapter=selling`);
         await page.evaluate(() => {
             window.container.launch('#app');

@@ -167,7 +167,14 @@ function actionStep(
         title,
         text,
         hint,
-        target: 'lesson-actions',
+        target:
+            allowed === isWatch
+                ? 'lesson-actions'
+                : ['bid', 'raise'].includes(id)
+                ? 'bid'
+                : id === 'finish'
+                ? 'turn'
+                : 'game-board',
         complete,
         validateMove: (_state, action) =>
             allowed(action) ? undefined : 'Follow the action described in this step, or use Replay step.',
@@ -217,7 +224,7 @@ const supply: Lesson = {
         actionStep(
             'produce',
             'Produce and set a price',
-            'Your orange factory can produce one orange container. Produce it and offer it for $2. Production costs $1, paid to the player before you, and uses your first action.',
+            'Your orange factory can produce one orange container. Click an orange container in the supply, then your factory-sales square marked 2. Production costs $1, paid to the player before you, and uses your first action.',
             (action) =>
                 action.kind === 'move' &&
                 action.move.name === MoveName.Produce &&
@@ -228,7 +235,7 @@ const supply: Lesson = {
         actionStep(
             'buy',
             'Buy for your warehouse',
-            'Use your second action to buy Ada’s white container for $2. Offer it from your warehouse for $4. The house-shaped row holds warehouse buildings. The squares below it hold containers for sale: their numbers are prices, not extra storage spaces. Your one warehouse holds one container.',
+            'Click Ada’s white container in her factory sales, then your warehouse-sales square marked 4. You pay her $2 and offer it for $4. The house-shaped row holds warehouse buildings. The squares below it hold containers for sale: their numbers are prices, not extra storage spaces. Your one warehouse holds one container.',
             (action) =>
                 action.kind === 'move' &&
                 action.move.name === MoveName.BuyFromFactory &&
@@ -239,7 +246,7 @@ const supply: Lesson = {
         actionStep(
             'finish',
             'Finish your turn',
-            'Both actions are spent. In the normal game, Done confirms your purchases and prices. Until then, Undo can revise your turn. In a lesson, use the replay control to start this step again.',
+            'Both actions are spent. In the normal game, Pass in the top-right corner confirms your purchases and prices. Until then, Undo can revise your turn. In a lesson, use the replay control to start this step again.',
             isMove(MoveName.Pass),
             (state) => state.game.currentPlayers[0] === 1
         ),
@@ -291,14 +298,14 @@ const buildings: Lesson = {
         actionStep(
             'warehouse',
             'Buy room for another container',
-            'Your warehouse is full with one brown container. Each warehouse holds one container. Buy a second warehouse for $4 to increase capacity to two. Buying a building uses one action.',
+            'Your warehouse is full with one brown container. Each warehouse holds one container. Click a warehouse in the supply, then your empty house-shaped building slot to buy it for $4 and increase capacity to two. Buying a building uses one action.',
             isMove(MoveName.BuyWarehouse),
             (state) => state.game.players[0].warehouses.length === 2
         ),
         actionStep(
             'stock',
             'Use the new storage space',
-            'Buy Ada’s white container for $2 and offer it for $3. You can now keep both the brown and white containers for visiting ships to buy. Buying a warehouse does not produce or include any containers.',
+            'Click Ada’s white container in her factory sales, then your warehouse-sales square marked 3. You pay $2 and offer it for $3. You can now keep both the brown and white containers for visiting ships to buy. Buying a warehouse does not produce or include any containers.',
             (action) =>
                 action.kind === 'move' &&
                 action.move.name === MoveName.BuyFromFactory &&
@@ -309,14 +316,14 @@ const buildings: Lesson = {
         actionStep(
             'finish',
             'Confirm these two actions',
-            'You bought a warehouse, then stock for it. Choose Done. Ada and Leo will pass so you can try expanding your factory next.',
+            'You bought a warehouse, then stock for it. Choose Pass in the top-right corner. Ada and Leo will pass so you can try expanding your factory next.',
             isMove(MoveName.Pass),
             (state) => state.game.currentPlayers[0] === 0 && state.game.players[0].actions === 2
         ),
         actionStep(
             'factory',
             'Buy a second factory for $6',
-            'Your orange factory makes orange containers. Buy a white factory to produce a second colour. You may own only one factory of each colour. Each factory also adds two spaces to your factory sales stock.',
+            'Your orange factory makes orange containers. Click a white factory in the supply, then your empty circular factory slot to buy it. You may own only one factory of each colour. Each factory also adds two spaces to your factory sales stock.',
             (action) =>
                 action.kind === 'move' && action.move.name === MoveName.BuyFactory && action.move.data === Color.White,
             (state) => state.game.players[0].factories.length === 2
@@ -324,7 +331,7 @@ const buildings: Lesson = {
         actionStep(
             'orange',
             'Produce with both factories',
-            'One production action can make one container per factory. Pay $1 for the entire action, even when using several factories. Start with orange and offer it for $2.',
+            'One production action can make one container per factory. Pay $1 for the entire action, even when using several factories. Click an orange container in the supply, then your factory-sales square marked 2.',
             (action) =>
                 action.kind === 'move' &&
                 action.move.name === MoveName.Produce &&
@@ -335,7 +342,7 @@ const buildings: Lesson = {
         actionStep(
             'white',
             'Add white in the same action',
-            'Now produce white and offer it for $3. This is still the same production action, with no extra $1 payment. More factories produce more stock; more warehouses let you buy and resell more stock from other players.',
+            'Click a white container in the supply, then your factory-sales square marked 3. This is still the same production action, with no extra $1 payment. More factories produce more stock; more warehouses let you buy and resell more stock from other players.',
             (action) =>
                 action.kind === 'move' &&
                 action.move.name === MoveName.Produce &&
@@ -403,14 +410,14 @@ const selling: Lesson = {
         actionStep(
             'sea',
             'Harbour → open sea',
-            'Sail into open sea. Moving directly from one harbour to another is not allowed. This uses one of your two actions.',
+            'Click your blue ship, then the open sea in the centre of the board. Moving directly from one harbour to another is not allowed. This uses one of your two actions.',
             isMove(MoveName.Sail),
             (state) => state.game.players[0].ship.shipPosition === ShipPosition.OpenSea
         ),
         actionStep(
             'island',
             'Open sea → island',
-            'Sail to the island to start the auction. An island auction ends your turn even if it was your first action. The seller does not submit a bid.',
+            'Click your blue ship, then the island harbour on the right to start the auction. Confirm the sailing move. An island auction ends your turn even if it was your first action. The seller does not submit a bid.',
             (action) =>
                 action.kind === 'move' &&
                 action.move.name === MoveName.Sail &&
@@ -458,7 +465,7 @@ const bidding: Lesson = {
         actionStep(
             'bid',
             'Submit a sealed bid of $8',
-            'Enter 8 and choose Bid. Your offer is hidden from Leo until he has also bid. You only pay if Ada ultimately sells the cargo to you. You cannot bid more cash than you hold.',
+            'Use the board’s calculator: press 8, then Bid. Your offer is hidden from Leo until he has also bid. You only pay if Ada ultimately sells the cargo to you. You cannot bid more cash than you hold.',
             (action) =>
                 action.kind === 'move' && action.move.name === MoveName.Bid && action.move.extraData.price === 8,
             (state) => state.game.players[0].bid === 8
@@ -473,7 +480,7 @@ const bidding: Lesson = {
         actionStep(
             'raise',
             'A tie: add $2',
-            'You and Leo both offered $8. Only the tied highest bidders bid again. Enter 2 as your additional bid: your new total will be $10, not $2. You may add $0, but cannot lower your first bid.',
+            'You and Leo both offered $8. Only the tied highest bidders bid again. Use the board’s calculator to bid 2 more, then confirm the $10 total. Your new total is $10, not $2. You may add $0, but cannot lower your first bid.',
             (action) =>
                 action.kind === 'move' && action.move.name === MoveName.Bid && action.move.extraData.price === 2,
             (state) => state.game.players[0].additionalBid === 2
@@ -526,7 +533,7 @@ const keeping: Lesson = {
         actionStep(
             'island',
             'Offer your shipment',
-            'Sail to the island. Ada and Leo will bid for the entire cargo, just as in the previous auction.',
+            'Click your blue ship, then the island harbour on the right and confirm the sailing move. Ada and Leo will bid for the entire cargo, just as in the previous auction.',
             (action) =>
                 action.kind === 'move' &&
                 action.move.name === MoveName.Sail &&
@@ -624,7 +631,7 @@ const scoring: Lesson = {
         actionStep(
             'finish',
             'Finish the game and count',
-            'The three dark-green containers contribute $0. White earns $20, orange $10, tan $6 and brown $4: $40 from the island. Add $20 cash, $2 for your warehouse container and $3 for the container on your ship; subtract $11 for your loan. Factory stock and buildings score nothing. Choose Done to see the final result.',
+            'The three dark-green containers contribute $0. White earns $20, orange $10, tan $6 and brown $4: $40 from the island. Add $20 cash, $2 for your warehouse container and $3 for the container on your ship; subtract $11 for your loan. Factory stock and buildings score nothing. Choose Pass in the top-right corner to see the final result.',
             isMove(MoveName.Pass),
             (state) => ended(state.game)
         ),

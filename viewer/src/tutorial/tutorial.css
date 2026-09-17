@@ -137,25 +137,6 @@
 .tutorial-actions button:hover {
     background: #32778b;
 }
-.tutorial-bid {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-}
-.tutorial-bid label {
-    font-weight: 650;
-}
-.tutorial-bid input {
-    font: inherit;
-    background: white;
-    color: #203a45;
-    border: 1px solid #8aadb4;
-    border-radius: 5px;
-    width: 90px;
-    min-height: 42px;
-    padding: 7px;
-}
 .tutorial-summary {
     border-left: 1px solid #8aadb4;
     padding-left: 24px;

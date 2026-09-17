@@ -2,7 +2,6 @@ import { createTutorial, TutorialMount, TutorialSnapshot } from '@boardgamers/pr
 import { mountTutorialGuide } from '@boardgamers/protocol/tutorial/dom';
 import { GameState, Move, stripSecret } from 'container-engine';
 import { Phase } from 'container-engine/src/gamestate';
-import { MoveName } from 'container-engine/src/move';
 import { EventEmitter } from 'events';
 import Vue from 'vue';
 import Game from '../components/Game.vue';
@@ -261,63 +260,21 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
     let controlStep = -1;
     function renderControls(snapshot: TutorialSnapshot<LessonState>) {
         const step = lesson.steps[snapshot.step]?.id ?? '';
-        // Preserve the typed bid and focus when validation reports an error.
+        target.dataset.step = step;
         if (controlStep !== snapshot.step) {
             controls.replaceChildren();
             controlStep = snapshot.step;
-            if (lesson.id === 'bidding' && (step === 'bid' || step === 'raise')) {
-                const form = element('div', 'tutorial-bid');
-                form.setAttribute('role', 'group');
-                form.setAttribute('aria-label', step === 'raise' ? 'Additional bid' : 'Your sealed bid');
-                const label = element('label', '', step === 'raise' ? 'Additional bid' : 'Your sealed bid');
-                const input = element('input');
-                input.type = 'number';
-                input.inputMode = 'numeric';
-                input.min = '0';
-                input.step = '1';
-                input.required = true;
-                input.max = String(snapshot.state.game.players[0].money - snapshot.state.game.players[0].bid);
-                input.value = '';
-                input.id = 'tutorial-bid-amount';
-                label.htmlFor = input.id;
-                const submit = element('button', '', step === 'raise' ? 'Add to my bid' : 'Bid');
-                submit.type = 'button';
-                const total = element('span', 'tutorial-muted');
-                const update = () => {
-                    total.textContent =
-                        step === 'raise'
-                            ? `Total: $8 + $${Number(input.value) || 0} = $${8 + (Number(input.value) || 0)}`
-                            : '';
-                };
-                input.addEventListener('input', update);
-                update();
-                form.append(label, input, submit, total);
-                const sendBid = () => {
-                    if (!input.reportValidity()) return;
-                    void play({
-                        kind: 'move',
-                        move: { name: MoveName.Bid, data: true, extraData: { price: Number(input.value) } },
-                    });
-                };
-                submit.addEventListener('click', sendBid);
-                input.addEventListener('keydown', (event) => {
-                    if (event.key === 'Enter') {
-                        event.preventDefault();
-                        sendBid();
-                    }
+            for (const choice of lesson
+                .choices(snapshot.state, step)
+                .filter((choice) => choice.action.kind !== 'move')) {
+                const button = element('button');
+                button.type = 'button';
+                if (choice.color) button.append(swatch(choice.color));
+                button.append(document.createTextNode(choice.label));
+                button.addEventListener('click', () => {
+                    void play(choice.action);
                 });
-                controls.append(form);
-            } else {
-                for (const choice of lesson.choices(snapshot.state, step)) {
-                    const button = element('button');
-                    button.type = 'button';
-                    if (choice.color) button.append(swatch(choice.color));
-                    button.append(document.createTextNode(choice.label));
-                    button.addEventListener('click', () => {
-                        void play(choice.action);
-                    });
-                    controls.append(button);
-                }
+                controls.append(button);
             }
         }
         controls.querySelectorAll<HTMLInputElement | HTMLButtonElement>('input, button').forEach((control) => {
