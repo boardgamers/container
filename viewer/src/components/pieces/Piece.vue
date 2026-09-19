@@ -15,7 +15,7 @@ import { PieceType, UIData } from '@/types/ui-data';
             [this.currentX, this.currentY] = [coords.x, coords.y];
 
             this.$nextTick(() => {
-                this.communicator.emit('draggedPosChanged', this);
+                if (!this.dragCancelled) this.communicator.emit('draggedPosChanged', this);
             });
         });
     },
@@ -115,7 +115,7 @@ export default class Piece extends Draggable {
             this.ui.dragged = this;
         } else {
             this.ui.dragged = null;
-            this.communicator.emit('draggedPosChanged', this);
+            this.communicator.emit(this.dragCancelled ? 'dragCancelled' : 'draggedPosChanged', this);
         }
     }
 
