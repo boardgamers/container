@@ -567,9 +567,11 @@
             </div>
 
             <div class="journal-and-chat">
-                <InlineLog v-if="G" :entries="logReversed.slice().reverse()" />
-                <div class="chat-host"></div>
+                <div class="mobile-panel-tabs"></div>
+                <InlineLog id="container-journal-panel" v-if="G" :entries="logReversed.slice().reverse()" />
+                <div id="container-chat-panel" class="chat-host"></div>
             </div>
+            <div class="chat-shortcut-host"></div>
         </div>
 
         <div v-if="G" :class="['modal', { visible: logVisible }]">
@@ -2213,6 +2215,57 @@ text {
     }
     .statusBar span {
         text-align: right;
+    }
+}
+</style>
+
+<style>
+.mobile-panel-tabs {
+    display: none;
+}
+@media (max-width: 700px) {
+    .journal-and-chat:has(.mobile-panel-tabs [role='tab']) {
+        gap: 0;
+    }
+    .mobile-panel-tabs:has([role='tab']) {
+        display: flex;
+        background: #203a45;
+        border: 1px solid #203a45;
+        border-radius: 3px 3px 0 0;
+    }
+    .mobile-panel-tabs button {
+        appearance: none;
+        flex: 1;
+        min-height: 34px;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        background: transparent;
+        color: #dce9e6;
+        font: 600 13px Arial, sans-serif;
+        cursor: pointer;
+    }
+    .mobile-panel-tabs button[aria-selected='true'] {
+        border-bottom-color: #8fd44a;
+        background: #304e57;
+        color: white;
+    }
+    .mobile-panel-tabs button:focus-visible {
+        outline: 2px solid white;
+        outline-offset: -3px;
+    }
+    .journal-and-chat[data-mobile-panel='journal'] > .chat-host,
+    .journal-and-chat[data-mobile-panel='chat'] > .inline-game-log {
+        display: none;
+    }
+    .journal-and-chat[data-mobile-panel] > .inline-game-log > summary,
+    .journal-and-chat[data-mobile-panel] .bgs-game-chat > summary {
+        display: none;
+    }
+    .journal-and-chat[data-mobile-panel] .inline-game-log,
+    .journal-and-chat[data-mobile-panel] .bgs-game-chat {
+        border-radius: 0 0 3px 3px;
+        border-top: 0;
+        margin: 0;
     }
 }
 </style>
