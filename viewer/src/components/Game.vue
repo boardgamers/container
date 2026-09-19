@@ -64,7 +64,7 @@
                 </button>
             </div>
         </div>
-        <div class="board-and-journal">
+        <div key="board-and-journal" class="board-and-journal">
             <div
                 ref="boardScroll"
                 :class="['board-scroll', { overview: mobileOverview }]"

@@ -115,7 +115,7 @@ export default class Piece extends Draggable {
             this.ui.dragged = this;
         } else {
             this.ui.dragged = null;
-            this.communicator.emit(this.dragCancelled ? 'dragCancelled' : 'draggedPosChanged', this);
+            this.communicator.emit('draggedPosChanged', this);
         }
     }
 

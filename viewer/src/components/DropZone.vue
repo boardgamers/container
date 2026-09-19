@@ -25,13 +25,7 @@ import { Ship, Container, LoanCard } from './pieces';
 import { ShipPosition } from 'container-engine/src/gamestate';
 import { MoveName } from 'container-engine';
 
-@Component({
-    created(this: DropZone) {
-        const cancel = () => (this.overlapping = false);
-        this.communicator.on('dragCancelled', cancel);
-        this.$on('hook:beforeDestroy', () => this.communicator.off('dragCancelled', cancel));
-    },
-})
+@Component
 export default class DropZone extends Vue {
     @Inject()
     readonly ui!: UIData;
@@ -67,7 +61,7 @@ export default class DropZone extends Vue {
     overlapping = false;
 
     updateOverlapping(piece: Piece) {
-        if (!this.enabled) {
+        if (!this.enabled || piece.dragCancelled) {
             this.overlapping = false;
             return;
         }
