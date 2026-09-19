@@ -2005,9 +2005,19 @@ text {
 .journal-and-chat .bgs-game-chat {
     margin: 0;
 }
+.game .journal-and-chat > .inline-game-log,
+.game .journal-and-chat .bgs-game-chat {
+    border-radius: 0;
+}
 @media (min-width: 1000px) {
     .journal-and-chat {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .game .journal-and-chat > .inline-game-log {
+        border-radius: 0 6px 6px 0;
+    }
+    .game .journal-and-chat .bgs-game-chat {
+        border-radius: 3px 0 0 3px;
     }
 }
 .board-and-journal {
@@ -2231,7 +2241,7 @@ text {
         display: flex;
         background: #203a45;
         border: 1px solid #203a45;
-        border-radius: 3px 3px 0 0;
+        border-radius: 0;
     }
     .mobile-panel-tabs button {
         appearance: none;
@@ -2263,7 +2273,7 @@ text {
     }
     .journal-and-chat[data-mobile-panel] .inline-game-log,
     .journal-and-chat[data-mobile-panel] .bgs-game-chat {
-        border-radius: 0 0 3px 3px;
+        border-radius: 0;
         border-top: 0;
         margin: 0;
     }
