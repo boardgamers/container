@@ -7,7 +7,9 @@
             <div class="container-action-title">
                 <span class="selected-container-colour" :style="{ background: containerActions.colour }"></span>
                 <span>{{ containerActions.title }}</span>
-                <button aria-label="Cancel selection" @click="ui.selected = null">×</button>
+                <button class="selection-close" aria-label="Cancel selection" @click="ui.selected = null">
+                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
+                </button>
             </div>
             <div class="container-action-choices">
                 <button
@@ -20,11 +22,32 @@
             </div>
         </div>
         <div v-if="G" class="mobile-board-navigation" aria-label="Board view">
-            <button :aria-pressed="mobileOverview" @click="mobileOverview = !mobileOverview">
-                {{ mobileOverview ? 'Enlarge' : 'Overview' }}
+            <button
+                class="board-view-toggle"
+                :aria-pressed="mobileOverview"
+                :aria-label="mobileOverview ? 'Enlarge board' : 'Board overview'"
+                :title="mobileOverview ? 'Enlarge board' : 'Board overview'"
+                @click="mobileOverview = !mobileOverview"
+            >
+                <svg v-if="mobileOverview" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4M3 3l5 5m9-5-5 5M3 17l5-5m9 5-5-5" />
+                </svg>
+                <svg v-else viewBox="0 0 20 20" aria-hidden="true">
+                    <rect x="3" y="3" width="14" height="14" rx="1" />
+                    <path d="M3 8h14M8 3v14M12 8v9M8 12h9" />
+                </svg>
             </button>
-            <button v-for="(p, i) in G.players" :key="i" @click="viewPlayerBoard(i)">
-                {{ i === player ? 'You' : p.name }}
+            <button
+                class="player-board-tab"
+                v-for="(p, i) in G.players"
+                :key="i"
+                :style="{ '--player-colour': playerColors[i] }"
+                :aria-pressed="!mobileOverview && mobilePlayer === i"
+                :title="p.name"
+                @click="viewPlayerBoard(i)"
+            >
+                <span class="player-board-marker" aria-hidden="true"></span
+                ><span class="player-board-name">{{ i === player ? 'You' : p.name }}</span>
             </button>
         </div>
         <div v-if="!ui.selected && mobileOffers.length" class="mobile-trade" aria-label="Containers for sale">
@@ -2007,112 +2030,186 @@ text {
 .container-actions {
     width: 100%;
     box-sizing: border-box;
-    padding: 8px 12px;
-    background: #e5eeea;
-    border-bottom: 1px solid #91acae;
-    font: 14px system-ui;
+    padding: 5px 10px 7px;
+    background: #c6c6b8;
+    border-bottom: 1px solid #7d9290;
+    color: #203a45;
+    font: 13px Arial, sans-serif;
     position: sticky;
     top: 0;
     z-index: 2;
 }
 .container-action-title {
     display: flex;
-    gap: 8px;
+    gap: 7px;
     align-items: center;
+    min-height: 28px;
 }
 .selected-container-colour {
-    width: 20px;
+    width: 22px;
     height: 12px;
-    border: 1px solid #203a45;
-    border-radius: 2px;
+    border: 1px solid #354a4c;
+    border-radius: 1px;
     flex-shrink: 0;
+    background-image: repeating-linear-gradient(90deg, transparent 0 4px, #203a4533 4px 5px) !important;
+    box-shadow: inset 0 1px #ffffff70, inset 0 -2px #00000018;
 }
-.container-actions button {
-    min-width: 44px;
-    min-height: 44px;
-    border: 1px solid #91acae;
-    border-radius: 5px;
-    background: #f7faf5;
+.container-actions button,
+.mobile-trade button {
+    appearance: none;
+    min-width: 36px;
+    min-height: 32px;
+    padding: 4px 11px;
+    border: 1px solid #738784;
+    border-radius: 2px;
+    background: linear-gradient(#eef0e7, #d4d9cc);
     color: #203a45;
-    font: inherit;
+    font: bold 13px Arial, sans-serif;
     cursor: pointer;
+    box-shadow: inset 0 1px #ffffffa0, 0 1px #203a4520;
 }
-.container-action-title button {
+.container-actions button:active,
+.mobile-trade button:active {
+    background: #afc4c0;
+    box-shadow: inset 0 1px 2px #203a4540;
+}
+.container-actions button:focus-visible,
+.mobile-board-navigation button:focus-visible,
+.mobile-trade button:focus-visible {
+    outline: 2px solid #1b6c87;
+    outline-offset: 2px;
+}
+.container-action-title .selection-close {
     margin-left: auto;
-    background: transparent;
-    font-size: 24px;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 4px;
+    border: 0;
+    background: none;
+    box-shadow: none;
+}
+.selection-close svg,
+.board-view-toggle svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 .container-action-choices {
     display: flex;
-    gap: 8px;
+    gap: 5px;
     flex-wrap: wrap;
-}
-.container-action-choices button {
-    padding: 6px 14px;
 }
 @media (max-width: 700px) {
     .mobile-trade {
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
         width: 100%;
-        padding: 8px 12px;
+        padding: 5px 10px;
         box-sizing: border-box;
-        font: 14px system-ui;
-        background: #e5eeea;
+        font: 12px Arial, sans-serif;
+        color: #203a45;
+        background: #c6c6b8;
+        border-bottom: 1px solid #7d9290;
     }
     .mobile-trade-choices {
         display: flex;
-        gap: 8px;
+        gap: 5px;
         flex-wrap: wrap;
-        margin-top: 6px;
     }
     .mobile-trade button {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        min-height: 44px;
-        border: 1px solid #91acae;
-        border-radius: 5px;
-        color: #203a45;
-        background: #f7faf5;
-        font: inherit;
+        gap: 6px;
+        padding: 4px 8px;
     }
-
     .mobile-board-navigation {
         display: flex;
         overflow-x: auto;
+        scrollbar-width: none;
         width: 100%;
         box-sizing: border-box;
-        gap: 6px;
-        padding: 6px 10px;
-        background: #c6d9d7;
+        gap: 4px;
+        padding: 4px 7px;
+        background: #203a45;
+        border-top: 1px solid #ffffff18;
+        border-bottom: 1px solid #112d37;
+    }
+    .mobile-board-navigation::-webkit-scrollbar {
+        display: none;
     }
     .mobile-board-navigation button {
+        appearance: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
         flex-shrink: 0;
-        min-height: 44px;
-        padding: 6px 12px;
-        border: 1px solid #91acae;
-        border-radius: 5px;
-        color: #203a45;
-        background: #f7faf5;
-        font: 14px system-ui;
+        height: 32px;
+        padding: 4px 8px;
+        border: 1px solid #688487;
+        border-radius: 2px;
+        color: #e6eeea;
+        background: #304e57;
+        font: 12px Arial, sans-serif;
+        cursor: pointer;
+    }
+    .mobile-board-navigation .board-view-toggle {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        width: 34px;
+        padding: 6px;
+        background: #203a45;
+    }
+    .mobile-board-navigation .player-board-tab {
+        border-bottom: 3px solid var(--player-colour);
+    }
+    .player-board-marker {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--player-colour);
+        box-shadow: 0 0 0 1px #00000040;
+        flex-shrink: 0;
+    }
+    .player-board-name {
+        max-width: 98px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .mobile-board-navigation .player-board-tab[aria-pressed='true'] {
+        background: var(--player-colour);
+        border-color: var(--player-colour);
+        color: #102b35;
+        font-weight: bold;
+    }
+    .player-board-tab[aria-pressed='true'] .player-board-marker {
+        background: #102b35;
+        box-shadow: none;
     }
     .board-scroll.overview #scene {
         width: 100%;
     }
-
     .board-scroll #scene {
         width: 1000px;
         max-width: none;
     }
     .statusBar {
         height: auto;
-        min-height: 40px;
+        min-height: 34px;
         gap: 8px;
-        font-size: 14px;
+        font-size: 13px;
         line-height: 1.4;
         align-items: center;
-        padding: 8px 12px;
+        padding: 6px 10px;
     }
     .statusBar span {
         text-align: right;
