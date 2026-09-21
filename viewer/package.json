@@ -1,6 +1,6 @@
 {
     "name": "container-viewer",
-    "version": "2.0.4",
+    "version": "2.0.5",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/boardgamers/container.git",
@@ -19,7 +19,7 @@
         "preview:tutorial": "node scripts/tutorial-preview.mjs"
     },
     "dependencies": {
-        "@boardgamers/protocol": "0.4.0",
+        "@boardgamers/protocol": "0.4.2",
         "container-engine": "workspace:../engine",
         "core-js": "^3.6.5",
         "lodash": "^4.17.19",
