@@ -115,7 +115,12 @@ try {
             .locator('.inline-game-log')
             .evaluate((el) => el.getBoundingClientRect().height);
         const chatHeight = await panel.evaluate((el) => el.getBoundingClientRect().height);
-        assert.ok(Math.abs(journalHeight - chatHeight) < 2, 'journal and chat have the same height');
+        if (width >= 1000) {
+            assert.ok(Math.abs(journalHeight - chatHeight) < 2, 'journal and chat have the same height');
+        } else {
+            assert.equal(chatHeight, 0, 'mobile starts on the journal tab');
+            assert.ok(journalHeight > 0, 'journal is visible');
+        }
         await journal.evaluate((el) => {
             el.scrollTop = 0;
             el.dispatchEvent(new Event('scroll'));
@@ -132,6 +137,7 @@ try {
         await page.evaluate((state) => host.emit('state', state), state);
         await journal.locator('.journal-entry').last().getByText('New entry while following the journal.').waitFor();
         await assertJournalAtEnd();
+        if (width < 1000) await page.getByRole('tab', { name: /^Chat/ }).click();
         await panel.scrollIntoViewIfNeeded();
         await page.waitForFunction(() => {
             const el = document.querySelector('.chat-messages');
@@ -201,6 +207,7 @@ try {
         await panel.evaluate((el) => {
             el.open = true;
         });
+        if (width < 1000) await page.getByRole('tab', { name: /^Chat/ }).click();
         await panel.scrollIntoViewIfNeeded();
         await list.evaluate((el) => {
             el.scrollTop = el.scrollHeight;
