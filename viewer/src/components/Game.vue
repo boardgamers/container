@@ -23,26 +23,11 @@
         </div>
         <div v-if="G" class="mobile-board-navigation" aria-label="Board view">
             <button
-                class="board-view-toggle"
-                :aria-pressed="mobileOverview"
-                :aria-label="mobileOverview ? 'Enlarge board' : 'Board overview'"
-                :title="mobileOverview ? 'Enlarge board' : 'Board overview'"
-                @click="mobileOverview = !mobileOverview"
-            >
-                <svg v-if="mobileOverview" viewBox="0 0 20 20" aria-hidden="true">
-                    <path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4M3 3l5 5m9-5-5 5M3 17l5-5m9 5-5-5" />
-                </svg>
-                <svg v-else viewBox="0 0 20 20" aria-hidden="true">
-                    <rect x="3" y="3" width="14" height="14" rx="1" />
-                    <path d="M3 8h14M8 3v14M12 8v9M8 12h9" />
-                </svg>
-            </button>
-            <button
                 class="player-board-tab"
                 v-for="(p, i) in G.players"
                 :key="i"
                 :style="{ '--player-colour': playerColors[i] }"
-                :aria-pressed="!mobileOverview && mobilePlayer === i"
+                :aria-pressed="mobilePlayer === i"
                 :title="p.name"
                 @click="viewPlayerBoard(i)"
             >
@@ -65,12 +50,7 @@
             </div>
         </div>
         <div key="board-and-journal" class="board-and-journal">
-            <div
-                ref="boardScroll"
-                :class="['board-scroll', { overview: mobileOverview }]"
-                tabindex="0"
-                aria-label="Game board"
-            >
+            <div ref="boardScroll" class="board-scroll" tabindex="0" aria-label="Game board">
                 <svg
                     @click="ui.selected = null"
                     @keydown.esc="ui.selected = null"
@@ -1035,12 +1015,10 @@ export default class Game extends Vue {
         }
     }
 
-    mobileOverview = false;
     mobilePlayer: number | null = null;
 
     get mobileOffers() {
-        if (!this.canMove || this.mobilePlayer === null || this.mobilePlayer === this.player || this.mobileOverview)
-            return [];
+        if (!this.canMove || this.mobilePlayer === null || this.mobilePlayer === this.player) return [];
         const seller = this.G!.players[this.mobilePlayer];
         const seen = new Set<string>();
         return this.containers
@@ -1075,7 +1053,6 @@ export default class Game extends Vue {
 
     viewPlayerBoard(index: number) {
         this.mobilePlayer = index;
-        this.mobileOverview = false;
         this.$nextTick(() => {
             const board = this.$refs.boardScroll as HTMLElement;
             board.scrollTo({ left: (index * 250 * board.scrollWidth) / 1250, behavior: 'smooth' });
@@ -2111,8 +2088,7 @@ text {
     background: none;
     box-shadow: none;
 }
-.selection-close svg,
-.board-view-toggle svg {
+.selection-close svg {
     width: 18px;
     height: 18px;
     display: block;
@@ -2183,14 +2159,6 @@ text {
         font: 12px Arial, sans-serif;
         cursor: pointer;
     }
-    .mobile-board-navigation .board-view-toggle {
-        position: sticky;
-        left: 0;
-        z-index: 1;
-        width: 34px;
-        padding: 6px;
-        background: #203a45;
-    }
     .mobile-board-navigation .player-board-tab {
         border-bottom: 3px solid var(--player-colour);
     }
@@ -2217,9 +2185,6 @@ text {
     .player-board-tab[aria-pressed='true'] .player-board-marker {
         background: #102b35;
         box-shadow: none;
-    }
-    .board-scroll.overview #scene {
-        width: 100%;
     }
     .board-scroll #scene {
         width: 1000px;

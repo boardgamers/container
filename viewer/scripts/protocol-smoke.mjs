@@ -143,6 +143,28 @@ try {
             const el = document.querySelector('.chat-messages');
             return el && Math.abs(el.scrollHeight - el.scrollTop - el.clientHeight) < 3;
         });
+        if (width < 1000) {
+            await page.setViewportSize({ width, height: 600 });
+            await panel.evaluate((el) => window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top - 400));
+            await list.evaluate((el) => {
+                el.scrollTop = el.scrollHeight;
+            });
+            const point = await list.evaluate((el) => {
+                const rect = el.getBoundingClientRect();
+                return { x: rect.left + 50, y: rect.top + 50 };
+            });
+            await page.mouse.move(point.x, point.y);
+            await page.mouse.wheel(0, 500);
+            await page.waitForFunction(
+                () => {
+                    const composer = document.querySelector('.chat-composer').getBoundingClientRect();
+                    return composer.bottom <= window.innerHeight + 1;
+                },
+                null,
+                { timeout: 3000 }
+            );
+            await page.setViewportSize({ width, height: 900 });
+        }
         assert.equal(await panel.locator('summary').textContent(), 'Chat', 'old history is not unread');
         await input.fill('@');
         assert.deepEqual(await panel.locator('.chat-suggestions button').allTextContents(), ['@Ada Lovelace', '@Bob']);

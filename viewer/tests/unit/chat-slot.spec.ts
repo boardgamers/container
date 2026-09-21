@@ -16,7 +16,7 @@ describe('Game chat mount point', () => {
         await wrapper.setProps({ state: setup(5, {}, 'chat-slot') });
         await wrapper.vm.$nextTick();
         expect(wrapper.element.contains(messages), 'first state must not replace the chat DOM').to.equal(true);
-        await wrapper.setData({ mobilePlayer: 2, mobileOverview: true });
+        await wrapper.setData({ mobilePlayer: 2 });
         expect(wrapper.element.querySelector('.chat-host')).to.equal(slot);
         expect(wrapper.element.contains(messages)).to.equal(true);
         wrapper.destroy();

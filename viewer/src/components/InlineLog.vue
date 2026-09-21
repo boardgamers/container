@@ -63,7 +63,6 @@ summary {
     height: var(--game-panel-content-height, 300px);
     overflow: auto;
     overflow-anchor: none;
-    overscroll-behavior: contain;
     margin-top: 8px;
 }
 .journal-entry {
