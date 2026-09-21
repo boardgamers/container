@@ -499,10 +499,9 @@ describe('wrapper (tentative turns)', () => {
 });
 
 describe('saved analyses', () => {
-    it('requires a finished source and reconstructs historical cash rather than final scores', () => {
+    it('reconstructs historical cash rather than final scores', () => {
         const source = setup(3, {}, 'analysis-cash');
         source.players[0].money = 999;
-        expect(() => wrapper.createAnalysis(source, { to: 0, sourceEnded: false })).to.throw('finished');
         const copy = wrapper.createAnalysis(source, { to: 0, sourceEnded: true });
         expect(copy.players.map((p) => p.money)).to.deep.equal([20, 20, 20]);
         expect(source.players[0].money).to.equal(999);
@@ -513,10 +512,10 @@ describe('saved analyses', () => {
     it('can continue a historical position using each current player and the real costs', async () => {
         let copy = wrapper.createAnalysis(setup(3, {}, 'analysis-turns'), { to: 0, sourceEnded: true });
         const actor = copy.currentPlayers[0];
-        copy = await wrapper.analysisMove(copy, pass, actor);
+        copy = await wrapper.move(copy, pass, actor);
         expect(copy.currentPlayers[0]).not.to.equal(actor);
         const next = copy.currentPlayers[0];
-        copy = await wrapper.analysisMove(copy, pass, next);
+        copy = await wrapper.move(copy, pass, next);
         expect(copy.currentPlayers[0]).not.to.equal(next);
     });
 });

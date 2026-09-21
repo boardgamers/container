@@ -213,10 +213,7 @@ export function logSlice(G: GameState, options?: { player?: number; start?: numb
     };
 }
 
-export const analysisPolicy = 'finished';
-
 export function createAnalysis(G: GameState, options: { to: number; sourceEnded: boolean }): GameState {
-    if (!options.sourceEnded) throw new Error('Analyses are available once this game has finished');
     if (options.to < 0 || options.to > G.log.length) throw new Error('Invalid history position');
     const copy = replay({ ...cloneDeep(G), log: G.log.slice(0, options.to), hiddenLog: [] });
     for (const player of copy.players) {
@@ -226,8 +223,6 @@ export function createAnalysis(G: GameState, options: { to: number; sourceEnded:
     copy.newTurn = true;
     return copy;
 }
-
-export const analysisMove = move;
 
 export function analysisView(G: GameState, options: { player: number; start?: number; end?: number }) {
     const state = cloneDeep(G);

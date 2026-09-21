@@ -33,6 +33,7 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
 .bgs-game-chat button:disabled{color:#788786;border-color:#b0bcb8;background:#dce3df;cursor:default}
 .bgs-game-chat .chat-mention{height:auto;padding:0 2px;border:0;background:transparent;color:inherit;font:inherit;font-weight:bold;text-decoration:underline}
 .bgs-game-chat article a{color:inherit;text-decoration:underline}
+.bgs-game-chat .chat-translate{height:auto;min-height:24px;padding:2px 4px;margin-left:6px;border:0;background:transparent;color:inherit;font-size:.8em;text-decoration:underline}
 .chat-suggestions{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .chat-suggestions:empty{display:none}
 .chat-suggestions button[aria-pressed="true"]{outline:2px solid #527f89}
