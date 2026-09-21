@@ -52,7 +52,56 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
     shortcut.type = 'button';
     shortcut.className = 'chat-shortcut';
     shortcut.hidden = true;
-    slot.append(shortcut);
+    (host.querySelector('.chat-shortcut-host') || slot).append(shortcut);
+    const panels = host.querySelector<HTMLElement>('.journal-and-chat');
+    const tabs = host.querySelector<HTMLElement>('.mobile-panel-tabs');
+    const journalTab = document.createElement('button');
+    const chatTab = document.createElement('button');
+    if (tabs && panels) {
+        tabs.setAttribute('role', 'tablist');
+        tabs.setAttribute('aria-label', 'Journal and chat');
+        for (const [button, name] of [
+            [journalTab, 'Journal'],
+            [chatTab, 'Chat'],
+        ] as const) {
+            button.type = 'button';
+            button.textContent = name;
+            button.setAttribute('role', 'tab');
+            button.setAttribute('aria-controls', name === 'Chat' ? 'container-chat-panel' : 'container-journal-panel');
+            button.onclick = () => selectPanel(name === 'Chat' ? 'chat' : 'journal');
+            button.onkeydown = (event) => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                event.preventDefault();
+                const next =
+                    event.key === 'Home'
+                        ? journalTab
+                        : event.key === 'End'
+                        ? chatTab
+                        : button === chatTab
+                        ? journalTab
+                        : chatTab;
+                next.click();
+                next.focus();
+            };
+            tabs.append(button);
+        }
+        panels.dataset.mobilePanel = 'journal';
+        journalTab.setAttribute('aria-selected', 'true');
+        chatTab.setAttribute('aria-selected', 'false');
+        chatTab.tabIndex = -1;
+    }
+    function selectPanel(panel: 'journal' | 'chat') {
+        if (panels) panels.dataset.mobilePanel = panel;
+        journalTab.setAttribute('aria-selected', String(panel === 'journal'));
+        chatTab.setAttribute('aria-selected', String(panel === 'chat'));
+        journalTab.tabIndex = panel === 'journal' ? 0 : -1;
+        chatTab.tabIndex = panel === 'chat' ? 0 : -1;
+        if (panel === 'chat') view.open();
+        else {
+            const journal = panels?.querySelector<HTMLDetailsElement>('.inline-game-log');
+            if (journal) journal.open = true;
+        }
+    }
     const view = mountChat(slot, {
         chat,
         styles: false,
@@ -84,14 +133,23 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
     function updateShortcut() {
         const count = chat.unread;
         const label = count ? `Chat · ${count} unread` : 'Chat';
+        chatTab.textContent = count ? `Chat · ${count}` : 'Chat';
         shortcut.textContent = label;
         shortcut.hidden = count === 0 || chatVisible;
         shortcut.setAttribute('aria-label', `Open ${label}`);
     }
-    shortcut.onclick = () => {
-        view.open();
+    shortcut.onclick = () => selectPanel('chat');
+    const mobile = window.matchMedia('(max-width: 700px)');
+    const expandMobilePanels = () => {
+        if (!mobile.matches) return;
+        chat.setOpen(true);
+        const journal = panels?.querySelector<HTMLDetailsElement>('.inline-game-log');
+        if (journal) journal.open = true;
     };
+    mobile.addEventListener('change', expandMobilePanels);
+    expandMobilePanels();
     const dispose = [
+        () => mobile.removeEventListener('change', expandMobilePanels),
         detach,
         chat.subscribe(updateShortcut),
         emitter.on('state', (state) => {
@@ -112,6 +170,9 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
     return () => {
         dispose.forEach((cleanup) => cleanup());
         view.destroy();
+        journalTab.remove();
+        chatTab.remove();
+        if (panels) delete panels.dataset.mobilePanel;
         shortcut.remove();
         style.remove();
     };

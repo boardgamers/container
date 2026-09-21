@@ -15,7 +15,7 @@ import { PieceType, UIData } from '@/types/ui-data';
             [this.currentX, this.currentY] = [coords.x, coords.y];
 
             this.$nextTick(() => {
-                this.communicator.emit('draggedPosChanged', this);
+                if (!this.dragCancelled) this.communicator.emit('draggedPosChanged', this);
             });
         });
     },

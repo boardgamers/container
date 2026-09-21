@@ -198,6 +198,9 @@ import DropZone from './DropZone.vue';
     },
 })
 export default class PlayerBoard extends Vue {
+    @Prop({ default: false })
+    openMoney!: boolean;
+
     @Prop()
     color?: string;
 
@@ -224,6 +227,7 @@ export default class PlayerBoard extends Vue {
         }
 
         name += this.player.name;
+        if (this.openMoney && !this.ended) name += ' · $' + this.player.money;
 
         if (this.player.showBid) {
             if (this.player.showAdditionalBid) {

@@ -4,29 +4,28 @@ import { Vue, Component, Prop } from 'vue-property-decorator';
 @Component({
     mounted(this: Draggable) {
         this.$nextTick(() => {
-            const endDrag = () => this.endDrag();
-            const drag = (event: MouseEvent | TouchEvent) => this.drag(event);
-
-            this.htmlElement.addEventListener('mousedown', (event) => this.startDrag(event));
-            this.htmlElement.addEventListener('touchstart', (event) => this.startDrag(event));
-
-            this.svgElement.addEventListener('touchmove', drag);
-            this.svgElement.addEventListener('touchend', endDrag);
-            this.svgElement.addEventListener('touchleave', endDrag);
-            this.svgElement.addEventListener('touchcancel', endDrag);
-
-            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('touchmove', drag));
-            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('touchend', endDrag));
-            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('touchleave', endDrag));
-            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('touchcancel', endDrag));
-
-            this.svgElement.addEventListener('mouseleave', endDrag);
-            this.svgElement.addEventListener('mouseup', endDrag);
-            this.svgElement.addEventListener('mousemove', drag);
-
-            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('mouseleave', endDrag));
-            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('mouseup', endDrag));
-            this.$on('hook:beforeDestroy', () => this.svgElement.removeEventListener('mousemove', drag));
+            const start = (event: PointerEvent) => this.startDrag(event);
+            const drag = (event: PointerEvent) => this.drag(event);
+            const end = (event: PointerEvent) => this.endDrag(event);
+            const cancel = (event: PointerEvent) => this.endDrag(event, true);
+            const anotherPointer = (event: PointerEvent) => {
+                if (this._pointer !== undefined && event.pointerId !== this._pointer) this.cancelDrag();
+            };
+            const element = this.htmlElement;
+            element.addEventListener('pointerdown', start);
+            element.addEventListener('pointermove', drag);
+            element.addEventListener('pointerup', end);
+            element.addEventListener('pointercancel', cancel);
+            element.addEventListener('lostpointercapture', cancel);
+            window.addEventListener('pointerdown', anotherPointer, true);
+            this.$on('hook:beforeDestroy', () => {
+                element.removeEventListener('pointerdown', start);
+                element.removeEventListener('pointermove', drag);
+                element.removeEventListener('pointerup', end);
+                element.removeEventListener('pointercancel', cancel);
+                element.removeEventListener('lostpointercapture', cancel);
+                window.removeEventListener('pointerdown', anotherPointer, true);
+            });
         });
     },
 })
@@ -35,76 +34,76 @@ export default class Draggable extends Vue {
     canDrag!: boolean;
 
     dragging = false;
+    dragCancelled = false;
+    _pointer?: number;
     _offset = { x: 0, y: 0 };
     _transform?: SVGTransform;
-    _dragStart?: number;
     _press?: { x: number; y: number };
 
     get svgElement() {
-        return document.querySelector('#scene') as SVGSVGElement;
+        return this.htmlElement.ownerSVGElement!;
     }
 
     get htmlElement() {
         return this.$el as SVGGElement;
     }
 
-    startDrag(evt: MouseEvent | TouchEvent) {
-        if (!this.canDrag) return;
-
-        if (evt instanceof MouseEvent && evt.button !== 0) return;
-        this._press = this.getMousePosition(evt);
-
+    startDrag(evt: PointerEvent) {
+        if (!this.canDrag || !evt.isPrimary || evt.button !== 0 || this._pointer !== undefined) return;
+        this.dragCancelled = false;
+        this._pointer = evt.pointerId;
+        this._press = { x: evt.clientX, y: evt.clientY };
         this._offset = this.getMousePosition(evt);
-        // Get all the transforms currently on this element
-        const transforms: SVGTransformList = this.htmlElement.transform.baseVal;
-        // Ensure the first transform is a translate transform
-        if (transforms.numberOfItems === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-            // Create an transform that translates by (0, 0)
+        const transforms = this.htmlElement.transform.baseVal;
+        if (transforms.numberOfItems === 0 || transforms.getItem(0).type !== 2) {
             const translate = this.svgElement.createSVGTransform();
             translate.setTranslate(0, 0);
-            // Add the translation to the front of the transforms list
-            this.htmlElement.transform.baseVal.insertItemBefore(translate, 0);
+            transforms.insertItemBefore(translate, 0);
         }
-
-        // Get initial translation amount
         this._transform = transforms.getItem(0);
         this._offset.x -= this._transform.matrix.e;
         this._offset.y -= this._transform.matrix.f;
-        this._dragStart = Date.now();
+        this.htmlElement.setPointerCapture(evt.pointerId);
     }
 
-    drag(evt: MouseEvent | TouchEvent) {
-        if (!this._press) {
-            return;
-        }
-
-        const coord = this.getMousePosition(evt);
-        if (!this.dragging && Math.hypot(coord.x - this._press.x, coord.y - this._press.y) < 5) return;
+    drag(evt: PointerEvent) {
+        if (!this._press || evt.pointerId !== this._pointer) return;
+        // Measure finger jitter in screen pixels, independent of board/browser zoom.
+        const threshold = evt.pointerType === 'mouse' ? 5 : 8;
+        if (!this.dragging && Math.hypot(evt.clientX - this._press.x, evt.clientY - this._press.y) < threshold) return;
         this.dragging = true;
         evt.preventDefault();
+        const coord = this.getMousePosition(evt);
         this._transform!.setTranslate(coord.x - this._offset.x, coord.y - this._offset.y);
-
         this.$emit('draggedTo', { x: coord.x - this._offset.x, y: coord.y - this._offset.y });
     }
 
-    endDrag() {
-        if (!this._press) return;
-        const clicked = !this.dragging;
-        this._press = undefined;
-        this.dragging = false;
-        if (clicked) this.$nextTick(() => this.$emit('fastClick', this));
+    endDrag(evt: PointerEvent, cancelled = false) {
+        if (evt.pointerId !== this._pointer) return;
+        this.finishDrag(cancelled);
     }
 
-    getMousePosition(evt: MouseEvent | TouchEvent) {
-        if ((evt as TouchEvent).touches) {
-            evt = (evt as TouchEvent).touches[0] as any;
-        }
+    cancelDrag() {
+        this.finishDrag(true);
+    }
 
-        const CTM = this.svgElement.getScreenCTM()!;
-        return {
-            x: ((evt as any).clientX - CTM.e) / CTM.a,
-            y: ((evt as any).clientY - CTM.f) / CTM.d,
-        };
+    finishDrag(cancelled: boolean) {
+        if (this._pointer === undefined) return;
+        const pointer = this._pointer;
+        const clicked = !this.dragging && !cancelled;
+        this.dragCancelled = cancelled;
+        this._pointer = undefined;
+        this._press = undefined;
+        this.dragging = false;
+        if (this.htmlElement.hasPointerCapture(pointer)) this.htmlElement.releasePointerCapture(pointer);
+        if (clicked) this.$emit('fastClick', this);
+    }
+
+    getMousePosition(evt: PointerEvent) {
+        const point = this.svgElement.createSVGPoint();
+        point.x = evt.clientX;
+        point.y = evt.clientY;
+        return point.matrixTransform(this.svgElement.getScreenCTM()!.inverse());
     }
 }
 </script>

@@ -61,7 +61,7 @@ export default class DropZone extends Vue {
     overlapping = false;
 
     updateOverlapping(piece: Piece) {
-        if (!this.enabled) {
+        if (!this.enabled || piece.dragCancelled) {
             this.overlapping = false;
             return;
         }

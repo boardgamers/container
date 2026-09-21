@@ -8,6 +8,7 @@ const { dirname, join } = require('path');
 const protocolDist = dirname(require.resolve('@boardgamers/protocol/viewer'));
 
 module.exports = {
+    productionSourceMap: false,
     transpileDependencies: ['@boardgamers/protocol', 'zod'],
     devServer: {
         // For gitpod, it needs to be disabled
