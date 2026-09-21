@@ -121,6 +121,7 @@
                     <template v-if="G">
                         <template v-for="(p, i) in G.players">
                             <PlayerBoard
+                                :open-money="preferences.analysis === true"
                                 :key="'B' + i"
                                 :player="p"
                                 :color="playerColors[i]"
@@ -566,12 +567,12 @@
                 </svg>
             </div>
 
-            <div class="journal-and-chat">
+            <div class="journal-and-chat" :class="{ analysis: preferences.analysis }">
                 <div class="mobile-panel-tabs"></div>
                 <InlineLog id="container-journal-panel" v-if="G" :entries="logReversed.slice().reverse()" />
                 <div id="container-chat-panel" class="chat-host"></div>
             </div>
-            <div class="chat-shortcut-host"></div>
+            <div class="chat-shortcut-host" v-show="!preferences.analysis"></div>
         </div>
 
         <div v-if="G" :class="['modal', { visible: logVisible }]">
@@ -1993,6 +1994,16 @@ text {
 </style>
 
 <style>
+.game .journal-and-chat.analysis .inline-game-log > summary {
+    display: list-item;
+}
+.journal-and-chat.analysis {
+    grid-template-columns: 1fr;
+}
+.journal-and-chat.analysis > .chat-host,
+.journal-and-chat.analysis > .mobile-panel-tabs {
+    display: none;
+}
 .journal-and-chat {
     display: grid;
     gap: 8px;
