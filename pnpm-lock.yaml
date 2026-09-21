@@ -86,8 +86,8 @@ importers:
     viewer:
         dependencies:
             '@boardgamers/protocol':
-                specifier: 0.4.2
-                version: 0.4.2
+                specifier: 0.5.0
+                version: 0.5.0
             container-engine:
                 specifier: workspace:../engine
                 version: link:../engine
@@ -1042,10 +1042,10 @@ packages:
             }
         engines: { node: '>=6.9.0' }
 
-    '@boardgamers/protocol@0.4.2':
+    '@boardgamers/protocol@0.5.0':
         resolution:
             {
-                integrity: sha512-dFWwj/uIR8LZuiFSPX++63f4Ivd3cG4JFFWCCObOu6u5RYw5GBT95rcSIiiWRLkBkXWKXgv3awQ/RMrAf+uFDQ==,
+                integrity: sha512-9SjU0cSktwxeMLItCW5VmUeSFl3Kg965JkKFf+BKZBxR2a2dyFoMKE3RYN2+ZwrI6GNS1mA6Fki9HOHQnD2WRw==,
             }
 
     '@cspotcode/source-map-support@0.8.1':
@@ -11586,7 +11586,7 @@ snapshots:
             '@babel/helper-string-parser': 7.29.7
             '@babel/helper-validator-identifier': 7.29.7
 
-    '@boardgamers/protocol@0.4.2':
+    '@boardgamers/protocol@0.5.0':
         dependencies:
             zod: 4.6.2
 
