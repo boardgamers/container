@@ -2016,7 +2016,8 @@ text {
 
 <style>
 .mobile-board-navigation,
-.mobile-trade {
+.mobile-trade,
+.container-actions {
     display: none;
 }
 .board-scroll {
@@ -2104,6 +2105,9 @@ text {
     flex-wrap: wrap;
 }
 @media (max-width: 700px) {
+    .container-actions {
+        display: block;
+    }
     .mobile-trade {
         display: flex;
         align-items: center;
