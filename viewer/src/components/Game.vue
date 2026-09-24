@@ -32,7 +32,7 @@
                 @click="viewPlayerBoard(i)"
             >
                 <span class="player-board-marker" aria-hidden="true"></span
-                ><span class="player-board-name">{{ i === player ? 'You' : p.name }}</span>
+                ><span class="player-board-name" :data-bgs-player="i">{{ i === player ? 'You' : p.name }}</span>
             </button>
         </div>
         <div v-if="!ui.selected && mobileOffers.length" class="mobile-trade" aria-label="Containers for sale">
@@ -74,15 +74,27 @@
                     <rect width="390" height="220" x="860" y="430" fill="#c6c6b8" />
 
                     <PassButton
+                        data-thumbnail-omit
                         data-tutorial="turn"
                         transform="translate(1105, 5)"
                         :enabled="canPass()"
                         @click="pass()"
                     />
-                    <UndoButton transform="translate(1105, 36)" :enabled="canUndo()" @click="undo()" />
-                    <LogButton transform="translate(1105, 67)" @click="showLog()" />
-                    <SoundButton transform="translate(1200, 15)" :isOn="preferences.sound" @click="toggleSound()" />
+                    <UndoButton
+                        data-thumbnail-omit
+                        transform="translate(1105, 36)"
+                        :enabled="canUndo()"
+                        @click="undo()"
+                    />
+                    <LogButton data-thumbnail-omit transform="translate(1105, 67)" @click="showLog()" />
+                    <SoundButton
+                        data-thumbnail-omit
+                        transform="translate(1200, 15)"
+                        :isOn="preferences.sound"
+                        @click="toggleSound()"
+                    />
                     <HelpButton
+                        data-thumbnail-omit
                         transform="translate(1200, 55)"
                         :isOn="!preferences.disableHelp"
                         @click="toggleHelp()"

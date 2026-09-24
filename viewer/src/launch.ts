@@ -4,6 +4,7 @@ import { EventEmitter } from 'events';
 import Vue from 'vue';
 import Game from './components/Game.vue';
 import { mountGameChat } from './game-chat';
+import { createBoardThumbnail, installPlayerCards } from './host-presentation';
 import { installActionSounds } from './sounds';
 import type { Preferences } from './types/ui-data';
 
@@ -43,7 +44,12 @@ function launch(selector: string) {
         render: (h) => h(Game, { props: params }, []),
     }).$mount(mountPoint);
 
+    const thumbnail = createBoardThumbnail(app.$el);
     const viewer = createViewer<GameState, Move[]>({
+        async onThumbnail(size) {
+            await app.$nextTick();
+            return thumbnail.render(app.$el.querySelector('#scene'), size, '#c6deda', '[data-thumbnail-omit]');
+        },
         async onState(data) {
             params.state = data;
             app.$forceUpdate();
@@ -75,8 +81,11 @@ function launch(selector: string) {
     params.emitter.on('replay:info', (info) => viewer.setReplayInfo(info));
     params.emitter.on('update:preference', ({ name, value }) => viewer.updatePreference(name, value));
     installActionSounds(item);
+    const removeCards = installPlayerCards(app.$el, viewer);
     const removeChat = mountGameChat(item, app.$el);
     app.$once('hook:beforeDestroy', () => {
+        removeCards();
+        thumbnail.destroy();
         removeChat();
         viewer.destroy();
         params.emitter.removeAllListeners();

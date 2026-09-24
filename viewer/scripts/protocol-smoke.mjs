@@ -1,3 +1,4 @@
+import { checkHostPresentation } from './host-presentation-smoke.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -326,12 +327,14 @@ try {
         await assertJournalAtEnd();
         await page.reload();
         await page.evaluate((state) => {
-            const host = window.container.launch('#app');
+            window.host = window.container.launch('#app');
             host.emit('preferences', { sound: false });
             host.emit('state', state);
         }, state);
         await assertJournalAtEnd();
         assert.deepEqual(errors, [], 'no browser errors');
+        await checkHostPresentation(page, 'host', `/tmp/container-board-thumbnail-${width}.png`);
+        assert.deepEqual(errors, []);
         await page.close();
         console.log(`${game} ${width}px: protocol/chat smoke passed`);
     }

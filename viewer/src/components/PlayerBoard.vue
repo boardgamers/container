@@ -1,9 +1,17 @@
 <template>
     <g class="player-board">
         <rect width="250" height="20" x="0" y="0" :fill="color" />
-        <text x="5" y="10" font-weight="600" fill="black" :text-decoration="isCurrentPlayer ? 'underline' : ''">{{
-            getPlayerName()
-        }}</text>
+        <text
+            :data-bgs-player="owner"
+            style="pointer-events: all"
+            tabindex="0"
+            x="5"
+            y="10"
+            font-weight="600"
+            fill="black"
+            :text-decoration="isCurrentPlayer ? 'underline' : ''"
+            >{{ getPlayerName() }}</text
+        >
 
         <rect width="250" height="180" x="0" y="20" fill="#e2e0d3" stroke="#899997" />
         <rect width="246" height="2" x="2" y="21" :fill="color" />
