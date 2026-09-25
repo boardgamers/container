@@ -23,10 +23,41 @@
         <text x="105" y="145" fill="white" stroke="white" text-anchor="middle">3</text>
         <rect class="button" x="10" y="170" width="30" height="30" fill="gray" rx="2" @click="add(0)" />
         <text x="25" y="185" fill="white" stroke="white" text-anchor="middle">0</text>
-        <rect class="button" x="50" y="170" width="30" height="30" fill="orange" rx="2" @click="del()" />
-        <text x="65" y="185" fill="white" text-anchor="middle">Del</text>
-        <rect class="button" x="90" y="170" width="30" height="30" fill="orange" rx="2" @click="bid()" />
-        <text x="105" y="185" fill="white" text-anchor="middle">Bid</text>
+        <g
+            class="action-key"
+            role="button"
+            tabindex="0"
+            aria-label="Del"
+            @click="del()"
+            @keydown.enter.prevent="del()"
+            @keydown.space.prevent="del()"
+        >
+            <title>Del</title>
+            <rect class="button" x="50" y="170" width="30" height="30" fill="orange" rx="2" />
+            <path
+                d="M60 178H75V192H60L54 185Z M63 182L69 188 M69 182L63 188"
+                fill="none"
+                stroke="white"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                pointer-events="none"
+                aria-hidden="true"
+            />
+        </g>
+        <g
+            class="action-key"
+            role="button"
+            tabindex="0"
+            aria-label="Bid"
+            @click="bid()"
+            @keydown.enter.prevent="bid()"
+            @keydown.space.prevent="bid()"
+        >
+            <title>Bid</title>
+            <rect class="button" x="90" y="170" width="30" height="30" fill="orange" rx="2" />
+            <text x="105" y="185" fill="white" text-anchor="middle" translate="no" aria-hidden="true">Bid</text>
+        </g>
     </g>
 </template>
 <script lang="ts">
@@ -56,6 +87,11 @@ export default class Calculator extends Vue {
 
     .button {
         cursor: pointer;
+    }
+
+    .action-key:focus-visible rect {
+        stroke: white;
+        stroke-width: 2;
     }
 
     .visor {
