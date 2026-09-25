@@ -49,7 +49,10 @@ export function journalPieces(html: string, colorBlind = false): string {
             if (i) fragment.insertAdjacentHTML('beforeend', pieceIcon('warehouse'));
             fragment.append(document.createTextNode(part));
         });
-        node.replaceWith(fragment);
+        node.replaceWith(...Array.from(fragment.childNodes));
     }
-    return root.innerHTML;
+    const message = document.createElement('span');
+    message.setAttribute('data-localized-journal', root.innerHTML);
+    message.innerHTML = root.innerHTML;
+    return message.outerHTML;
 }

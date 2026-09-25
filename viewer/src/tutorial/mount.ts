@@ -187,7 +187,7 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
         const cargo = element('div', 'tutorial-cargo');
         cargo.dataset.tutorial = 'cargo';
         cargo.append(
-            element('h3', '', `${game.players[owner].name === 'You' ? 'Your' : game.players[owner].name + '’s'} ship`)
+            element('h3', '', game.players[owner].name === 'You' ? 'Your ship' : `${game.players[owner].name}'s ship`)
         );
         for (const piece of game.players[owner].ship.containers) cargo.append(swatch(piece.color));
         if (!game.players[owner].ship.containers.length) cargo.append(element('span', 'tutorial-muted', 'Empty'));

@@ -73,6 +73,12 @@ export function createTranslator(catalogs, initialLocale = 'en') {
         if (translated === undefined && cache.has(text)) {
             translated = cache.get(text);
         }
+        if (translated === undefined) {
+            const prefix = /^(\d+\s*\/\s*\d+\s*·\s*)(.+)$/u.exec(text);
+            if (prefix && depth < 2) {
+                translated = prefix[1] + translate(prefix[2], depth + 1);
+            }
+        }
         if (translated === undefined && depth < 2 && text.length <= 2500) {
             for (const { source, pieces } of patterns) {
                 if (!text.startsWith(pieces[0])) {
@@ -103,12 +109,6 @@ export function createTranslator(catalogs, initialLocale = 'en') {
                     translate(parameters[key] ?? key, depth + 1)
                 );
                 break;
-            }
-        }
-        if (translated === undefined) {
-            const prefix = /^(\d+\s*\/\s*\d+\s*·\s*)(.+)$/u.exec(text);
-            if (prefix && depth < 2) {
-                translated = prefix[1] + translate(prefix[2], depth + 1);
             }
         }
         if (translated === undefined) {
@@ -165,7 +165,7 @@ export function mountLocalization(target, catalogs, initialLocale = 'en') {
     const originals = new WeakMap();
     const attributes = ['title', 'aria-label', 'placeholder', 'alt'];
     const excluded =
-        'script,style,code,pre,[contenteditable="true"],[translate="no"],[data-bgs-player],[data-message-id],.chat-message-text,.chat-message-body,.chat-content,.message-text,.chat-author,.chat-segment';
+        '[data-localized-journal],script,style,code,pre,[contenteditable="true"],[translate="no"],[data-bgs-player],[data-message-id],.chat-message-text,.chat-message-body,.chat-content,.message-text,.chat-author,.chat-segment';
     let destroyed = false;
     function apply(node, attribute) {
         const element = node.nodeType === 3 ? node.parentElement : node;
@@ -198,11 +198,44 @@ export function mountLocalization(target, catalogs, initialLocale = 'en') {
         if (destroyed) {
             return;
         }
+        if (node.parentElement?.closest('[data-localized-journal]')) return;
         if (node.nodeType === 3) {
             apply(node);
             return;
         }
         if (node.nodeType !== 1 && node !== target) {
+            return;
+        }
+        if (node.hasAttribute?.('data-localized-journal')) {
+            // Translate the sentence as a unit, with opaque slots for names and pictograms.
+            // Rebuild from its canonical source on every language change.
+            const original = node.getAttribute('data-localized-journal');
+            const fragment = node.ownerDocument.createElement('span');
+            fragment.innerHTML = original;
+            const parts = [];
+            let text = '';
+            for (const child of Array.from(fragment.childNodes)) {
+                if (child.nodeType === 3) {
+                    text += child.textContent;
+                } else {
+                    text += `⟪${parts.length}⟫`;
+                    for (const el of [child, ...child.querySelectorAll('[title],[aria-label]')]) {
+                        for (const attr of attributes) {
+                            if (el.hasAttribute(attr))
+                                el.setAttribute(attr, translator.translate(el.getAttribute(attr)));
+                        }
+                    }
+                    parts.push(child);
+                }
+            }
+            const output = translator.translate(text);
+            const rendered = node.ownerDocument.createElement('span');
+            for (const part of output.split(/(⟪\d+⟫)/)) {
+                const slot = part.match(/^⟪(\d+)⟫$/);
+                if (slot && parts[Number(slot[1])]) rendered.append(parts[Number(slot[1])].cloneNode(true));
+                else rendered.append(node.ownerDocument.createTextNode(part));
+            }
+            if (node.innerHTML !== rendered.innerHTML) node.innerHTML = rendered.innerHTML;
             return;
         }
         if (node.matches?.(excluded)) {
