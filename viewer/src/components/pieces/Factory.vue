@@ -4,6 +4,7 @@
         <path d="M-6 6 V-2 L-1 0 V-4 L4 -1 V-7 H7 V6Z" fill="#172d34" fill-opacity=".85" />
         <path d="M-4 2 V4 M0 2 V4 M4 2 V4" stroke="#f4eed6" stroke-width="1.3" />
 
+        <ColorMark :color="color" transform="scale(1.25)" />
         <title>Factory</title>
     </g>
 </template>
@@ -11,8 +12,10 @@
 import { PieceType } from '@/types/ui-data';
 import { Component, Mixins, Prop } from 'vue-property-decorator';
 import Piece from './Piece.vue';
+import ColorMark from '../ColorMark.vue';
 
 @Component({
+    components: { ColorMark },
     created(this: Factory) {
         this.pieceType = PieceType.Factory;
     },

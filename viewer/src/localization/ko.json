@@ -617,5 +617,6 @@
     "translate(140, {p0})": "translate(140, {p0})",
     "translate(280, 425)": "translate(280, 425)",
     "translate(770, 425)": "translate(770, 425)",
-    "Money: ${p0}": "돈: ${p0}"
+    "Money: ${p0}": "돈: ${p0}",
+    "Color-blind mode": "색각 이상 모드"
 }

@@ -617,5 +617,6 @@
     "translate(140, {p0})": "translate(140, {p0})",
     "translate(280, 425)": "translate(280, 425)",
     "translate(770, 425)": "translate(770, 425)",
-    "Money: ${p0}": "Geld: ${p0}"
+    "Money: ${p0}": "Geld: ${p0}",
+    "Color-blind mode": "Kleurenblinde modus"
 }

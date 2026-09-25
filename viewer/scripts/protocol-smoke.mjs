@@ -1,10 +1,10 @@
-import { checkHostPresentation } from './host-presentation-smoke.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { checkHostPresentation } from './host-presentation-smoke.mjs';
 
 const game = 'container';
 const require = createRequire(import.meta.url);
@@ -56,6 +56,7 @@ try {
         state.log = Array.from({ length: 50 }, (_, index) =>
             journalEntry(`Journal entry ${index + 1}: Ada buys containers from Bob's warehouse.`)
         );
+        state.log.unshift(journalEntry('<span style="border:1px solid black">orange</span> container'));
         const id = (value) => value.toString(16).padStart(24, '0');
         const messages = Array.from({ length: 35 }, (_, i) => ({
             _id: id(i + 1),
@@ -98,6 +99,26 @@ try {
         );
         await page.waitForFunction(() => readyCount === 1);
         await page.locator('#app').evaluate((el) => (el.style.display = ''));
+        assert.equal(await page.locator('.color-mark').count(), 0, 'colour symbols are off by default');
+        await page.evaluate(() => {
+            window.preferenceChanges = [];
+            host.on('update:preference', (value) => preferenceChanges.push(value));
+            host.emit('preferences', { colorBlind: true });
+        });
+        await page.waitForFunction(() => document.querySelectorAll('.color-mark').length > 20);
+        assert.equal(await page.locator('.point-card .color-mark').count(), 5, 'value card matches cargo symbols');
+        assert.equal(
+            await page.locator('.inline-game-log .color-mark').count(),
+            1,
+            'journal uses the same colour symbols'
+        );
+        assert.equal(await page.locator('.player-number').count(), 6, 'ships and island rows identify all players');
+        await page.screenshot({ path: `/tmp/container-color-blind-${width}.png`, fullPage: true });
+        await page.locator('.color-blind-toggle').scrollIntoViewIfNeeded();
+        await page.locator('.color-blind-toggle').click();
+        await page.waitForFunction(() => document.querySelectorAll('.color-mark').length === 0);
+        assert.deepEqual(await page.evaluate(() => preferenceChanges), [{ name: 'colorBlind', value: false }]);
+
         const panel = page.locator('.bgs-game-chat');
         const input = panel.locator('input');
         const list = panel.locator('.chat-messages');

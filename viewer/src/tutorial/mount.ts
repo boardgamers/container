@@ -4,6 +4,7 @@ import { GameState, Move, stripSecret } from 'container-engine';
 import { Phase } from 'container-engine/src/gamestate';
 import { EventEmitter } from 'events';
 import Vue from 'vue';
+import { colorMarkSvg } from '../color-blind';
 import Game from '../components/Game.vue';
 import { colorName, colors, lessons, LessonState, TutorialAction } from './lessons';
 import './tutorial.css';
@@ -36,7 +37,7 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
         state: null as GameState | null,
         player: 0,
         emitter,
-        preferences: Vue.observable({ sound: false, disableHelp: false }),
+        preferences: Vue.observable({ sound: false, colorBlind: false, disableHelp: false }),
         interactionDisabled: false,
         tutorialMove: (move: Move) => {
             void play({ kind: 'move', move });
@@ -95,9 +96,13 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
             animate = false;
         }
     }
+    emitter.on('update:preference', ({ name }) => {
+        if (name === 'colorBlind' && latest) renderSummary(latest);
+    });
     function swatch(color: string) {
         const chip = element('span', 'tutorial-container');
         chip.style.backgroundColor = color;
+        if (params.preferences.colorBlind) chip.innerHTML = colorMarkSvg(color);
         chip.setAttribute('aria-hidden', 'true');
         return chip;
     }

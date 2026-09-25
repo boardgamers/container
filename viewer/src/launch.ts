@@ -37,6 +37,7 @@ function launch(selector: string) {
         // toggles, platform preference pushes) would only paint on the next re-render.
         preferences: Vue.observable({
             sound: true,
+            colorBlind: false,
             disableHelp: false,
         }),
     };

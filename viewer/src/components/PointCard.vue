@@ -50,6 +50,12 @@
                 stroke="black"
             />
             <text x="70" y="140" text-anchor="middle">2</text>
+            <ColorMark
+                v-for="(entry, i) in pointCard.containerValues"
+                :key="entry.containerColor"
+                :color="entry.containerColor"
+                :transform="`translate(30 ${20 + 30 * i}) scale(.8)`"
+            />
         </g>
     </g>
 </template>
@@ -57,7 +63,8 @@
 import { Vue, Component, Prop } from 'vue-property-decorator';
 import type { PointCard as PointCardInfo } from 'container-engine';
 
-@Component
+import ColorMark from './ColorMark.vue';
+@Component({ components: { ColorMark } })
 export default class PointCard extends Vue {
     @Prop()
     pointCard?: PointCardInfo;

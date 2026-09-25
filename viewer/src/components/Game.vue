@@ -1,11 +1,11 @@
 <template>
-    <div class="game">
+    <div class="game" :class="{ 'color-blind': preferences.colorBlind }">
         <div class="statusBar">
             <strong>CONTAINER</strong><span>{{ getStatusMessage() }}</span>
         </div>
         <div v-if="containerActions" class="container-actions" aria-label="Selected container">
             <div class="container-action-title">
-                <span class="selected-container-colour" :style="{ background: containerActions.colour }"></span>
+                <span v-html="colorBadge(containerActions.colour)"></span>
                 <span>{{ containerActions.title }}</span>
                 <button class="selection-close" aria-label="Cancel selection" @click="ui.selected = null">
                     <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
@@ -31,7 +31,7 @@
                 :title="p.name"
                 @click="viewPlayerBoard(i)"
             >
-                <span class="player-board-marker" aria-hidden="true"></span
+                <span class="player-board-marker" aria-hidden="true">{{ preferences.colorBlind ? i + 1 : '' }}</span
                 ><span class="player-board-name" :data-bgs-player="i">{{ i === player ? 'You' : p.name }}</span>
             </button>
         </div>
@@ -44,7 +44,7 @@
                     @click="selectContainer(offer.id)"
                     :aria-label="offer.label"
                 >
-                    <span class="selected-container-colour" :style="{ background: offer.colour }"></span>
+                    <span v-html="colorBadge(offer.colour)"></span>
                     ${{ offer.price }}
                 </button>
             </div>
@@ -89,13 +89,19 @@
                     <LogButton data-thumbnail-omit transform="translate(1105, 67)" @click="showLog()" />
                     <SoundButton
                         data-thumbnail-omit
-                        transform="translate(1200, 15)"
+                        transform="translate(1200, 3)"
                         :isOn="preferences.sound"
                         @click="toggleSound()"
                     />
+                    <ColorBlindButton
+                        data-thumbnail-omit
+                        transform="translate(1200, 69)"
+                        :isOn="preferences.colorBlind"
+                        @click="toggleColorBlind()"
+                    />
                     <HelpButton
                         data-thumbnail-omit
-                        transform="translate(1200, 55)"
+                        transform="translate(1200, 36)"
                         :isOn="!preferences.disableHelp"
                         @click="toggleHelp()"
                     />
@@ -133,6 +139,20 @@
                                 stroke-width="3"
                                 :stroke="playerColors[i]"
                             />
+                            <g v-if="preferences.colorBlind" :key="'N' + i" class="player-number" pointer-events="none">
+                                <rect
+                                    x="865"
+                                    :y="434 + i * 44"
+                                    width="14"
+                                    height="14"
+                                    rx="2"
+                                    fill="white"
+                                    stroke="#203a45"
+                                />
+                                <text x="872" :y="441 + i * 44" text-anchor="middle" font-size="11" fill="#172d34">
+                                    {{ i + 1 }}
+                                </text>
+                            </g>
                         </template>
                     </template>
 
@@ -646,6 +666,8 @@
 </template>
 <script lang="ts">
 import InlineLog from './InlineLog.vue';
+import ColorBlindButton from './buttons/ColorBlindButton.vue';
+import { colorBadgeHtml } from '../color-blind';
 import { journalPieces } from '../journal-pieces';
 import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
 import { MoveName, ended, move as engineMove } from 'container-engine';
@@ -680,6 +702,7 @@ import { GameEventName, LogMove } from 'container-engine/src/log';
         UndoButton,
         LogButton,
         SoundButton,
+        ColorBlindButton,
         HelpButton,
         DropZone,
         Calculator,
@@ -1461,6 +1484,16 @@ export default class Game extends Vue {
         return !!availableMoves[MoveName.Decline];
     }
 
+    colorBadge(color: string) {
+        return colorBadgeHtml(color, !!this.preferences.colorBlind);
+    }
+
+    toggleColorBlind() {
+        const value = !this.preferences.colorBlind;
+        this.$set(this.preferences, 'colorBlind', value);
+        this.emitter.emit('update:preference', { name: 'colorBlind', value });
+    }
+
     toggleSound() {
         const newSound = !this.preferences.sound;
 
@@ -1678,12 +1711,14 @@ export default class Game extends Vue {
                     logReversed.push('New phase: ' + log.phase);
                 } else if (log.type == 'event') {
                     if (log.event.name == GameEventName.Upkeep) {
-                        logReversed.push('New event: ' + journalPieces(log.event.interest));
+                        logReversed.push(
+                            'New event: ' + journalPieces(log.event.interest, this.preferences.colorBlind)
+                        );
                     } else {
                         logReversed.push('New event: ' + log.event.name);
                     }
                 } else if (log.type == 'move') {
-                    logReversed.push(journalPieces(log.pretty));
+                    logReversed.push(journalPieces(log.pretty, this.preferences.colorBlind));
                 }
             });
 
@@ -1730,32 +1765,25 @@ export default class Game extends Vue {
     getFinalScoreHTML(player, i) {
         let str = player.finalScoreBreakdown ? player.finalScoreBreakdown[i] : '0';
 
-        str = str.replaceAll(
-            'brown',
-            '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: brown; color: brown;"></span>'
-        );
-        str = str.replaceAll(
-            'darkslategray',
-            '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: darkslategray; color: darkslategray;"></span>'
-        );
-        str = str.replaceAll(
-            'orange',
-            '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: orange; color: orange;"></span>'
-        );
-        str = str.replaceAll(
-            'tan',
-            '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: tan; color: tan;"></span>'
-        );
-        str = str.replaceAll(
-            'white',
-            '<span style="font-weight: bold; border: 1px solid black; padding: 0 12px; font-size: 12px; background-color: white; color: white;"></span>'
-        );
+        str = str.replace(/brown|darkslategray|orange|tan|white/g, (color: string) => this.colorBadge(color));
 
         return str;
     }
 }
 </script>
 <style lang="scss">
+.game.color-blind .player-board-marker {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font: bold 11px Arial, sans-serif;
+    color: #172d34;
+    background: white;
+    border: 1px solid #172d34;
+}
+
 .game {
     background-color: #dce9e6;
     display: flex;

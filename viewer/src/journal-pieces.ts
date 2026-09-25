@@ -1,4 +1,5 @@
-function pieceIcon(kind: string, color = ''): string {
+import { colorMarkSvg } from './color-blind';
+function pieceIcon(kind: string, color = '', colorBlind = false): string {
     const label = `${color === 'darkslategray' ? 'dark green' : color} ${kind}`.trim();
     const shape =
         kind === 'factory'
@@ -6,10 +7,12 @@ function pieceIcon(kind: string, color = ''): string {
             : kind === 'container'
             ? `<g transform="translate(1 6)"><rect width="20" height="10" rx=".8" fill="${color}" stroke="#21343b"/><path d="M4 2V8 M8 2V8 M12 2V8 M16 2V8" stroke="#10252b" stroke-opacity=".3" stroke-width=".7"/><path d="M1 1H19" stroke="white" stroke-opacity=".5"/></g>`
             : '<g transform="translate(1 1) scale(.66)"><path d="M15 0 L30 10 L30 30 L0 30 L0 10Z" fill="#789298" stroke="#233b43"/><path d="M0 10 L15 0 L30 10" fill="none" stroke="#344a51" stroke-width="2"/><path d="M7 30V14 H23V30" fill="#dae2da" stroke="#425c65"/><path d="M8 18H22 M8 22H22 M8 26H22" stroke="#6c8285"/></g>';
-    return `<span title="${label}" style="display:inline-block;vertical-align:middle;line-height:0"><svg role="img" aria-label="${label}" width="26" height="26" viewBox="0 0 22 22"><title>${label}</title>${shape}</svg></span>`;
+    return `<span title="${label}" style="display:inline-block;vertical-align:middle;line-height:0"><svg role="img" aria-label="${label}" width="26" height="26" viewBox="0 0 22 22"><title>${label}</title>${shape}${
+        colorBlind && color ? `<g transform="translate(6 6)">${colorMarkSvg(color)}</g>` : ''
+    }</svg></span>`;
 }
 
-export function journalPieces(html: string): string {
+export function journalPieces(html: string, colorBlind = false): string {
     const root = document.createElement('div');
     root.innerHTML = html;
     for (const badge of Array.from(root.querySelectorAll('span'))) {
@@ -35,7 +38,7 @@ export function journalPieces(html: string): string {
         if (before?.nodeType === Node.TEXT_NODE) {
             before.textContent = before.textContent!.replace(/\ba $/, '');
         }
-        badge.outerHTML = pieceIcon(kind, color);
+        badge.outerHTML = pieceIcon(kind, color, colorBlind);
     }
     for (const node of Array.from(root.childNodes)) {
         if (node.nodeType !== Node.TEXT_NODE || !node.textContent?.includes('a warehouse')) continue;

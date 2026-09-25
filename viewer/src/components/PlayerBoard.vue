@@ -10,7 +10,7 @@
             font-weight="600"
             fill="black"
             :text-decoration="isCurrentPlayer ? 'underline' : ''"
-            >{{ getPlayerName() }}</text
+            >{{ preferences.colorBlind ? owner + 1 + '. ' : '' }}{{ getPlayerName() }}</text
         >
 
         <rect width="250" height="180" x="0" y="20" fill="#e2e0d3" stroke="#899997" />
@@ -196,8 +196,9 @@
     </g>
 </template>
 <script lang="ts">
+import type { Preferences } from '../types/ui-data';
 import { Player } from 'container-engine';
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Component, Prop, InjectReactive } from 'vue-property-decorator';
 import DropZone from './DropZone.vue';
 
 @Component({
@@ -206,6 +207,7 @@ import DropZone from './DropZone.vue';
     },
 })
 export default class PlayerBoard extends Vue {
+    @InjectReactive() readonly preferences!: Preferences;
     @Prop({ default: false })
     openMoney!: boolean;
 

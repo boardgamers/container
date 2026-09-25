@@ -39,3 +39,13 @@ Lessons run the real engine locally with deterministic opponents and private
 player views. The extra lesson controls make drag actions accessible on mobile.
 Chapter progress survives refresh. Playback controls return to the previous step,
 replay the current step or go back to the start. No live game or chat messages are sent.
+
+## Shared accessibility preference
+
+The viewer follows BGS's boolean `colorBlind` preference (default `false`).
+Its eye icon updates the same shared preference through `update:preference`.
+Shapes identify container colours across pieces, factories, value cards, trade
+controls, tutorials and the journal. Player numbers match ships, boards and
+island rows. No engine state or colour identifiers are changed.
+
+Register `{ "name": "colorBlind", "label": "Color-blind mode", "type": "checkbox", "default": false }` in the BGS viewer preferences.

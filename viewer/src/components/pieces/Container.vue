@@ -8,6 +8,7 @@
         <path d="M4 2V8 M8 2V8 M12 2V8 M16 2V8" stroke="#10252b" stroke-opacity=".3" stroke-width=".7" />
         <path d="M1 1H19" stroke="white" stroke-opacity=".5" />
 
+        <ColorMark :color="color" transform="translate(10 5) scale(.8)" />
         <title>Container</title>
     </g>
 </template>
@@ -15,8 +16,10 @@
 import { ContainerState, PieceType } from '@/types/ui-data';
 import { Component, Mixins, Prop } from 'vue-property-decorator';
 import Piece from './Piece.vue';
+import ColorMark from '../ColorMark.vue';
 
 @Component({
+    components: { ColorMark },
     created(this: Container) {
         this.pieceType = PieceType.Container;
     },
