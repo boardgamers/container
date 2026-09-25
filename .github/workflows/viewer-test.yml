@@ -29,6 +29,7 @@ jobs:
               with:
                   version: 11
             - run: pnpm install
+            - run: pnpm --dir .. test:locales
             # - run: pnpm lint
             # - run: pnpm test
             - run: pnpm build

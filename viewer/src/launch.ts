@@ -5,6 +5,7 @@ import Vue from 'vue';
 import Game from './components/Game.vue';
 import { mountGameChat } from './game-chat';
 import { createBoardThumbnail, installPlayerCards } from './host-presentation';
+import { mountLocalization } from './localization';
 import { installActionSounds } from './sounds';
 import type { Preferences } from './types/ui-data';
 
@@ -45,12 +46,14 @@ function launch(selector: string) {
     }).$mount(mountPoint);
 
     const thumbnail = createBoardThumbnail(app.$el);
+    const localization = mountLocalization(target.ownerDocument.body);
     const viewer = createViewer<GameState, Move[]>({
         async onThumbnail(size) {
             await app.$nextTick();
             return thumbnail.render(app.$el.querySelector('#scene'), size, '#c6deda', '[data-thumbnail-omit]');
         },
         async onState(data) {
+            localization.setState(data);
             params.state = data;
             app.$forceUpdate();
             await app.$nextTick();
@@ -60,6 +63,7 @@ function launch(selector: string) {
             app.$forceUpdate();
         },
         onPreferences(data) {
+            localization.setLocale(data.locale);
             Object.assign(params.preferences, data);
             app.$forceUpdate();
         },
@@ -84,6 +88,7 @@ function launch(selector: string) {
     const removeCards = installPlayerCards(app.$el, viewer);
     const removeChat = mountGameChat(item, app.$el);
     app.$once('hook:beforeDestroy', () => {
+        localization.destroy();
         removeCards();
         thumbnail.destroy();
         removeChat();
