@@ -11,7 +11,7 @@ const js = ts.transpileModule(marks.replace(/^import .*$/gm, '') + journal.repla
 }).outputText;
 const catalogs = Object.fromEntries(
     await Promise.all(
-        ['en', 'fr', 'hi', 'ko', 'nl'].map(async (locale) => [
+        ['en', 'fr', 'hi', 'ko', 'nl', 'fa'].map(async (locale) => [
             locale,
             JSON.parse(await readFile(new URL(`localization/${locale}.json`, root), 'utf8')),
         ])
@@ -37,7 +37,7 @@ try {
             node.innerHTML = journalPieces(source, true);
             const l = mountLocalization(node, catalogs, 'fr');
             const results = {};
-            for (const lang of ['fr', 'hi', 'ko', 'nl', 'en', 'hi']) {
+            for (const lang of ['fr', 'hi', 'ko', 'nl', 'fa', 'en', 'hi']) {
                 l.setLocale(lang);
                 await new Promise((resolve) => setTimeout(resolve, 10));
                 results[lang] = {
@@ -63,11 +63,13 @@ try {
     assert.match(result.hi.text, /Build ने Fish से 3 \$ में.*खरीदा; नई कीमत: 5 \$/);
     assert.match(result.ko.text, /Build: Fish에게서 \$3에.*구매, 새 가격 \$5/);
     assert.match(result.nl.text, /Build koopt.*van Fish voor \$3; nieuwe prijs: \$5/);
+    assert.match(result.fa.text, /Build.*Fish.*3.*5/s);
+    assert.match(result.fa.text, /[\u0600-\u06ff]/);
     assert.match(result.warehouse.text, /Build achète.*pour 4 \$/);
     assert.equal(result.warehouse.icons, 1);
     assert.match(result.seizure.text, /은행이 Build의 공장에서.*압류/);
     assert.equal(result.seizure.icons, 1);
-    for (const item of ['fr', 'hi', 'ko', 'nl', 'en'].map((lang) => result[lang])) {
+    for (const item of ['fr', 'hi', 'ko', 'nl', 'fa', 'en'].map((lang) => result[lang])) {
         assert.equal(item.icons, 1);
         assert.deepEqual(item.names, ['Build', 'Fish']);
         assert.doesNotMatch(item.text, /⟪|\{p\d/);

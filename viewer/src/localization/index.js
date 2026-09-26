@@ -2,6 +2,7 @@ import catalog8 from './da.json';
 import catalog1 from './de.json';
 import catalog5 from './el.json';
 import catalog0 from './en.json';
+import persian from './fa.json';
 import catalog2 from './fr.json';
 import catalog6 from './hi.json';
 import catalog13 from './it.json';
@@ -10,6 +11,7 @@ import catalog14 from './nl.json';
 import catalog3 from './pl.json';
 import catalog9 from './pt-BR.json';
 import catalog4 from './ro.json';
+import './rtl.css';
 import catalog7 from './ru.json';
 import { createTranslator, mountLocalization as mount } from './runtime.js';
 import catalog12 from './vi.json';
@@ -17,6 +19,7 @@ import catalog11 from './zh-TW.json';
 export { languages, resolveLocale } from './runtime.js';
 export const catalogs = {
     en: catalog0,
+    fa: persian,
     de: catalog1,
     fr: catalog2,
     pl: catalog3,

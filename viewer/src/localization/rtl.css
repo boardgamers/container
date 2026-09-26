@@ -1,0 +1,18 @@
+/* Keep the physical board and calculator order while reading prose right to left. */
+#game:lang(fa),
+.container-tutorial:lang(fa),
+svg:lang(fa) {
+    direction: ltr;
+}
+.modal-content:lang(fa),
+.journal-and-chat:lang(fa),
+.bgs-tutorial-guide:lang(fa),
+.tutorial-answers:lang(fa),
+.tutorial-summary:lang(fa) {
+    direction: rtl;
+    text-align: start;
+}
+[data-localized-journal]:lang(fa),
+.bgs-tutorial-body p:lang(fa) {
+    unicode-bidi: plaintext;
+}

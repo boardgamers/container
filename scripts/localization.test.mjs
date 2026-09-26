@@ -22,6 +22,7 @@ const catalogs = {
 };
 test('regional language preferences select supported catalogues', () => {
     assert.equal(resolveLocale('nl-BE'), 'nl');
+    assert.equal(resolveLocale('fa-IR'), 'fa');
     assert.equal(resolveLocale('pt-PT'), 'pt-BR');
     assert.equal(resolveLocale('zh-Hant-TW'), 'zh-TW');
     assert.equal(resolveLocale('zh-CN'), 'en');
