@@ -288,6 +288,19 @@ function observedCash(G: GameState, seed: string): number[] | undefined {
         for (const entry of G.log) {
             if (entry.type === 'move') replayed = engine.move(replayed, entry.move, entry.player);
         }
+        for (const p of replayed.players) {
+            const actual = G.players[p.id];
+            for (const key of [
+                'factories',
+                'warehouses',
+                'ship',
+                'containersOnFactoryStore',
+                'containersOnWarehouseStore',
+                'containersOnIsland',
+            ] as const) {
+                if (!isEqual(p[key], actual[key])) return undefined;
+            }
+        }
         return replayed.players.map((p, i) => p.money + (G.players[i].loans.length - p.loans.length) * 10);
     } catch {
         return undefined;
@@ -299,7 +312,9 @@ export function createAnalysisScenario(G: GameState, { player, seed }: { player?
     const copy = cloneDeep(engine.stripSecret(G, player));
     const rng = seedrandom(seed);
     const cash = observedCash(G, seed);
-    if (cash) copy.analysisCash = cash;
+    if (!cash || cash.some((amount) => !Number.isFinite(amount) || amount < 0))
+        throw new Error('Cannot reconstruct public cash balances safely');
+    copy.analysisCash = cash;
     const cards = cloneDeep(pointCards).filter((card) => !isEqual(card, copy.players[player!]?.pointCard));
     copy.seed = seed;
     copy.hiddenLog = [];
@@ -311,7 +326,8 @@ export function createAnalysisScenario(G: GameState, { player, seed }: { player?
         delete p.finalScoreBreakdown;
         if (p.id !== player) {
             p.pointCard = cards.splice(Math.floor(rng() * cards.length), 1)[0];
-            p.money = Math.max(p.bid + p.additionalBid, cash?.[p.id] ?? Math.floor(rng() * 101));
+            if (cash[p.id] < p.bid + p.additionalBid) throw new Error('Public bids contradict reconstructed cash');
+            p.money = cash[p.id];
             p.lastMove = null;
             if (!p.showBid)
                 p.bid =
@@ -331,5 +347,5 @@ export function createAnalysisScenario(G: GameState, { player, seed }: { player?
 }
 
 export function canLaunchAnalysisMode(G: GameState): boolean {
-    return G.newTurn !== false;
+    return G.newTurn !== false && observedCash(G, 'analysis-eligibility') !== undefined;
 }

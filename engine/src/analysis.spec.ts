@@ -53,3 +53,14 @@ describe('observer and pending auctions', () => {
         expect(b.currentPlayers.length).to.be.greaterThan(0);
     });
 });
+
+describe('public cash reconstruction failures', () => {
+    it('fails closed when the public ledger cannot reproduce the position', () => {
+        const source = setup(3, {}, 'source');
+        source.players[0].containersOnFactoryStore[0].price = 4;
+        expect(wrapper.canLaunchAnalysisMode(source)).to.equal(false);
+        expect(() => wrapper.createAnalysisScenario(source, { seed: 'fake' })).to.throw(
+            'Cannot reconstruct public cash'
+        );
+    });
+});
