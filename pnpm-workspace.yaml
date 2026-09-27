@@ -29,3 +29,6 @@ packageExtensions:
     '@vue/cli-plugin-typescript':
         dependencies:
             '@vue/compiler-sfc': ^3.5.41
+
+patchedDependencies:
+    '@boardgamers/protocol@0.6.1': patches/@boardgamers__protocol@0.6.1.patch

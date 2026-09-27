@@ -6,6 +6,9 @@ settings:
 
 packageExtensionsChecksum: sha256-00qAjbZKW5ZUQ9vzlY/TpeXMvkYJise4VKJxePABdVI=
 
+patchedDependencies:
+    '@boardgamers/protocol@0.6.1': 4ec4a210cf846eebd6d902b2952c029dbcde5ed288f88dba1f9362a8a9caa953
+
 importers:
     .:
         devDependencies:
@@ -87,7 +90,7 @@ importers:
         dependencies:
             '@boardgamers/protocol':
                 specifier: 0.6.1
-                version: 0.6.1
+                version: 0.6.1(patch_hash=4ec4a210cf846eebd6d902b2952c029dbcde5ed288f88dba1f9362a8a9caa953)
             container-engine:
                 specifier: workspace:../engine
                 version: link:../engine
@@ -11586,7 +11589,7 @@ snapshots:
             '@babel/helper-string-parser': 7.29.7
             '@babel/helper-validator-identifier': 7.29.7
 
-    '@boardgamers/protocol@0.6.1':
+    '@boardgamers/protocol@0.6.1(patch_hash=4ec4a210cf846eebd6d902b2952c029dbcde5ed288f88dba1f9362a8a9caa953)':
         dependencies:
             zod: 4.6.2
 

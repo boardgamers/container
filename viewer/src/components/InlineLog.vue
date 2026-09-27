@@ -40,7 +40,7 @@ export default class InlineLog extends Vue {
     onScroll() {
         const feed = this.$refs.feed as HTMLElement;
         if (!feed.clientHeight) return;
-        this.follow = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 32;
+        this.follow = feed.scrollHeight - feed.scrollTop - feed.clientHeight <= 1;
     }
 }
 </script>
