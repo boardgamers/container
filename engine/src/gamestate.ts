@@ -120,6 +120,7 @@ export interface ShipPiece {
 }
 
 export interface GameState {
+    analysisCash?: number[];
     players: Player[];
     startingPlayer: number;
     currentPlayers: number[];

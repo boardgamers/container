@@ -1,5 +1,8 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
+import seedrandom from 'seedrandom';
 import type { GameState } from './index';
+import { availableMoves } from './src/available-moves';
+import pointCards from './src/cards';
 import * as engine from './src/engine';
 import { Phase } from './src/gamestate';
 import type { LogMove } from './src/log';
@@ -247,4 +250,86 @@ export function analysisView(G: GameState, options: { player: number; start?: nu
             availableMoves: state.players.map((p) => p.availableMoves),
         },
     };
+}
+
+function observedCash(G: GameState, seed: string): number[] | undefined {
+    if (G.analysisCash) return G.analysisCash;
+    try {
+        let replayed = engine.setup(G.players.length, G.options, seed);
+        const factories = [
+            ...replayed.factoriesLeft,
+            ...replayed.players.reduce((all, p) => all.concat(p.factories), [] as typeof replayed.factoriesLeft),
+        ];
+        const containers = [
+            ...replayed.containersLeft,
+            ...replayed.players.reduce(
+                (all, p) => all.concat(p.containersOnFactoryStore.map((c) => c.piece)),
+                [] as typeof replayed.containersLeft
+            ),
+        ];
+        for (const p of replayed.players) {
+            const color = G.players[p.id].factories[0].color;
+            const factory = factories.find((f) => f.color === color && f.id === G.players[p.id].factories[0].id)!;
+            factories.splice(factories.indexOf(factory), 1);
+            const container = containers
+                .filter((c) => c.color === color)
+                .sort((a, b) => Number(a.id.slice(1)) - Number(b.id.slice(1)))[0];
+            containers.splice(containers.indexOf(container), 1);
+            p.factories = [factory];
+            p.containersOnFactoryStore = [{ piece: container, price: 2, moved: false }];
+            p.actions = p.id === G.startingPlayer ? 2 : 0;
+        }
+        replayed.factoriesLeft = factories;
+        replayed.containersLeft = containers;
+        replayed.startingPlayer = G.startingPlayer;
+        replayed.currentPlayers = [G.startingPlayer];
+        for (const p of replayed.players)
+            p.availableMoves = replayed.currentPlayers.includes(p.id) ? availableMoves(replayed, p) : null;
+        for (const entry of G.log) {
+            if (entry.type === 'move') replayed = engine.move(replayed, entry.move, entry.player);
+        }
+        return replayed.players.map((p, i) => p.money + (G.players[i].loans.length - p.loans.length) * 10);
+    } catch {
+        return undefined;
+    }
+}
+
+export function createAnalysisScenario(G: GameState, { player, seed }: { player?: number; seed: string }): GameState {
+    if (G.newTurn === false) throw new Error('Analysis requires a committed turn');
+    const copy = cloneDeep(engine.stripSecret(G, player));
+    const rng = seedrandom(seed);
+    const cash = observedCash(G, seed);
+    if (cash) copy.analysisCash = cash;
+    const cards = cloneDeep(pointCards).filter((card) => !isEqual(card, copy.players[player!]?.pointCard));
+    copy.seed = seed;
+    copy.hiddenLog = [];
+    copy.log = [];
+    copy.newTurn = true;
+    for (const p of copy.players) {
+        p.isAI = false;
+        p.isDropped = false;
+        delete p.finalScoreBreakdown;
+        if (p.id !== player) {
+            p.pointCard = cards.splice(Math.floor(rng() * cards.length), 1)[0];
+            p.money = Math.max(p.bid + p.additionalBid, cash?.[p.id] ?? Math.floor(rng() * 101));
+            p.lastMove = null;
+            if (!p.showBid)
+                p.bid =
+                    G.phase === Phase.Bid && !copy.currentPlayers.includes(p.id) && p.id !== copy.auctioningPlayer
+                        ? Math.floor(rng() * (p.money + 1))
+                        : 0;
+            if (!p.showAdditionalBid)
+                p.additionalBid =
+                    G.phase === Phase.Bid && copy.highestBidders.includes(p.id) && !copy.currentPlayers.includes(p.id)
+                        ? Math.floor(rng() * (p.money - p.bid + 1))
+                        : 0;
+        }
+    }
+    for (const p of copy.players)
+        p.availableMoves = copy.currentPlayers.includes(p.id) ? availableMoves(copy, p) : null;
+    return copy;
+}
+
+export function canLaunchAnalysisMode(G: GameState): boolean {
+    return G.newTurn !== false;
 }
