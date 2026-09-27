@@ -670,7 +670,7 @@ import ColorBlindButton from './buttons/ColorBlindButton.vue';
 import { colorBadgeHtml } from '../color-blind';
 import { journalPieces } from '../journal-pieces';
 import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
-import { MoveName, ended, move as engineMove } from 'container-engine';
+import { MoveName, ended, isLoanReversal, move as engineMove } from 'container-engine';
 import type { GameState, Move } from 'container-engine';
 import { EventEmitter } from 'events';
 import { groupBy, isEqual } from 'lodash';
@@ -1325,9 +1325,13 @@ export default class Game extends Vue {
         this.sendMove({ name: MoveName.Decline, data: true });
     }
 
-    sendMove(move) {
+    sendMove(move: Move) {
         if (this.tutorialMove) {
             if (!this.interactionDisabled) this.tutorialMove(move);
+            return;
+        }
+        if (this.committedState && isLoanReversal(this.turnMoves[this.turnMoves.length - 1], move)) {
+            this.undo();
             return;
         }
         // Send the WHOLE turn so far: the platform is stateless between calls and
@@ -2071,7 +2075,7 @@ text {
 }
 .piece.canDrag,
 .loan.canDrag {
-    touch-action: pinch-zoom;
+    touch-action: auto;
 }
 .container-actions {
     width: 100%;

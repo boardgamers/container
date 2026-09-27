@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { cloneDeep } from 'lodash';
 import * as wrapper from '../wrapper';
-import { setup } from './engine';
+import { move as atomicMove, setup } from './engine';
 import { GameState, Phase, ShipPosition } from './gamestate';
 import { Move, MoveName } from './move';
 
@@ -78,6 +78,77 @@ describe('wrapper (tentative turns)', () => {
         const result = await wrapper.move(cloneDeep(base), [], A);
         expect(wrapper.toSave(result)).to.be.undefined;
         expect(wrapper.logLength(result)).to.equal(wrapper.logLength(base));
+    });
+
+    it('should cancel repeated loan reversals without growing the log or committing a turn', async () => {
+        const base = setup(3, {}, 'loan-reversal');
+        const A = base.currentPlayers[0];
+        const moves: Move[] = [];
+        for (let i = 0; i < 100; i++) moves.push(getLoan, payLoan);
+        const result = await wrapper.move(cloneDeep(base), moves, A);
+        expect(result).to.deep.equal({ ...base, newTurn: false });
+        expect(wrapper.toSave(result)).to.be.undefined;
+        const committed = await wrapper.move(cloneDeep(base), [...moves, pass], A);
+        expect(committed).to.deep.equal(await wrapper.move(cloneDeep(base), pass, A));
+    });
+
+    it('should cancel a repayment followed by a loan without erasing the older loan history', async () => {
+        const platform = new Platform(2, 'repay-reversal');
+        const A = platform.saved.currentPlayers[0];
+        await platform.send([getLoan, pass], A);
+        await platform.send(pass, platform.saved.currentPlayers[0]);
+        const base = cloneDeep(platform.saved);
+        const result = await wrapper.move(cloneDeep(base), [payLoan, getLoan], A);
+        expect(result).to.deep.equal({ ...base, newTurn: false });
+        expect(result.players[A].loans).to.have.length(1);
+        expect(wrapper.toSave(result)).to.be.undefined;
+    });
+
+    it('should unwind two loans one at a time', async () => {
+        const base = setup(3, {}, 'nested-loans');
+        const A = base.currentPlayers[0];
+        const one = await wrapper.move(cloneDeep(base), [getLoan, getLoan, payLoan], A);
+        expect(one).to.deep.equal(await wrapper.move(cloneDeep(base), getLoan, A));
+        const none = await wrapper.move(cloneDeep(base), [getLoan, getLoan, payLoan, payLoan], A);
+        expect(none).to.deep.equal({ ...base, newTurn: false });
+    });
+
+    it('should keep loans separated by another action', async () => {
+        const base = setup(3, {}, 'use-loan');
+        const A = base.currentPlayers[0];
+        const purchase: Move = { name: MoveName.BuyWarehouse, data: true, extraData: base.warehousesLeft[0] };
+        const moves = [getLoan, purchase, payLoan];
+        const result = await wrapper.move(cloneDeep(base), moves, A);
+        let expected = cloneDeep(base);
+        for (const action of moves) expected = atomicMove(expected, action, A);
+        expect(result).to.deep.equal(expected);
+        expect(result.log.length).to.equal(base.log.length + 3);
+    });
+
+    it('should validate cancelled moves and still reject crossing a turn boundary', async () => {
+        const base = setup(3, {}, 'invalid-reversal');
+        const A = base.currentPlayers[0];
+        for (const actions of [
+            [payLoan, getLoan],
+            [getLoan, getLoan, getLoan, payLoan, payLoan, payLoan],
+            [pass, getLoan, payLoan],
+        ]) {
+            let error: Error | undefined;
+            try {
+                await wrapper.move(cloneDeep(base), actions, A);
+            } catch (e) {
+                error = e as Error;
+            }
+            expect(error, 'invalid moves cannot disappear through cancellation').to.be.instanceOf(Error);
+        }
+    });
+
+    it('should preserve loan reversals when replaying already committed history', () => {
+        let state = setup(3, {}, 'legacy-loan-log');
+        state.players.forEach((player) => (player.name = `Player ${player.id}`));
+        const A = state.currentPlayers[0];
+        for (const action of [getLoan, payLoan, pass]) state = atomicMove(state, action, A);
+        expect(wrapper.replay(state)).to.deep.equal(state);
     });
 
     it('should make undo-by-truncation equivalent to never having made the popped move', async () => {

@@ -124,3 +124,12 @@ export enum MoveName {
     Decline = 'decline',
     Pass = 'pass',
 }
+
+export function isLoanReversal(previous: Move | undefined, next: Move): boolean {
+    return (
+        previous?.data === true &&
+        next.data === true &&
+        ((previous.name === MoveName.GetLoan && next.name === MoveName.PayLoan) ||
+            (previous.name === MoveName.PayLoan && next.name === MoveName.GetLoan))
+    );
+}

@@ -3,4 +3,4 @@ export { currentPlayers, ended, move, moveAI, setup, stripSecret } from './src/e
 export { Phase } from './src/gamestate';
 export type { GameState, Player, PointCard } from './src/gamestate';
 export { GameEventName, LogItem } from './src/log';
-export { Move, MoveName, Moves } from './src/move';
+export { isLoanReversal, Move, MoveName, Moves } from './src/move';

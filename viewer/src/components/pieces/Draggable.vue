@@ -19,6 +19,7 @@ import { Vue, Component, Prop } from 'vue-property-decorator';
             element.addEventListener('lostpointercapture', cancel);
             window.addEventListener('pointerdown', anotherPointer, true);
             this.$on('hook:beforeDestroy', () => {
+                this.cancelDrag();
                 element.removeEventListener('pointerdown', start);
                 element.removeEventListener('pointermove', drag);
                 element.removeEventListener('pointerup', end);
@@ -36,6 +37,9 @@ export default class Draggable extends Vue {
     dragging = false;
     dragCancelled = false;
     _pointer?: number;
+    _scrollFrame?: number;
+    _dragPoint?: { clientX: number; clientY: number };
+    _scrollTime?: number;
     _offset = { x: 0, y: 0 };
     _transform?: SVGTransform;
     _press?: { x: number; y: number };
@@ -53,6 +57,7 @@ export default class Draggable extends Vue {
         this.dragCancelled = false;
         this._pointer = evt.pointerId;
         this._press = { x: evt.clientX, y: evt.clientY };
+        if (evt.pointerType === 'touch') return;
         this._offset = this.getMousePosition(evt);
         const transforms = this.htmlElement.transform.baseVal;
         if (transforms.numberOfItems === 0 || transforms.getItem(0).type !== 2) {
@@ -71,11 +76,45 @@ export default class Draggable extends Vue {
         // Measure finger jitter in screen pixels, independent of board/browser zoom.
         const threshold = evt.pointerType === 'mouse' ? 5 : 8;
         if (!this.dragging && Math.hypot(evt.clientX - this._press.x, evt.clientY - this._press.y) < threshold) return;
+        if (evt.pointerType === 'touch') {
+            this.cancelDrag();
+            return;
+        }
         this.dragging = true;
         evt.preventDefault();
-        const coord = this.getMousePosition(evt);
+        this._dragPoint = { clientX: evt.clientX, clientY: evt.clientY };
+        this.positionDraggedPiece();
+        if (this._scrollFrame === undefined)
+            this._scrollFrame = requestAnimationFrame((time) => this.scrollWhileDragging(time));
+    }
+
+    positionDraggedPiece() {
+        if (!this._dragPoint || !this._transform) return;
+        const coord = this.getMousePosition(this._dragPoint);
         this._transform!.setTranslate(coord.x - this._offset.x, coord.y - this._offset.y);
         this.$emit('draggedTo', { x: coord.x - this._offset.x, y: coord.y - this._offset.y });
+    }
+
+    scrollWhileDragging(time: number) {
+        this._scrollFrame = undefined;
+        if (!this.dragging || !this._dragPoint) return;
+        const scroller = this.htmlElement.closest('.board-scroll') as HTMLElement | null;
+        const elapsed = this._scrollTime === undefined ? 16 : Math.min(time - this._scrollTime, 32);
+        this._scrollTime = time;
+        if (scroller) {
+            const bounds = scroller.getBoundingClientRect();
+            const { clientX, clientY } = this._dragPoint;
+            const edge = Math.min(48, bounds.width / 4);
+            let speed = 0;
+            if (clientY >= bounds.top && clientY <= bounds.bottom) {
+                if (clientX < bounds.left + edge) speed = -Math.min(1, (bounds.left + edge - clientX) / edge);
+                else if (clientX > bounds.right - edge) speed = Math.min(1, (clientX - bounds.right + edge) / edge);
+            }
+            const before = scroller.scrollLeft;
+            scroller.scrollLeft += speed * elapsed * 0.6;
+            if (scroller.scrollLeft !== before) this.positionDraggedPiece();
+        }
+        this._scrollFrame = requestAnimationFrame((next) => this.scrollWhileDragging(next));
     }
 
     endDrag(evt: PointerEvent, cancelled = false) {
@@ -88,6 +127,10 @@ export default class Draggable extends Vue {
     }
 
     finishDrag(cancelled: boolean) {
+        if (this._scrollFrame !== undefined) cancelAnimationFrame(this._scrollFrame);
+        this._scrollFrame = undefined;
+        this._scrollTime = undefined;
+        this._dragPoint = undefined;
         if (this._pointer === undefined) return;
         const pointer = this._pointer;
         const clicked = !this.dragging && !cancelled;
@@ -99,7 +142,7 @@ export default class Draggable extends Vue {
         if (clicked) this.$emit('fastClick', this);
     }
 
-    getMousePosition(evt: PointerEvent) {
+    getMousePosition(evt: { clientX: number; clientY: number }) {
         const point = this.svgElement.createSVGPoint();
         point.x = evt.clientX;
         point.y = evt.clientY;

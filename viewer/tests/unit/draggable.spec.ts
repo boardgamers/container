@@ -47,6 +47,18 @@ function gesture(scale = 1) {
 }
 
 describe('Board pointer gestures', () => {
+    let requestFrame;
+    let cancelFrame;
+    beforeEach(() => {
+        requestFrame = (global as any).requestAnimationFrame;
+        cancelFrame = (global as any).cancelAnimationFrame;
+        (global as any).requestAnimationFrame = () => 1;
+        (global as any).cancelAnimationFrame = () => {};
+    });
+    afterEach(() => {
+        (global as any).requestAnimationFrame = requestFrame;
+        (global as any).cancelAnimationFrame = cancelFrame;
+    });
     it('keeps small finger movements as a tap on a scaled-down board', () => {
         const { vm, events, pointer } = gesture(0.3);
         vm.startDrag(pointer(100));
@@ -55,13 +67,13 @@ describe('Board pointer gestures', () => {
         expect(events.map((e) => e[0])).to.deep.equal(['fastClick']);
         expect(vm.dragging).to.equal(false);
     });
-    it('captures a drag and translates screen movement into board coordinates', () => {
+    it('captures a mouse drag and translates screen movement into board coordinates', () => {
         const { vm, events, pointer, transform } = gesture(0.5);
-        vm.startDrag(pointer(200));
-        vm.drag(pointer(100));
+        vm.startDrag(pointer(200, 0, 1, 'mouse'));
+        vm.drag(pointer(100, 0, 1, 'mouse'));
         expect(vm.dragging).to.equal(true);
         expect(transform.matrix.e).to.equal(-200);
-        vm.endDrag(pointer(100));
+        vm.endDrag(pointer(100, 0, 1, 'mouse'));
         expect(vm.dragCancelled).to.equal(false);
         expect(events.some((e) => e[0] === 'fastClick')).to.equal(false);
     });

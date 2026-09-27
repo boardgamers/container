@@ -3,7 +3,7 @@ import type { GameState } from './index';
 import * as engine from './src/engine';
 import { Phase } from './src/gamestate';
 import type { LogMove } from './src/log';
-import { Move, MoveName } from './src/move';
+import { isLoanReversal, Move, MoveName } from './src/move';
 import { asserts } from './src/utils';
 
 export async function init(nbPlayers: number, expansions: string[], options: {}, seed?: string): Promise<GameState> {
@@ -30,8 +30,12 @@ export function setPlayerMetaData(G: GameState, player: number, metaData: { name
  * increment. Undo is implemented by the viewer replaying a shortened buffer — or, when
  * the buffer empties, by doing nothing at all, since the saved state *is* the turn start.
  */
-export async function move(G: GameState, move: Move | Move[] | null | undefined, player: number) {
-    const moves: Move[] = move == null ? [] : Array.isArray(move) ? move : [move];
+export async function move(
+    G: GameState,
+    payload: Move | Move[] | null | undefined,
+    player: number
+): Promise<GameState> {
+    const moves: Move[] = payload == null ? [] : Array.isArray(payload) ? payload : [payload];
 
     if (moves.length === 0) {
         // Nothing to apply — flag the result as tentative so nothing gets persisted
@@ -39,6 +43,15 @@ export async function move(G: GameState, move: Move | Move[] | null | undefined,
         return { ...G, newTurn: false };
     }
 
+    const compacted: Move[] = [];
+    for (const action of moves) {
+        if (isLoanReversal(compacted[compacted.length - 1], action)) compacted.pop();
+        else compacted.push(action);
+    }
+    const before = compacted.length < moves.length ? cloneDeep(G) : undefined;
+
+    // Validate every requested move and the turn boundary before cancelling any pair.
+    // Historical replay deliberately keeps the original atomic engine semantics.
     for (let i = 0; i < moves.length; i++) {
         G = engine.move(G, moves[i], player);
 
@@ -52,7 +65,7 @@ export async function move(G: GameState, move: Move | Move[] | null | undefined,
         }
     }
 
-    return G;
+    return before ? move(before, compacted, player) : G;
 }
 
 /**
