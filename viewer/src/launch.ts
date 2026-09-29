@@ -54,6 +54,7 @@ function launch(selector: string) {
             return thumbnail.render(app.$el.querySelector('#scene'), size, '#c6deda', '[data-thumbnail-omit]');
         },
         async onState(data) {
+            await localization.ready;
             localization.setState(data);
             params.state = data;
             app.$forceUpdate();
@@ -63,8 +64,10 @@ function launch(selector: string) {
             params.player = data.index;
             app.$forceUpdate();
         },
-        onPreferences(data) {
-            localization.setLocale(data.locale);
+        async onPreferences(data) {
+            if (!(await localization.setLocale(data.locale))) {
+                return;
+            }
             Object.assign(params.preferences, data);
             app.$forceUpdate();
         },

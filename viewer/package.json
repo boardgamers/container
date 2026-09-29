@@ -62,6 +62,7 @@
         "dist/img",
         "dist/media",
         "tsconfig.json",
-        "public/audio"
+        "public/audio",
+        "dist/container-viewer.umd.min.locale-*.js"
     ]
 }
