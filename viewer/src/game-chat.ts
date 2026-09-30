@@ -59,6 +59,7 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
     let players: { id: number; name: string; color?: string; faction?: string }[] = [];
     let localPlayer: number | undefined;
     let chatVisible = false;
+    let chatNotifications = true;
     const shortcut = document.createElement('button');
     shortcut.type = 'button';
     shortcut.className = 'chat-shortcut';
@@ -146,7 +147,7 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
         const label = count ? `Chat · ${count} unread` : 'Chat';
         chatTab.textContent = count ? `Chat · ${count}` : 'Chat';
         shortcut.textContent = label;
-        shortcut.hidden = count === 0 || chatVisible;
+        shortcut.hidden = !chatNotifications || count === 0 || chatVisible;
         shortcut.setAttribute('aria-label', `Open ${label}`);
     }
     shortcut.onclick = () => selectPanel('chat');
@@ -162,6 +163,10 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
     const dispose = [
         () => mobile.removeEventListener('change', expandMobilePanels),
         detach,
+        emitter.on('preferences', (preferences) => {
+            chatNotifications = preferences.chatNotifications !== false;
+            updateShortcut();
+        }),
         chat.subscribe(updateShortcut),
         emitter.on('state', (state) => {
             players = (state?.players || []).map((player: any, index: number) => ({ ...player, id: index }));
