@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { checkFinalScore } from './final-score-smoke.mjs';
 import { checkHostPresentation } from './host-presentation-smoke.mjs';
 
 const game = 'container';
@@ -388,6 +389,7 @@ try {
         await page.close();
         console.log(`${game} ${width}px: protocol/chat smoke passed`);
     }
+    await checkFinalScore(browser, `http://127.0.0.1:${server.address().port}/`, engine);
 } finally {
     await browser.close();
     await new Promise((resolve) => server.close(resolve));

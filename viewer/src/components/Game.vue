@@ -618,48 +618,61 @@
         </div>
 
         <div v-if="G" :class="['modal', { visible: endScoreVisible }]">
-            <div class="modal-content">
-                <span class="close" @click="endScoreVisible = false">&times;</span>
-                <div class="modal-title">Final Score</div>
-                <table class="final-score-table">
-                    <tr>
-                        <th><div>Player</div></th>
-                        <th v-for="player in G.players" :key="'FS' + player.id">
-                            <div :style="'background-color: ' + playerColors[player.id]">{{ player.name }}</div>
-                        </th>
-                    </tr>
-                    <tr
-                        v-for="(cat, i) in [
-                            'Money',
-                            '$10 containers',
-                            '$5/$10 containers',
-                            '$6 containers',
-                            '$4 containers',
-                            '$2 containers',
-                            'Discarded color',
-                            'Containers in Warehouses ($2 each)',
-                            'Containers on Ship ($3 each)',
-                            'Loans (-$11 each)',
-                        ]"
-                        :key="'FC_' + cat"
-                    >
-                        <td>{{ cat }}</td>
-                        <td v-for="player in G.players" :key="'FS' + player.id + i">
-                            <div
-                                :style="i === 6 || i === 9 ? 'color: red;' : 'color: green;'"
-                                v-html="getFinalScoreHTML(player, i)"
-                            />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Final Score</td>
-                        <td v-for="player in G.players" :key="'FS' + player.id + 'money'">
-                            <div style="font-weight: bold" :style="player.money < 0 ? 'color: red;' : 'color: green;'">
-                                {{ player.money > 0 ? '$' + player.money : '-$' + Math.abs(player.money) }}
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+            <div
+                class="modal-content final-score-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="final-score-title"
+                @keydown.esc="endScoreVisible = false"
+            >
+                <div class="final-score-header">
+                    <h2 id="final-score-title" class="modal-title">Final Score</h2>
+                    <button class="close" aria-label="Close" @click="endScoreVisible = false">&times;</button>
+                </div>
+                <div class="final-score-scroll" tabindex="0" role="region" aria-labelledby="final-score-title">
+                    <table class="final-score-table">
+                        <tr>
+                            <th><div>Player</div></th>
+                            <th v-for="player in G.players" :key="'FS' + player.id">
+                                <div :style="'background-color: ' + playerColors[player.id]">{{ player.name }}</div>
+                            </th>
+                        </tr>
+                        <tr
+                            v-for="(cat, i) in [
+                                'Money',
+                                '$10 containers',
+                                '$5/$10 containers',
+                                '$6 containers',
+                                '$4 containers',
+                                '$2 containers',
+                                'Discarded color',
+                                'Containers in Warehouses ($2 each)',
+                                'Containers on Ship ($3 each)',
+                                'Loans (-$11 each)',
+                            ]"
+                            :key="'FC_' + cat"
+                        >
+                            <td>{{ cat }}</td>
+                            <td v-for="player in G.players" :key="'FS' + player.id + i">
+                                <div
+                                    :style="i === 6 || i === 9 ? 'color: red;' : 'color: green;'"
+                                    v-html="getFinalScoreHTML(player, i)"
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Final Score</td>
+                            <td v-for="player in G.players" :key="'FS' + player.id + 'money'">
+                                <div
+                                    style="font-weight: bold"
+                                    :style="player.money < 0 ? 'color: red;' : 'color: green;'"
+                                >
+                                    {{ player.money > 0 ? '$' + player.money : '-$' + Math.abs(player.money) }}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -1919,13 +1932,15 @@ text {
 .modal {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
-    padding-top: 100px; /* Location of the box */
+    z-index: 1000;
+    box-sizing: border-box;
+    padding: clamp(8px, 4vh, 32px) 8px;
     left: 0;
     top: 0;
     width: 100%; /* Full width */
     height: 100%; /* Full height */
     overflow: auto; /* Enable scroll if needed */
+    touch-action: auto;
     background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
 
     &.visible {
@@ -1941,11 +1956,12 @@ text {
     // backgrounds). Like the rest of the viewer, use fixed colors for both themes.
     color: #212121;
     margin: auto;
+    box-sizing: border-box;
+    width: max-content;
+    max-width: 100%;
     padding: 10px 20px 20px 20px;
     border: 1px solid #888;
-    position: absolute;
-    left: 50%;
-    transform: translate(-50%);
+    position: relative;
 }
 
 .modal-log {
@@ -2012,6 +2028,47 @@ text {
             }
         }
     }
+}
+
+.final-score-dialog {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    padding: 0;
+    overflow: hidden;
+}
+
+.final-score-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 4px 8px;
+
+    .modal-title {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        font-size: 24px;
+    }
+
+    .close {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        border: 0;
+        background: transparent;
+        color: #555;
+        cursor: pointer;
+    }
+}
+
+.final-score-scroll {
+    min-height: 0;
+    min-width: 0;
+    overflow: auto;
+    touch-action: auto;
+    padding: 0 8px 8px;
 }
 
 .confirmButton {
