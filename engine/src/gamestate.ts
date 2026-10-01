@@ -121,6 +121,7 @@ export interface ShipPiece {
 
 export interface GameState {
     analysisCash?: number[];
+    pendingMessages?: string[];
     players: Player[];
     startingPlayer: number;
     currentPlayers: number[];

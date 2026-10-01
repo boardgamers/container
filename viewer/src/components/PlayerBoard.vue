@@ -5,7 +5,7 @@
             :data-bgs-player="owner"
             style="pointer-events: all"
             tabindex="0"
-            x="5"
+            :x="supporterBadge ? 23 : 5"
             y="10"
             font-weight="600"
             fill="black"
@@ -13,6 +13,16 @@
             >{{ preferences.colorBlind ? owner + 1 + '. ' : '' }}{{ getPlayerName() }}</text
         >
 
+        <image
+            v-if="supporterBadge"
+            :href="supporterBadge.url"
+            x="4"
+            y="2"
+            width="16"
+            height="16"
+            :aria-label="supporterBadge.label"
+            ><title>{{ supporterBadge.label }}</title></image
+        >
         <rect width="250" height="180" x="0" y="20" fill="#e2e0d3" stroke="#899997" />
         <rect width="246" height="2" x="2" y="21" :fill="color" />
         <text x="248" y="104" text-anchor="end" font-size="8" fill="#45585b">FACTORY SALES</text>
@@ -208,6 +218,11 @@ import DropZone from './DropZone.vue';
 })
 export default class PlayerBoard extends Vue {
     @InjectReactive() readonly preferences!: Preferences;
+    get supporterBadge() {
+        return this.owner !== undefined && this.preferences.bgs?.players?.[this.owner]?.pro
+            ? this.preferences.bgs.supporterBadge
+            : undefined;
+    }
     @Prop({ default: false })
     openMoney!: boolean;
 

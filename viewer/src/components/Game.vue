@@ -31,6 +31,14 @@
                 :title="p.name"
                 @click="viewPlayerBoard(i)"
             >
+                <img
+                    v-if="supporterBadge(i)"
+                    :src="supporterBadge(i).url"
+                    :alt="supporterBadge(i).label"
+                    :title="supporterBadge(i).label"
+                    width="14"
+                    height="14"
+                />
                 <span class="player-board-marker" aria-hidden="true">{{ preferences.colorBlind ? i + 1 : '' }}</span
                 ><span class="player-board-name" :data-bgs-player="i">{{ i === player ? 'You' : p.name }}</span>
             </button>
@@ -241,6 +249,13 @@
                             @fastClick="loan($event)"
                         />
                     </template>
+
+                    <g v-if="ownIslandValue !== undefined" class="island-value" transform="translate(860, 410)">
+                        <title>
+                            Island score if the game ended now, including the discarded colour and full-set bonus.
+                        </title>
+                        <text x="0" y="0">Your island: ${{ ownIslandValue }}</text>
+                    </g>
 
                     <template v-if="G && player != undefined">
                         <text x="20" y="440">Money: ${{ G.players[player].money }}</text>
@@ -679,6 +694,7 @@
 </template>
 <script lang="ts">
 import InlineLog from './InlineLog.vue';
+import { islandValue } from '../island-value';
 import ColorBlindButton from './buttons/ColorBlindButton.vue';
 import { colorBadgeHtml } from '../color-blind';
 import { journalPieces } from '../journal-pieces';
@@ -755,6 +771,11 @@ export default class Game extends Vue {
 
     @ProvideReactive()
     G?: GameState | null = null;
+
+    get ownIslandValue() {
+        const ownPlayer = this.player == null ? undefined : this.G?.players[this.player];
+        return ownPlayer ? islandValue(ownPlayer) : undefined;
+    }
 
     // Pieces
     containers: Piece[] = [];
@@ -1097,6 +1118,10 @@ export default class Game extends Vue {
         const pieces = this.$refs.containerPieces as Container[];
         const piece = pieces.find((piece) => piece.pieceId === id);
         if (piece?.canDrag) this.ui.selected = piece;
+    }
+
+    supporterBadge(index: number) {
+        return this.preferences.bgs?.players?.[index]?.pro ? this.preferences.bgs.supporterBadge : undefined;
     }
 
     viewPlayerBoard(index: number) {

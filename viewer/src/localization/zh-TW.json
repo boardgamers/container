@@ -647,5 +647,9 @@
     "tan factory": "工廠 (米色)",
     "white factory": "工廠 (白色)",
     "dark green factory": "工廠 (深綠色)",
-    "Close": "關閉"
+    "Close": "關閉",
+    "Your island: ${p0}": "你的島嶼：${p0}",
+    "Island score if the game ended now, including the discarded colour and full-set bonus.": "若遊戲現在結束，島嶼的計分價值，已計入棄置顏色與完整顏色組合加成。",
+    "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} 接受 {p1} 的 ${p2} 出價並獲得 ${p3}",
+    "{p0} declines all bids and buys the cargo for ${p1}": "{p0} 拒絕所有出價並以 ${p1} 購買貨物"
 }

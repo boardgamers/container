@@ -647,5 +647,9 @@
     "tan factory": "fabbrica (marrone chiaro)",
     "white factory": "fabbrica (bianco)",
     "dark green factory": "fabbrica (verde scuro)",
-    "Close": "Chiudi"
+    "Close": "Chiudi",
+    "Your island: ${p0}": "La tua isola: ${p0}",
+    "Island score if the game ended now, including the discarded colour and full-set bonus.": "Punteggio dell’isola se la partita finisse ora, inclusi il colore scartato e il bonus del set completo.",
+    "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} accetta l’offerta di ${p2} di {p1} e riceve ${p3}",
+    "{p0} declines all bids and buys the cargo for ${p1}": "{p0} rifiuta tutte le offerte e acquista il carico per ${p1}"
 }

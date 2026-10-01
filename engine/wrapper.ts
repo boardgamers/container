@@ -151,6 +151,9 @@ export function replay(G: GameState) {
         G = engine.move(G, move.move, move.player);
     }
 
+    // Reconstructing history must not announce old auctions again.
+    if (oldG.pendingMessages) G.pendingMessages = [...oldG.pendingMessages];
+    else delete G.pendingMessages;
     return G;
 }
 
@@ -199,10 +202,10 @@ export function currentPlayer(G: GameState) {
 }
 
 export function messages(G: GameState) {
-    return {
-        messages: [],
-        data: G,
-    };
+    if (G.newTurn === false || !G.pendingMessages?.length) return { messages: [], data: G };
+    const data = { ...G };
+    delete data.pendingMessages;
+    return { messages: [...G.pendingMessages], data };
 }
 
 export function logLength(G: GameState, _player?: number) {

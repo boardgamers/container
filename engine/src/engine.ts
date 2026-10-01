@@ -14,7 +14,7 @@ import {
     Player,
     ShipPosition,
 } from './gamestate';
-import { GameEventName, LogItem } from './log';
+import { GameEventName, LogItem, LogMove } from './log';
 import { Move, MoveName, Moves } from './move';
 import { asserts, shuffle } from './utils';
 
@@ -512,10 +512,11 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
         case MoveName.Accept: {
             const otherPlayer = G.players[move.data];
+            const bid = otherPlayer.bid + otherPlayer.additionalBid;
             otherPlayer.containersOnIsland.push(...player.ship.containers);
             player.ship.containers = [];
-            otherPlayer.money -= otherPlayer.bid + otherPlayer.additionalBid;
-            player.money += (otherPlayer.bid + otherPlayer.additionalBid) * 2;
+            otherPlayer.money -= bid;
+            player.money += bid * 2;
             G.players.forEach((p) => {
                 p.bid = p.additionalBid = 0;
             });
@@ -541,9 +542,15 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
-                simple: `${player.name} accepts ${otherPlayer.name}'s bid`,
-                pretty: `${playerNameHTML(player)} accepts ${playerNameHTML(otherPlayer)}'s bid`,
+                simple: `${player.name} accepts ${otherPlayer.name}'s bid of $${bid} and receives $${bid * 2}`,
+                pretty: `${playerNameHTML(player)} accepts ${playerNameHTML(
+                    otherPlayer
+                )}'s bid of $${bid} and receives $${bid * 2}`,
             });
+            if (!fake) {
+                const entry = G.log[G.log.length - 1] as LogMove;
+                (G.pendingMessages ||= []).push(entry.simple);
+            }
 
             break;
         }
@@ -578,9 +585,13 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 type: 'move',
                 player: playerNumber,
                 move,
-                simple: `${player.name} declines all bids`,
-                pretty: `${playerNameHTML(player)} declines all bids`,
+                simple: `${player.name} declines all bids and buys the cargo for $${bid}`,
+                pretty: `${playerNameHTML(player)} declines all bids and buys the cargo for $${bid}`,
             });
+            if (!fake) {
+                const entry = G.log[G.log.length - 1] as LogMove;
+                (G.pendingMessages ||= []).push(entry.simple);
+            }
 
             break;
         }

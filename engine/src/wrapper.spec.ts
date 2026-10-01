@@ -414,6 +414,11 @@ describe('wrapper (tentative turns)', () => {
         expect(platform.saved.currentPlayers).to.deep.equal([B]);
         expect(platform.saved.newTurn).to.be.true;
 
+        const announced = wrapper.messages(platform.saved);
+        expect(announced.messages).to.have.length(1);
+        expect(announced.messages[0]).to.contain('bid of $3 and receives $6');
+        expect(wrapper.messages(wrapper.replay(cloneDeep(announced.data))).messages).to.deep.equal([]);
+
         // The saved log never shrank across committed states
         for (let i = 1; i < platform.logLengths.length; i++) {
             expect(platform.logLengths[i]).to.be.at.least(platform.logLengths[i - 1]);

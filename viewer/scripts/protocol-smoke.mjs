@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { checkAuctionMessages } from './auction-messages-smoke.mjs';
 import { checkFinalScore } from './final-score-smoke.mjs';
 import { checkHostPresentation } from './host-presentation-smoke.mjs';
 
@@ -393,6 +394,7 @@ try {
             'opening chat clears restored unread'
         );
         await checkHostPresentation(page, 'host', `/tmp/container-board-thumbnail-${width}.png`);
+        await checkAuctionMessages(page, state);
         assert.deepEqual(errors, []);
         await page.close();
         console.log(`${game} ${width}px: protocol/chat smoke passed`);

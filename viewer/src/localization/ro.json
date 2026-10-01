@@ -647,5 +647,9 @@
     "tan factory": "fabrică (bej)",
     "white factory": "fabrică (alb)",
     "dark green factory": "fabrică (verde închis)",
-    "Close": "Închide"
+    "Close": "Închide",
+    "Your island: ${p0}": "Insula ta: ${p0}",
+    "Island score if the game ended now, including the discarded colour and full-set bonus.": "Scorul insulei dacă jocul s-ar termina acum, incluzând culoarea eliminată și bonusul pentru setul complet.",
+    "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} acceptă oferta de ${p2} a lui {p1} și primește ${p3}",
+    "{p0} declines all bids and buys the cargo for ${p1}": "{p0} refuză toate ofertele și cumpără încărcătura pentru ${p1}"
 }

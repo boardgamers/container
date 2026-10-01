@@ -170,7 +170,15 @@ export function mountLocalization(target, catalogs, initialLocale = 'en') {
     let destroyed = false;
     function apply(node, attribute) {
         const element = node.nodeType === 3 ? node.parentElement : node;
-        if (!element || element.closest?.(excluded)) {
+        const sourceText = originals.get(node)?.get('text')?.source ?? node.data;
+        const auctionAnnouncement =
+            !attribute &&
+            node.nodeType === 3 &&
+            element?.matches('.bgs-game-chat article.system[data-message-id]') &&
+            /^(.+ accepts .+'s bid of \$\d+ and receives \$\d+|.+ declines all bids and buys the cargo for \$\d+)$/.test(
+                sourceText
+            );
+        if (!element || (element.closest?.(excluded) && !auctionAnnouncement)) {
             return;
         }
         const value = attribute ? node.getAttribute(attribute) : node.data;
@@ -237,6 +245,12 @@ export function mountLocalization(target, catalogs, initialLocale = 'en') {
                 else rendered.append(node.ownerDocument.createTextNode(part));
             }
             if (node.innerHTML !== rendered.innerHTML) node.innerHTML = rendered.innerHTML;
+            return;
+        }
+        if (node.matches?.('.bgs-game-chat article.system[data-message-id]')) {
+            for (const child of node.childNodes) {
+                if (child.nodeType === 3) apply(child);
+            }
             return;
         }
         if (node.matches?.(excluded)) {

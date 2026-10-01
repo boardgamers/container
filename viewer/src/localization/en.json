@@ -647,5 +647,9 @@
     "tan factory": "tan factory",
     "white factory": "white factory",
     "dark green factory": "dark green factory",
-    "Close": "Close"
+    "Close": "Close",
+    "Your island: ${p0}": "Your island: ${p0}",
+    "Island score if the game ended now, including the discarded colour and full-set bonus.": "Island score if the game ended now, including the discarded colour and full-set bonus.",
+    "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}",
+    "{p0} declines all bids and buys the cargo for ${p1}": "{p0} declines all bids and buys the cargo for ${p1}"
 }

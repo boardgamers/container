@@ -647,5 +647,9 @@
     "tan factory": "fabriek (beige)",
     "white factory": "fabriek (wit)",
     "dark green factory": "fabriek (donkergroen)",
-    "Close": "Sluiten"
+    "Close": "Sluiten",
+    "Your island: ${p0}": "Jouw eiland: ${p0}",
+    "Island score if the game ended now, including the discarded colour and full-set bonus.": "Eilandscore als het spel nu zou eindigen, inclusief de verwijderde kleur en de bonus voor een volledige set.",
+    "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} accepteert het bod van {p1} van ${p2} en ontvangt ${p3}",
+    "{p0} declines all bids and buys the cargo for ${p1}": "{p0} wijst alle biedingen af en koopt de lading voor ${p1}"
 }

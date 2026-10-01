@@ -647,5 +647,9 @@
     "tan factory": "nhà máy (nâu nhạt)",
     "white factory": "nhà máy (trắng)",
     "dark green factory": "nhà máy (xanh lá đậm)",
-    "Close": "Đóng"
+    "Close": "Đóng",
+    "Your island: ${p0}": "Đảo của bạn: ${p0}",
+    "Island score if the game ended now, including the discarded colour and full-set bonus.": "Điểm đảo nếu trò chơi kết thúc ngay bây giờ, đã tính màu bị loại và thưởng đủ bộ màu.",
+    "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} chấp nhận giá ${p2} của {p1} và nhận ${p3}",
+    "{p0} declines all bids and buys the cargo for ${p1}": "{p0} từ chối mọi giá đấu và mua hàng với giá ${p1}"
 }
