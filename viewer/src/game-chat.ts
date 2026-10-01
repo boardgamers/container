@@ -1,9 +1,10 @@
 import { ChatController, chatSegments, type ChatMessage } from '@boardgamers/protocol/chat';
 import { mountChat } from '@boardgamers/protocol/chat/dom';
 import { attachChat, type ViewerEmitter } from '@boardgamers/protocol/viewer';
-import { playerColors } from 'container-engine/src/engine';
+import { playerColors as resolvePlayerColors, playerTextColor } from './player-colors';
 type ChatEmitter = Pick<ViewerEmitter<any, any>, 'on' | 'emit'>;
 export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): () => void {
+    let playerColors = resolvePlayerColors({});
     const chat = new ChatController();
     const detach = attachChat(emitter, chat);
     const slot = host.querySelector<HTMLElement>('.chat-host') || document.createElement('div');
@@ -138,7 +139,7 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
             (message.author === 'You' ? localPlayer : players.find((p) => p.name === message.author)?.id);
         if (index !== undefined && playerColors[index]) {
             author.style.backgroundColor = playerColors[index];
-            author.style.color = author.style.backgroundColor === 'brown' ? '#fff' : '#111';
+            author.style.color = playerTextColor(playerColors[index]);
         }
         return author;
     }
@@ -164,6 +165,8 @@ export function mountGameChat(emitter: ViewerEmitter<any, any>, host: Element): 
         () => mobile.removeEventListener('change', expandMobilePanels),
         detach,
         emitter.on('preferences', (preferences) => {
+            playerColors = resolvePlayerColors(preferences as Parameters<typeof resolvePlayerColors>[0]);
+            view.refresh();
             chatNotifications = preferences.chatNotifications !== false;
             updateShortcut();
         }),

@@ -191,7 +191,7 @@
                         :owner="ship.owner"
                         :ownerName="G.players[ship.owner].name"
                         :position="ship.position"
-                        :color="ship.color"
+                        :color="playerColors[ship.owner]"
                     />
 
                     <template v-for="container in containers">
@@ -649,7 +649,14 @@
                         <tr>
                             <th><div>Player</div></th>
                             <th v-for="player in G.players" :key="'FS' + player.id">
-                                <div :style="'background-color: ' + playerColors[player.id]">{{ player.name }}</div>
+                                <div
+                                    :style="{
+                                        backgroundColor: playerColors[player.id],
+                                        color: playerTextColor(playerColors[player.id]),
+                                    }"
+                                >
+                                    {{ player.name }}
+                                </div>
                             </th>
                         </tr>
                         <tr
@@ -697,6 +704,7 @@ import InlineLog from './InlineLog.vue';
 import { islandValue } from '../island-value';
 import ColorBlindButton from './buttons/ColorBlindButton.vue';
 import { colorBadgeHtml } from '../color-blind';
+import { playerColors, playerTextColor } from '../player-colors';
 import { journalPieces } from '../journal-pieces';
 import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
 import { MoveName, ended, isLoanReversal, move as engineMove } from 'container-engine';
@@ -785,7 +793,10 @@ export default class Game extends Vue {
     loanCards: Piece[] = [];
     ships: ShipType[] = [];
 
-    playerColors = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'];
+    get playerColors() {
+        return playerColors(this.preferences);
+    }
+    playerTextColor = playerTextColor;
 
     animationQueue: Array<Function> = [];
 
@@ -1025,7 +1036,7 @@ export default class Game extends Vue {
         // Ships
         this.ships = [];
         this.G?.players.forEach((player, pi) => {
-            const color = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'][pi];
+            const color = this.playerColors[pi];
             switch (player.ship.shipPosition) {
                 case ShipPosition.OpenSea:
                     this.ships.push({
@@ -1754,13 +1765,14 @@ export default class Game extends Vue {
                 } else if (log.type == 'event') {
                     if (log.event.name == GameEventName.Upkeep) {
                         logReversed.push(
-                            'New event: ' + journalPieces(log.event.interest, this.preferences.colorBlind)
+                            'New event: ' +
+                                journalPieces(log.event.interest, this.preferences.colorBlind, this.playerColors)
                         );
                     } else {
                         logReversed.push('New event: ' + log.event.name);
                     }
                 } else if (log.type == 'move') {
-                    logReversed.push(journalPieces(log.pretty, this.preferences.colorBlind));
+                    logReversed.push(journalPieces(log.pretty, this.preferences.colorBlind, this.playerColors));
                 }
             });
 

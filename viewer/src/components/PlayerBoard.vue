@@ -8,7 +8,7 @@
             :x="supporterBadge ? 23 : 5"
             y="10"
             font-weight="600"
-            fill="black"
+            :fill="playerTextColor(color)"
             :text-decoration="isCurrentPlayer ? 'underline' : ''"
             >{{ preferences.colorBlind ? owner + 1 + '. ' : '' }}{{ getPlayerName() }}</text
         >
@@ -206,6 +206,7 @@
     </g>
 </template>
 <script lang="ts">
+import { playerTextColor } from '../player-colors';
 import type { Preferences } from '../types/ui-data';
 import { Player } from 'container-engine';
 import { Vue, Component, Prop, InjectReactive } from 'vue-property-decorator';
@@ -217,6 +218,7 @@ import DropZone from './DropZone.vue';
     },
 })
 export default class PlayerBoard extends Vue {
+    playerTextColor = playerTextColor;
     @InjectReactive() readonly preferences!: Preferences;
     get supporterBadge() {
         return this.owner !== undefined && this.preferences.bgs?.players?.[this.owner]?.pro

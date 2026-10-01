@@ -1,4 +1,6 @@
+import { playerColors as defaults } from 'container-engine/src/engine';
 import { colorMarkSvg } from './color-blind';
+import { playerTextColor } from './player-colors';
 function pieceIcon(kind: string, color = '', colorBlind = false): string {
     const label = `${color === 'darkslategray' ? 'dark green' : color} ${kind}`.trim();
     const shape =
@@ -12,10 +14,15 @@ function pieceIcon(kind: string, color = '', colorBlind = false): string {
     }</svg></span>`;
 }
 
-export function journalPieces(html: string, colorBlind = false): string {
+export function journalPieces(html: string, colorBlind = false, playerColors: string[] = []): string {
     const root = document.createElement('div');
     root.innerHTML = html;
     for (const badge of Array.from(root.querySelectorAll('span'))) {
+        const seat = defaults.indexOf(badge.style.backgroundColor);
+        if (seat >= 0 && playerColors[seat]) {
+            badge.style.backgroundColor = playerColors[seat];
+            badge.style.color = playerTextColor(playerColors[seat]);
+        }
         const color = badge.textContent || '';
         const tail = badge.nextSibling;
         if (

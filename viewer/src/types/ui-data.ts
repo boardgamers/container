@@ -9,7 +9,7 @@ export interface UIData {
 }
 
 export type Preferences = {
-    bgs?: { players?: { pro: boolean }[]; supporterBadge?: { url: string; label: string } };
+    bgs?: { playerColors?: string[]; players?: { pro: boolean }[]; supporterBadge?: { url: string; label: string } };
     analysis?: boolean;
     sound: boolean;
     colorBlind?: boolean;
