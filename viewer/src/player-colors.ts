@@ -1,3 +1,4 @@
+import { playerSymbolGlyph } from '@boardgamers/protocol/player-symbols';
 import { playerColors as defaults } from 'container-engine/src/engine';
 import type { Preferences } from './types/ui-data';
 
@@ -15,4 +16,8 @@ export function playerTextColor(color = ''): string {
         return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
     });
     return luminance[0] * 0.2126 + luminance[1] * 0.7152 + luminance[2] * 0.0722 > 0.179 ? '#111' : '#fff';
+}
+
+export function playerSymbol(index: number, preferences: { bgs?: { playerSymbols?: string[] } }): string {
+    return playerSymbolGlyph(preferences.bgs?.playerSymbols?.[index], String(index + 1));
 }

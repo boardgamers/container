@@ -39,7 +39,9 @@
                     width="14"
                     height="14"
                 />
-                <span class="player-board-marker" aria-hidden="true">{{ preferences.colorBlind ? i + 1 : '' }}</span
+                <span class="player-board-marker" aria-hidden="true">{{
+                    preferences.colorBlind ? ownerSymbol(i) : ''
+                }}</span
                 ><span class="player-board-name" :data-bgs-player="i">{{ i === player ? 'You' : p.name }}</span>
             </button>
         </div>
@@ -158,7 +160,7 @@
                                     stroke="#203a45"
                                 />
                                 <text x="872" :y="441 + i * 44" text-anchor="middle" font-size="11" fill="#172d34">
-                                    {{ i + 1 }}
+                                    {{ ownerSymbol(i) }}
                                 </text>
                             </g>
                         </template>
@@ -704,7 +706,7 @@ import InlineLog from './InlineLog.vue';
 import { islandValue } from '../island-value';
 import ColorBlindButton from './buttons/ColorBlindButton.vue';
 import { colorBadgeHtml } from '../color-blind';
-import { playerColors, playerTextColor } from '../player-colors';
+import { playerColors, playerTextColor, playerSymbol } from '../player-colors';
 import { journalPieces } from '../journal-pieces';
 import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
 import { MoveName, ended, isLoanReversal, move as engineMove } from 'container-engine';
@@ -792,6 +794,10 @@ export default class Game extends Vue {
     warehousesBuilt: Piece[] = [];
     loanCards: Piece[] = [];
     ships: ShipType[] = [];
+
+    ownerSymbol(index: number) {
+        return playerSymbol(index, this.preferences);
+    }
 
     get playerColors() {
         return playerColors(this.preferences);

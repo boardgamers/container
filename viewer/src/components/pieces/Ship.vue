@@ -24,7 +24,7 @@
         <g v-if="preferences.colorBlind" class="player-number" pointer-events="none">
             <circle cx="15" cy="8" r="5.5" fill="white" stroke="#203a45" />
             <text x="15" y="8" text-anchor="middle" fill="#172d34" font-size="9" font-weight="bold">{{
-                owner + 1
+                ownerSymbol
             }}</text>
         </g>
         <DropZone :width="30" :height="80" :enabled="player == owner" :accepts="'container'" :data="{ type: 'ship' }" />
@@ -32,6 +32,7 @@
     </g>
 </template>
 <script lang="ts">
+import { playerSymbol } from '../../player-colors';
 import { Preferences, PieceType } from '@/types/ui-data';
 import { ContainerPiece, ShipPosition } from 'container-engine/src/gamestate';
 import { Component, InjectReactive, Mixins, Prop } from 'vue-property-decorator';
@@ -49,6 +50,9 @@ import DropZone from '../DropZone.vue';
     },
 })
 export default class Ship extends Mixins(Piece) {
+    get ownerSymbol() {
+        return playerSymbol(this.owner, this.preferences);
+    }
     @InjectReactive() readonly preferences!: Preferences;
     @InjectReactive()
     readonly player!: number;

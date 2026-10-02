@@ -118,6 +118,25 @@ try {
             'journal uses the same colour symbols'
         );
         assert.equal(await page.locator('.player-number').count(), 6, 'ships and island rows identify all players');
+        await page.evaluate(() =>
+            host.emit('preferences', {
+                colorBlind: true,
+                bgs: { players: [], playerColors: [], playerSymbols: ['star', 'hexagon', 'cross'] },
+            })
+        );
+        await page.waitForFunction(() => document.querySelector('.player-number')?.textContent.includes('★'));
+        assert.equal(
+            await page.locator('.point-card .color-mark').count(),
+            5,
+            'resource symbols keep their own meaning'
+        );
+        await page.evaluate(() =>
+            host.emit('preferences', {
+                colorBlind: true,
+                bgs: { players: [], playerColors: [], playerSymbols: ['diamond', 'hexagon', 'cross'] },
+            })
+        );
+        await page.waitForFunction(() => document.querySelector('.player-number')?.textContent.includes('◆'));
         await page.screenshot({ path: `/tmp/container-color-blind-${width}.png`, fullPage: true });
         await page.locator('.color-blind-toggle').scrollIntoViewIfNeeded();
         await page.locator('.color-blind-toggle').click();
