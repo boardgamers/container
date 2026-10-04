@@ -1,5 +1,5 @@
-import { islandValue } from '@/island-value';
 import Game from '@/components/Game.vue';
+import { islandValue } from '@/island-value';
 import { shallowMount } from '@vue/test-utils';
 import { expect } from 'chai';
 import { setup } from 'container-engine';
