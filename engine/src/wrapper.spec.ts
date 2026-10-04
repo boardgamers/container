@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { cloneDeep } from 'lodash';
 import * as wrapper from '../wrapper';
+import { bidRevision } from './choice-revisions';
 import { move as atomicMove, setup } from './engine';
 import { GameState, Phase, ShipPosition } from './gamestate';
 import { Move, MoveName } from './move';
@@ -243,6 +244,51 @@ describe('wrapper (tentative turns)', () => {
 
         return { A, B, C };
     }
+
+    it('allows replacing sealed bids in each round without reopening the clock or exposing earlier bids', async () => {
+        const platform = new Platform(3, 'wrapper-test-revisions');
+        const { A, B, C } = await playToBidPhase(platform);
+        const bid = (price: number, revision?: string): Move => ({
+            name: MoveName.Bid,
+            data: true,
+            extraData: { price },
+            ...(revision ? { revision } : {}),
+        });
+        await platform.send(bid(5), B);
+        const key = bidRevision(platform.saved, B)!;
+        const replacement = bid(3, key);
+        expect(wrapper.canMoveOutOfTurn(platform.saved, replacement, B)).to.equal(true);
+        expect(wrapper.canMoveOutOfTurn(platform.saved, replacement, A)).to.equal(false);
+        expect(wrapper.canMoveOutOfTurn(platform.saved, [replacement, getLoan], B)).to.equal(false);
+        await platform.send(replacement, B);
+        expect(wrapper.isLiveUpdate(platform.saved)).to.equal(true);
+        expect(platform.saved.currentPlayers).to.deep.equal([C]);
+        expect(platform.saved.hiddenLog).to.have.length(1);
+        expect(platform.saved.players[B].bid).to.equal(3);
+        expect(wrapper.stripSecret(platform.saved, C).players[B].bid).not.to.equal(3);
+        expect(wrapper.replay(platform.saved).players[B].bid).to.equal(3);
+        await platform.send(bid(3), C);
+        expect(wrapper.isLiveUpdate(platform.saved)).to.equal(false);
+        await platform.send(bid(2), B);
+        const extraKey = bidRevision(platform.saved, B)!;
+        expect(extraKey).not.to.equal(key);
+        expect(wrapper.canMoveOutOfTurn(platform.saved, replacement, B)).to.equal(false);
+        await platform.send(bid(0, extraKey), B);
+        expect(platform.saved.players[B].additionalBid).to.equal(0);
+        expect(platform.saved.hiddenLog).to.have.length(3);
+        expect(wrapper.replay(platform.saved).players[B].additionalBid).to.equal(0);
+        await platform.send(bid(1), C);
+        expect(platform.saved.phase).to.equal(Phase.AcceptDecline);
+        expect(platform.saved.highestBidders).to.deep.equal([C]);
+        expect(wrapper.canMoveOutOfTurn(platform.saved, bid(0, extraKey), B)).to.equal(false);
+        let rejected = false;
+        try {
+            await platform.send(bid(0, extraKey), B);
+        } catch {
+            rejected = true;
+        }
+        expect(rejected).to.equal(true);
+    });
 
     it('should play a 3-player auction with a bid tie and an additional-bid round', async () => {
         const platform = new Platform(3, 'wrapper-test-3p');

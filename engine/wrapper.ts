@@ -3,6 +3,7 @@ import seedrandom from 'seedrandom';
 import type { GameState } from './index';
 import { availableMoves } from './src/available-moves';
 import pointCards from './src/cards';
+import { canReviseBid } from './src/choice-revisions';
 import * as engine from './src/engine';
 import { Phase } from './src/gamestate';
 import type { LogMove } from './src/log';
@@ -79,6 +80,9 @@ export function toSave(G: GameState): GameState | undefined {
     return G.newTurn === false ? undefined : G;
 }
 
+export const canMoveOutOfTurn = canReviseBid;
+export const isLiveUpdate = (G: GameState): boolean => G.liveUpdate === true;
+
 export function factions(G: GameState) {
     return G.players.map((pl) => engine.playerColors[pl.id]);
 }
@@ -151,6 +155,7 @@ export function replay(G: GameState) {
         G = engine.move(G, move.move, move.player);
     }
 
+    G.liveUpdate = oldG.liveUpdate;
     // Reconstructing history must not announce old auctions again.
     if (oldG.pendingMessages) G.pendingMessages = [...oldG.pendingMessages];
     else delete G.pendingMessages;
@@ -162,6 +167,7 @@ export function round(G: GameState) {
 }
 
 export async function dropPlayer(G: GameState, player: number) {
+    G.liveUpdate = false;
     G.players[player].isDropped = true;
 
     // Auto-play only the dropped player's own pending decision, if any. Everything

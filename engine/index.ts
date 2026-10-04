@@ -1,4 +1,5 @@
 export { availableMoves, AvailableMoves } from './src/available-moves';
+export * from './src/choice-revisions';
 export { currentPlayers, ended, move, moveAI, setup, stripSecret } from './src/engine';
 export { Phase } from './src/gamestate';
 export type { GameState, Player, PointCard } from './src/gamestate';

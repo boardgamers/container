@@ -90,7 +90,7 @@ export declare namespace Moves {
     }
 }
 
-export type Move =
+export type Move = (
     | Moves.MoveBuyFromFactory
     | Moves.MoveBuyFromWarehouse
     | Moves.MoveBuyFactory
@@ -105,7 +105,8 @@ export type Move =
     | Moves.MoveAccept
     | Moves.MoveDecline
     | Moves.MovePass
-    | Moves.MoveDomesticSale;
+    | Moves.MoveDomesticSale
+) & { revision?: string };
 
 export enum MoveName {
     DomesticSale = 'domesticSale',

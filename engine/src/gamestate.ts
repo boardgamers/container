@@ -120,6 +120,7 @@ export interface ShipPiece {
 }
 
 export interface GameState {
+    liveUpdate?: boolean;
     analysisCash?: number[];
     pendingMessages?: string[];
     players: Player[];

@@ -3,6 +3,7 @@ import { chunk, groupBy, isEqual, range, zip } from 'lodash';
 import seedrandom from 'seedrandom';
 import { availableMoves } from './available-moves';
 import pointCards from './cards';
+import { canReviseBid } from './choice-revisions';
 import {
     ContainerColor,
     containerColors,
@@ -140,19 +141,30 @@ export function currentPlayers(G: GameState): number[] {
 
 export function move(G: GameState, move: Move, playerNumber: number, fake?: boolean): GameState {
     const player = G.players[playerNumber];
-    const available = player.availableMoves?.[move.name];
+    const revision = move.revision !== undefined;
+    assert(!revision || canReviseBid(G, move, playerNumber), 'This bid can no longer be changed');
+    const available = revision ? availableMoves(G, player)[move.name] : player.availableMoves?.[move.name];
 
-    assert(G.currentPlayers.includes(playerNumber), 'It is not your turn!');
+    assert(revision || G.currentPlayers.includes(playerNumber), 'It is not your turn!');
     assert(available, 'You are not allowed to run the command ' + move.name);
     assert(
         available.some((x) => isEqual(x, move.data)),
         'Wrong argument for the command ' + move.name
     );
     assert(
-        move.name != MoveName.Bid || move.extraData.price + player.bid <= player.money,
+        move.name != MoveName.Bid ||
+            (Number.isInteger(move.extraData?.price) &&
+                move.extraData.price >= 0 &&
+                move.extraData.price + (G.highestBidders.length ? player.bid : 0) <= player.money),
         "Can't bid more money than you have!"
     );
 
+    G.liveUpdate = revision;
+    const previousBid = revision
+        ? G.hiddenLog
+              .map((e) => e.type === 'move' && e.player === playerNumber && e.move.name === MoveName.Bid)
+              .lastIndexOf(true)
+        : -1;
     switch (move.name) {
         case MoveName.DomesticSale: {
             asserts<Moves.MoveDomesticSale>(move);
@@ -445,12 +457,13 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
         case MoveName.Bid: {
             asserts<Moves.MoveBid>(move);
+            const { revision: ignored, ...recordedMove } = move;
 
             if (G.highestBidders.length === 0) {
                 G.hiddenLog.push({
                     type: 'move',
                     player: playerNumber,
-                    move,
+                    move: recordedMove,
                     simple: `${player.name} bids $${move.extraData.price}`,
                     pretty: `${playerNameHTML(player)} bids $${move.extraData.price}`,
                 });
@@ -460,7 +473,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 G.hiddenLog.push({
                     type: 'move',
                     player: playerNumber,
-                    move,
+                    move: recordedMove,
                     simple: `${player.name} bids additional $${move.extraData.price}`,
                     pretty: `${playerNameHTML(player)} bids additional $${move.extraData.price}`,
                 });
@@ -468,6 +481,9 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 G.currentPlayers = G.currentPlayers.filter((id) => id !== player.id);
             }
 
+            if (revision && previousBid >= 0) {
+                G.hiddenLog[previousBid] = G.hiddenLog.pop()!;
+            }
             if (G.currentPlayers.length === 0) {
                 if (G.highestBidders.length === 0) {
                     G.players
@@ -624,7 +640,10 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
     player.availableMoves = null;
 
-    if (move.name != MoveName.GetLoan && move.name != MoveName.PayLoan) player.lastMove = move;
+    if (move.name != MoveName.GetLoan && move.name != MoveName.PayLoan) {
+        const { revision: ignoredRevision, ...recordedMove } = move;
+        player.lastMove = recordedMove;
+    }
 
     G.currentPlayers.forEach((p) => (G.players[p].availableMoves = availableMoves(G, G.players[p])));
 

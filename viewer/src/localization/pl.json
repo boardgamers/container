@@ -651,5 +651,6 @@
     "Your island: ${p0}": "Twoja wyspa: ${p0}",
     "Island score if the game ended now, including the discarded colour and full-set bonus.": "Wynik wyspy, gdyby gra skończyła się teraz, z uwzględnieniem odrzuconego koloru i premii za komplet kolorów.",
     "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} przyjmuje ofertę {p1} w wysokości ${p2} i otrzymuje ${p3}",
-    "{p0} declines all bids and buys the cargo for ${p1}": "{p0} odrzuca wszystkie oferty i kupuje ładunek za ${p1}"
+    "{p0} declines all bids and buys the cargo for ${p1}": "{p0} odrzuca wszystkie oferty i kupuje ładunek za ${p1}",
+    "Change bid": "Zmień ofertę"
 }

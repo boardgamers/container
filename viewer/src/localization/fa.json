@@ -651,5 +651,6 @@
     "Your island: ${p0}": "جزیرهٔ شما: ${p0}",
     "Island score if the game ended now, including the discarded colour and full-set bonus.": "امتیاز جزیره اگر بازی همین حالا تمام شود، با احتساب رنگ حذف‌شده و پاداش مجموعهٔ کامل رنگ‌ها.",
     "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} پیشنهاد ${p2} از {p1} را می‌پذیرد و ${p3} دریافت می‌کند",
-    "{p0} declines all bids and buys the cargo for ${p1}": "{p0} همهٔ پیشنهادها را رد می‌کند و محموله را به قیمت ${p1} می‌خرد"
+    "{p0} declines all bids and buys the cargo for ${p1}": "{p0} همهٔ پیشنهادها را رد می‌کند و محموله را به قیمت ${p1} می‌خرد",
+    "Change bid": "تغییر پیشنهاد"
 }

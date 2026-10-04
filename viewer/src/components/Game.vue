@@ -312,7 +312,7 @@
                                 @click="decline()"
                             />
                         </template>
-                        <template v-else-if="G.phase == 'bid' && G.currentPlayers.includes(player)">
+                        <template v-else-if="G.phase == 'bid' && (G.currentPlayers.includes(player) || changingBid)">
                             <rect
                                 v-if="!preferences.disableHelp"
                                 x="135"
@@ -325,9 +325,23 @@
                                 rx="2px"
                             />
                             <Calculator data-tutorial="bid" transform="translate(140, 430)" @bid="bid($event)" />
+                            <Button
+                                v-if="changingBid"
+                                transform="translate(140, 650)"
+                                :width="130"
+                                text="Cancel"
+                                @click="editingBid = null"
+                            />
                         </template>
                     </template>
 
+                    <Button
+                        v-if="revisableBid && !changingBid"
+                        transform="translate(140, 430)"
+                        :width="130"
+                        text="Change bid"
+                        @click="editingBid = revisableBid"
+                    />
                     <template v-if="G && gameEnded(G)">
                         <Button
                             :transform="`translate(140, 580)`"
@@ -709,7 +723,7 @@ import { colorBadgeHtml } from '../color-blind';
 import { playerColors, playerTextColor, playerSymbol } from '../player-colors';
 import { journalPieces } from '../journal-pieces';
 import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
-import { MoveName, ended, isLoanReversal, move as engineMove } from 'container-engine';
+import { bidRevision, MoveName, ended, isLoanReversal, move as engineMove } from 'container-engine';
 import type { GameState, Move } from 'container-engine';
 import { EventEmitter } from 'events';
 import { groupBy, isEqual } from 'lodash';
@@ -1348,8 +1362,20 @@ export default class Game extends Vue {
         }
     }
 
+    editingBid: string | null = null;
+    get revisableBid() {
+        return !this.interactionDisabled && this.G && this.player != null
+            ? bidRevision(this.G, this.player)
+            : undefined;
+    }
+    get changingBid() {
+        return !!this.editingBid && this.editingBid === this.revisableBid;
+    }
     bid(event) {
-        if (this.G!.players[this.player!].bid != 0) {
+        if (this.changingBid) {
+            this.sendMove({ name: MoveName.Bid, data: true, extraData: { price: event }, revision: this.editingBid! });
+            this.editingBid = null;
+        } else if (this.G!.highestBidders.length > 0) {
             this.confirmBidVisible = true;
             this.totalBid = this.G!.players[this.player!].bid + event;
         } else {
