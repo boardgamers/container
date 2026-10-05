@@ -324,12 +324,19 @@
                                 stroke-width="2px"
                                 rx="2px"
                             />
-                            <Calculator data-tutorial="bid" transform="translate(140, 430)" @bid="bid($event)" />
+                            <Calculator
+                                :key="changingBid ? editingBid : 'new-bid'"
+                                :initialValue="changingBid ? submittedBid : undefined"
+                                data-tutorial="bid"
+                                transform="translate(140, 430)"
+                                @bid="bid($event)"
+                            />
                             <Button
                                 v-if="changingBid"
                                 transform="translate(140, 650)"
                                 :width="130"
                                 text="Cancel"
+                                icon="cancel"
                                 @click="editingBid = null"
                             />
                         </template>
@@ -340,6 +347,7 @@
                         transform="translate(140, 430)"
                         :width="130"
                         text="Change bid"
+                        icon="edit"
                         @click="editingBid = revisableBid"
                     />
                     <template v-if="G && gameEnded(G)">
@@ -1371,26 +1379,36 @@ export default class Game extends Vue {
     get changingBid() {
         return !!this.editingBid && this.editingBid === this.revisableBid;
     }
+    get submittedBid(): number {
+        const player = this.G!.players[this.player!];
+        return this.G!.highestBidders.length ? player.additionalBid : player.bid;
+    }
     bid(event) {
-        if (this.changingBid) {
-            this.sendMove({ name: MoveName.Bid, data: true, extraData: { price: event }, revision: this.editingBid! });
-            this.editingBid = null;
-        } else if (this.G!.highestBidders.length > 0) {
+        if (this.G!.highestBidders.length > 0) {
             this.confirmBidVisible = true;
             this.totalBid = this.G!.players[this.player!].bid + event;
+            this.confirmBidRevision = this.changingBid ? this.editingBid : null;
+        } else if (this.changingBid) {
+            this.sendMove({ name: MoveName.Bid, data: true, extraData: { price: event }, revision: this.editingBid! });
+            this.editingBid = null;
         } else {
             this.sendMove({ name: MoveName.Bid, data: true, extraData: { price: event } });
         }
     }
 
+    confirmBidRevision: string | null = null;
     confirmBid() {
         this.confirmBidVisible = false;
+        if (this.confirmBidRevision && this.confirmBidRevision !== this.revisableBid) return;
         this.sendMove({
             name: MoveName.Bid,
             data: true,
             extraData: { price: this.totalBid - this.G!.players[this.player!].bid },
+            ...(this.confirmBidRevision ? { revision: this.confirmBidRevision } : {}),
         });
         this.totalBid = 0;
+        if (this.confirmBidRevision) this.editingBid = null;
+        this.confirmBidRevision = null;
     }
 
     confirmSail() {
@@ -1756,7 +1774,7 @@ export default class Game extends Vue {
         return (
             this.ui &&
             (this.ui.dragged || this.ui.selected) != null &&
-            (this.ui.dragged || this.ui.selected).pieceType == pieceType
+            (this.ui.dragged || this.ui.selected)?.pieceType == pieceType
         );
     }
 
@@ -1764,7 +1782,7 @@ export default class Game extends Vue {
         if (
             this.ui &&
             (this.ui.dragged || this.ui.selected) != null &&
-            (this.ui.dragged || this.ui.selected).pieceType == 'container'
+            (this.ui.dragged || this.ui.selected)?.pieceType == 'container'
         ) {
             const container = (this.ui.dragged || this.ui.selected) as Container;
 

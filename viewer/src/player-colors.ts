@@ -18,6 +18,7 @@ export function playerTextColor(color = ''): string {
     return luminance[0] * 0.2126 + luminance[1] * 0.7152 + luminance[2] * 0.0722 > 0.179 ? '#111' : '#fff';
 }
 
-export function playerSymbol(index: number, preferences: { bgs?: { playerSymbols?: string[] } }): string {
+export function playerSymbol(index: number | undefined, preferences: { bgs?: { playerSymbols?: string[] } }): string {
+    if (index === undefined) return '';
     return playerSymbolGlyph(preferences.bgs?.playerSymbols?.[index], String(index + 1));
 }

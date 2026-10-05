@@ -12,6 +12,12 @@ module.exports = {
         disableHostCheck: true,
     },
     chainWebpack: (config) => {
+        if (config.plugins.has('fork-ts-checker')) {
+            config.plugin('fork-ts-checker').tap((args) => {
+                args[0].vue.compiler = 'vue-template-compiler';
+                return args;
+            });
+        }
         // App and library builds use different Vue import transforms.
         for (const name of ['js', 'ts', 'tsx', 'vue']) {
             const rule = config.module.rule(name);

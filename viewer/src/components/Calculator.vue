@@ -61,17 +61,26 @@
     </g>
 </template>
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { Vue, Component, Prop } from 'vue-property-decorator';
 
-@Component
+@Component({
+    created(this: Calculator) {
+        this.value = this.initialValue ?? 0;
+        this.replaceFirstDigit = this.initialValue !== undefined;
+    },
+})
 export default class Calculator extends Vue {
+    @Prop() initialValue?: number;
     value: number = 0;
+    replaceFirstDigit = false;
 
     add(number) {
-        this.value = Math.min(999, this.value * 10 + number);
+        this.value = Math.min(999, (this.replaceFirstDigit ? 0 : this.value) * 10 + number);
+        this.replaceFirstDigit = false;
     }
 
     del() {
+        this.replaceFirstDigit = false;
         this.value = Math.floor(this.value / 10);
     }
 

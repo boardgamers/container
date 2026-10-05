@@ -19,7 +19,7 @@
 <script lang="ts">
 import { Vue, Component, Prop, Watch, Inject, InjectReactive } from 'vue-property-decorator';
 import { ContainerState, DropZoneType, PieceType, UIData, Preferences } from '../types/ui-data';
-import { EventEmitter, Listener } from 'events';
+import { EventEmitter } from 'events';
 import Piece from './pieces/Piece.vue';
 import { Ship, Container, LoanCard } from './pieces';
 import { ShipPosition } from 'container-engine/src/gamestate';
@@ -57,7 +57,7 @@ export default class DropZone extends Vue {
     @Prop()
     availableMoves?: any;
 
-    listener?: Listener;
+    listener?: (...args: any[]) => void;
     overlapping = false;
 
     updateOverlapping(piece: Piece) {
