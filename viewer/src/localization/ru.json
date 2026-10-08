@@ -652,5 +652,6 @@
     "Island score if the game ended now, including the discarded colour and full-set bonus.": "Стоимость острова, если бы игра закончилась сейчас, с учётом сброшенного цвета и бонуса за полный набор.",
     "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} принимает ставку {p1} в размере ${p2} и получает ${p3}",
     "{p0} declines all bids and buys the cargo for ${p1}": "{p0} отклоняет все ставки и покупает груз за ${p1}",
-    "Change bid": "Изменить ставку"
+    "Change bid": "Изменить ставку",
+    "Undo my move": "Отменить ход"
 }

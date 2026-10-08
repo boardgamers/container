@@ -90,7 +90,15 @@
                         :enabled="canPass()"
                         @click="pass()"
                     />
+                    <!-- BGS's "Undo my move" stands in for the in-turn undo when that has nothing to undo. -->
+                    <UndoMoveButton
+                        v-if="canUndoMove()"
+                        data-thumbnail-omit
+                        transform="translate(1105, 36)"
+                        @click="requestUndo()"
+                    />
                     <UndoButton
+                        v-else
                         data-thumbnail-omit
                         transform="translate(1105, 36)"
                         :enabled="canUndo()"
@@ -325,7 +333,7 @@
                                 rx="2px"
                             />
                             <Calculator
-                                :key="changingBid ? editingBid : 'new-bid'"
+                                :key="`${changingBid ? editingBid : 'new-bid'}:${draftsVersion}`"
                                 :initialValue="changingBid ? submittedBid : undefined"
                                 data-tutorial="bid"
                                 transform="translate(140, 430)"
@@ -738,7 +746,7 @@ import { groupBy, isEqual } from 'lodash';
 import { ContainerState, DropZoneType, Piece, PieceType, ShipType, UIData, Preferences } from '../types/ui-data';
 import { ContainerColor, ShipPosition } from 'container-engine/src/gamestate';
 import { Container, Factory, Warehouse, Ship, LoanCard, Piece as PieceComponent } from './pieces';
-import { Button, PassButton, UndoButton, LogButton, SoundButton, HelpButton } from './buttons';
+import { Button, PassButton, UndoButton, UndoMoveButton, LogButton, SoundButton, HelpButton } from './buttons';
 import PlayerBoard from './PlayerBoard.vue';
 import PointCard from './PointCard.vue';
 import DropZone from './DropZone.vue';
@@ -761,6 +769,7 @@ import { GameEventName, LogMove } from 'container-engine/src/log';
         Ship,
         PassButton,
         UndoButton,
+        UndoMoveButton,
         LogButton,
         SoundButton,
         ColorBlindButton,
@@ -786,6 +795,10 @@ export default class Game extends Vue {
 
     @Prop({ default: false })
     interactionDisabled!: boolean;
+
+    // BGS lets the only human of a game against bots take back their last saved move.
+    @Prop({ default: false })
+    undoAvailable!: boolean;
 
     @Prop()
     @ProvideReactive()
@@ -848,6 +861,11 @@ export default class Game extends Vue {
     @Watch('state', { immediate: true })
     onStateChanged(state: GameState) {
         if (state && state.newTurn !== false) {
+            if (this.committedState && state.log.length < this.committedState.log.length) {
+                // Moves were taken back (BGS undo or replay): choices drafted in the later
+                // position no longer apply.
+                this.resetDrafts();
+            }
             // Committed state: the previous turn is final, clear the turn buffer.
             // Tentative states (newTurn === false) are only ever our own turn in
             // progress, echoed back by the server — keep the buffer for those.
@@ -1359,6 +1377,46 @@ export default class Game extends Vue {
             this.emitter.emit('move', [...this.turnMoves]);
         }
         // Empty buffer: nothing to send — nothing was ever persisted for this turn
+    }
+
+    /**
+     * BGS's "Undo my move" (games against bots): unlike `undo`, it takes back the last
+     * *saved* move, and the AI replies to it. BGS then sends the earlier state.
+     * A method, like the other `can*` checks: host preferences such as `analysis` are not
+     * reactive, so a cached computed would miss them.
+     */
+    canUndoMove() {
+        return (
+            this.undoAvailable &&
+            !this.tutorialMove &&
+            !this.interactionDisabled &&
+            !this.preferences.analysis &&
+            this.player != null &&
+            !!this.G?.players[this.player] &&
+            !ended(this.G) &&
+            // Unsaved moves of the current turn are taken back with `undo` first.
+            this.turnMoves.length === 0
+        );
+    }
+
+    requestUndo() {
+        if (!this.canUndoMove()) return;
+        this.resetDrafts();
+        this.emitter.emit('undo');
+    }
+
+    // Bumped to remount the bid calculator, whose typed amount is local.
+    draftsVersion = 0;
+
+    /** Discard unsent choices: selection, bid drafts and pending confirmations. */
+    resetDrafts() {
+        this.ui.selected = null;
+        this.editingBid = null;
+        this.confirmBidVisible = false;
+        this.confirmBidRevision = null;
+        this.totalBid = 0;
+        this.confirmSailVisible = false;
+        this.draftsVersion++;
     }
 
     loan(event) {

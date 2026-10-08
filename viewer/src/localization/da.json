@@ -652,5 +652,6 @@
     "Island score if the game ended now, including the discarded colour and full-set bonus.": "Øens værdi hvis spillet sluttede nu, inklusive den kasserede farve og bonussen for et komplet sæt.",
     "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} accepterer buddet fra {p1} på ${p2} og modtager ${p3}",
     "{p0} declines all bids and buys the cargo for ${p1}": "{p0} afviser alle bud og køber lasten for ${p1}",
-    "Change bid": "Ændr bud"
+    "Change bid": "Ændr bud",
+    "Undo my move": "Fortryd mit træk"
 }

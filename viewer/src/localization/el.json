@@ -652,5 +652,6 @@
     "Island score if the game ended now, including the discarded colour and full-set bonus.": "Βαθμολογία νησιού αν το παιχνίδι τελείωνε τώρα, με την αφαίρεση του χρώματος και το μπόνους πλήρους σετ.",
     "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0} δέχεται την προσφορά ${p2} του παίκτη {p1} και λαμβάνει ${p3}",
     "{p0} declines all bids and buys the cargo for ${p1}": "{p0} απορρίπτει όλες τις προσφορές και αγοράζει το φορτίο για ${p1}",
-    "Change bid": "Αλλαγή προσφοράς"
+    "Change bid": "Αλλαγή προσφοράς",
+    "Undo my move": "Αναίρεση κίνησης"
 }

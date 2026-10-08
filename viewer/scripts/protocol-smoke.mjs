@@ -7,6 +7,7 @@ import { chromium } from 'playwright';
 import { checkAuctionMessages } from './auction-messages-smoke.mjs';
 import { checkFinalScore } from './final-score-smoke.mjs';
 import { checkHostPresentation } from './host-presentation-smoke.mjs';
+import { checkUndoMove } from './undo-move-smoke.mjs';
 
 const game = 'container';
 const require = createRequire(import.meta.url);
@@ -414,6 +415,7 @@ try {
         );
         await checkHostPresentation(page, 'host', `/tmp/container-board-thumbnail-${width}.png`);
         await checkAuctionMessages(page, state);
+        await checkUndoMove(page, engine);
         assert.deepEqual(errors, []);
         await page.close();
         console.log(`${game} ${width}px: protocol/chat smoke passed`);

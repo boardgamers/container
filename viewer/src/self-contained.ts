@@ -30,6 +30,30 @@ function launchSelfContained(selector = '#app') {
         playerIndex = AbstractJudge.currentPlayers[0];
     }
 
+    // Delayed deliveries (AI replies, echoes), cancelled when a move is taken back.
+    const timers = new Set<ReturnType<typeof setTimeout>>();
+    const later = (deliver: () => void, delay: number) => {
+        const timer = setTimeout(() => {
+            timers.delete(timer);
+            deliver();
+        }, delay);
+        timers.add(timer);
+    };
+
+    // Mimic BGS's "Undo my move" in games against bots: each saved move of the player is an
+    // undo point, and undoing restores the position before it, without the AI replies.
+    const undoPoints: GameState[] = [];
+    const offerUndo = () => emitter.emit('undo:available', undoPoints.length > 0);
+    emitter.on('undo', () => {
+        const previous = undoPoints.pop();
+        if (!previous) return;
+        timers.forEach(clearTimeout);
+        timers.clear();
+        gameState = previous;
+        emitter.emit('state', cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState));
+        offerUndo();
+    });
+
     emitter.on('move', async (moves: Move | Move[]) => {
         console.log('moves received', moves);
 
@@ -45,12 +69,14 @@ function launchSelfContained(selector = '#app') {
             // Tentative: just echo the state back to the acting player. Delayed like on
             // the real platform, where the echo arrives over the network mid-animation.
             const echo = cloneDeep(strip ? stripSecret(newState, playerIndex) : newState);
-            setTimeout(() => emitter.emit('state', echo), 300);
+            later(() => emitter.emit('state', echo), 300);
             return;
         }
 
+        undoPoints.push(cloneDeep(gameState));
         gameState = newState;
         emitter.emit('state', cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState));
+        offerUndo();
 
         let delay = 800;
         while (gameState.players.some((pl) => pl.isAI && pl.availableMoves)) {
@@ -59,7 +85,7 @@ function launchSelfContained(selector = '#app') {
                 gameState.players.findIndex((pl) => pl.isAI && pl.availableMoves)
             );
             let newState = cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState);
-            setTimeout(() => emitter.emit('state', newState), delay);
+            later(() => emitter.emit('state', newState), delay);
             delay += 800;
         }
 
@@ -80,7 +106,7 @@ function launchSelfContained(selector = '#app') {
             gameState.players.findIndex((pl) => pl.isAI && pl.availableMoves)
         );
         let newState = cloneDeep(strip ? stripSecret(gameState, playerIndex) : gameState);
-        setTimeout(() => emitter.emit('state', newState), delay);
+        later(() => emitter.emit('state', newState), delay);
         delay += 800;
     }
 

@@ -652,5 +652,6 @@
     "Island score if the game ended now, including the discarded colour and full-set bonus.": "यदि खेल अभी समाप्त हो जाए तो द्वीप का स्कोर, हटाए गए रंग और पूरे सेट के बोनस सहित।",
     "{p0} accepts {p1}'s bid of ${p2} and receives ${p3}": "{p0}, {p1} की ${p2} की बोली स्वीकार करता है और ${p3} प्राप्त करता है",
     "{p0} declines all bids and buys the cargo for ${p1}": "{p0} सभी बोलियाँ अस्वीकार करके ${p1} में माल खरीदता है",
-    "Change bid": "बोली बदलें"
+    "Change bid": "बोली बदलें",
+    "Undo my move": "अपनी चाल वापस लें"
 }

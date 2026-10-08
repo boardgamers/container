@@ -28,9 +28,11 @@ function launch(selector: string) {
         player?: number;
         emitter: EventEmitter;
         preferences: Preferences;
+        undoAvailable: boolean;
     } = {
         state: null,
         emitter: new EventEmitter(),
+        undoAvailable: false,
         // Observable so preference changes update the UI immediately: Game receives
         // this object as a prop, and Vue 2 does not deep-observe prop values coming
         // from a non-reactive parent — plain-object mutations (the in-game sound/help
@@ -49,6 +51,13 @@ function launch(selector: string) {
 
     const thumbnail = createBoardThumbnail(app.$el);
     const localization = mountLocalization(target.ownerDocument.body);
+    // "Undo my move" (games against bots): offered by BGS, hidden while replaying history.
+    let undoOffered = false;
+    let replaying = false;
+    const updateUndo = () => {
+        params.undoAvailable = undoOffered && !replaying;
+        app.$forceUpdate();
+    };
     const viewer = createViewer<GameState, Move[]>({
         async onThumbnail(size) {
             await app.$nextTick();
@@ -64,6 +73,10 @@ function launch(selector: string) {
         onPlayer(data) {
             params.player = data.index;
             app.$forceUpdate();
+        },
+        onUndoAvailable(available) {
+            undoOffered = available;
+            updateUndo();
         },
         async onPreferences(data) {
             if (!(await localization.setLocale(data.locale))) {
@@ -90,6 +103,15 @@ function launch(selector: string) {
     params.emitter.on('replaceLog', (data: string[]) => viewer.replaceLog(data));
     params.emitter.on('replay:info', (info) => viewer.setReplayInfo(info));
     params.emitter.on('update:preference', ({ name, value }) => viewer.updatePreference(name, value));
+    params.emitter.on('undo', () => viewer.undo());
+    item.on('replay:start', () => {
+        replaying = true;
+        updateUndo();
+    });
+    item.on('replay:end', () => {
+        replaying = false;
+        updateUndo();
+    });
     installActionSounds(item);
     const removeCards = installPlayerCards(app.$el, viewer);
     const removeChat = mountGameChat(item, app.$el);

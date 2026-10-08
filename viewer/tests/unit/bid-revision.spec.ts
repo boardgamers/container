@@ -1,5 +1,5 @@
-import { expect } from 'chai';
 import Game from '@/components/Game.vue';
+import { expect } from 'chai';
 const options = (Game as any).options;
 describe('bid revision controls', () => {
     it('prefills the additional amount during a tied auction', () => {

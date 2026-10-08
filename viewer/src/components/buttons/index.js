@@ -4,5 +4,6 @@ import LogButton from './LogButton.vue';
 import PassButton from './PassButton.vue';
 import SoundButton from './SoundButton.vue';
 import UndoButton from './UndoButton.vue';
+import UndoMoveButton from './UndoMoveButton.vue';
 
-export { Button, HelpButton, LogButton, PassButton, SoundButton, UndoButton };
+export { Button, HelpButton, LogButton, PassButton, SoundButton, UndoButton, UndoMoveButton };
