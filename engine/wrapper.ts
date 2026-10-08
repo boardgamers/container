@@ -132,7 +132,33 @@ export function rankings(G: GameState) {
     return G.players.map((pl) => sortedPlayers.indexOf(pl.id) + 1);
 }
 
-export function replay(G: GameState) {
+/**
+ * Rebuild the state from its seed and logged moves.
+ *
+ * With `to`, rebuild the earlier position after the first `to` visible log entries instead,
+ * as BGS does to take back moves (undo against bots, admin replays); its undo checks that
+ * `logLength` is then `to`. Hidden-log moves (sealed bids, bid-phase loans) all come after
+ * the whole visible log, so they are left out: replaying to the visible length of a
+ * running auction reopens it with no bids. `to` 0 gives the initial position, whose log
+ * already holds the game start.
+ */
+export function replay(G: GameState, options?: { to?: number }): GameState {
+    if (options?.to !== undefined) {
+        const { to } = options;
+        if (!Number.isInteger(to) || to < 0 || to > G.log.length) throw new Error('Invalid history position');
+        const copy = cloneDeep(G);
+        const log = copy.log.slice(0, to);
+        return replay({
+            ...copy,
+            log,
+            hiddenLog: [],
+            // As saved back then: reached by a regular move (sealed-bid replacements, the only
+            // live updates, never reach the visible log), its announcements already made.
+            liveUpdate: log.some((entry) => entry.type === 'move') ? false : undefined,
+            pendingMessages: undefined,
+        });
+    }
+
     const oldPlayers = G.players;
 
     const oldG = G;
