@@ -13,6 +13,7 @@ const loaders = {
     da: () => import(/* webpackChunkName: "locale-da" */ './da.json'),
     'pt-BR': () => import(/* webpackChunkName: "locale-pt-BR" */ './pt-BR.json'),
     ko: () => import(/* webpackChunkName: "locale-ko" */ './ko.json'),
+    'zh-CN': () => import(/* webpackChunkName: "locale-zh-CN" */ './zh-CN.json'),
     'zh-TW': () => import(/* webpackChunkName: "locale-zh-TW" */ './zh-TW.json'),
     vi: () => import(/* webpackChunkName: "locale-vi" */ './vi.json'),
     it: () => import(/* webpackChunkName: "locale-it" */ './it.json'),
