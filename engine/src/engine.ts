@@ -128,6 +128,9 @@ export function stripSecret(G: GameState, player?: number): GameState {
                     money: ended(G) ? pl.money : 0,
                     bid: pl.showBid ? pl.bid : 0,
                     additionalBid: pl.showAdditionalBid ? pl.additionalBid : 0,
+                    // Bid moves contain sealed prices (including tie-breaks). Public results
+                    // are exposed through the reveal-controlled fields and log, not lastMove.
+                    lastMove: pl.lastMove?.name === MoveName.Bid ? null : pl.lastMove,
                 };
             }
         }),
