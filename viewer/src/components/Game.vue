@@ -738,6 +738,7 @@ import ColorBlindButton from './buttons/ColorBlindButton.vue';
 import { colorBadgeHtml } from '../color-blind';
 import { playerColors, playerTextColor, playerSymbol } from '../player-colors';
 import { journalPieces } from '../journal-pieces';
+import { journalOrder } from '../journal-order';
 import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
 import { bidRevision, MoveName, ended, isLoanReversal, move as engineMove } from 'container-engine';
 import type { GameState, Move } from 'container-engine';
@@ -1867,7 +1868,7 @@ export default class Game extends Vue {
     get logReversed() {
         let logReversed: string[] = [];
         if (this.G && this.G.log) {
-            this.G.log.forEach((log) => {
+            journalOrder(this.G.log).forEach((log) => {
                 if (log.type == 'phase') {
                     logReversed.push('New phase: ' + log.phase);
                 } else if (log.type == 'event') {
@@ -1893,7 +1894,7 @@ export default class Game extends Vue {
     get logReversedSimple() {
         let logReversed: string[] = [];
         if (this.G && this.G.log) {
-            this.G.log.forEach((log) => {
+            journalOrder(this.G.log).forEach((log) => {
                 if (log.type == 'phase') {
                     logReversed.push('New phase: ' + log.phase);
                 } else if (log.type == 'event') {

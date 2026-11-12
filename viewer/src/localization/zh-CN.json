@@ -246,6 +246,7 @@
     "Two colours in the supply are empty, so the game ends after this turn. Your island has 3 dark green, 2 white, 1 orange, 1 tan and 1 brown. Each player has a private card with different values for these colours. Your card determines your final score; the prices you paid at auction do not.": "供应区已有两种颜色耗尽，游戏在本回合结束后结算。你的岛上有 3 个深绿色、2 个白色、1 个橙色、1 个浅褐色和 1 个棕色集装箱。每人的秘密价值卡为各颜色赋予不同价值。最终得分取决于价值卡，而不是拍卖时支付的价格。",
     "Undo": "撤销",
     "Undo last move": "撤销上一步",
+    "Undo my move": "撤销我的操作",
     "Unknown Container chapter": "未知的集装箱章节",
     "Unpaid loans": "未偿还贷款",
     "Upkeep": "维护",
