@@ -1,4 +1,4 @@
-# Container per-game achievements (review candidate)
+# Container per-game achievements
 
 The engine wrapper exports the optional `achievementDefinitions()` and
 `achievements(GameState)` hooks using the published `@boardgamers/protocol/engine`
@@ -33,7 +33,7 @@ not require a victory.
 ## Threshold attainability audit
 
 `warehouse-six` was an invalid review-candidate ID and is retired, not repurposed.
-Its replacement is `warehouse-five`. Revision 1 remains an unpublished candidate.
+Its replacement is `warehouse-five`, included in revision 1 for engine 2.1.8.
 
 | Feats                     | Legal limits checked                                                                                                                                                                                |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -100,9 +100,12 @@ inputs, and each manifest call returns a fresh object graph.
     prerequisite rather than a guarantee of this implementation.
 -   Install published protocol **0.11.0** using the committed lockfile. No local
     unpublished protocol dependency is used.
--   Coordinator review/activation is required. This branch does not upload to BGS,
-    activate a manifest, bump release versions, or push to the release branch.
--   Later publication must follow `AGENTS.md` delivery requirements.
+-   Engine 2.1.8 carries the reviewed revision-1 manifest (17 achievements).
+    Release authorization follows independent approval of commit `6ae62e0`.
+    Publication must follow `AGENTS.md`: deliver source, dependencies, lockfile
+    and version changes to canonical `master` alongside the BGS engine upload.
+    Activation must verify the installed manifest and public album, without
+    creating fake production games.
 
 Tests play legal seeded 3/4/5-player games through completion, serialize and
 replay them, check immutable/idempotent evaluation, and separately vary final
