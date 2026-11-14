@@ -28,7 +28,28 @@ not require a victory.
 | `island-ten`       | At least ten containers on the island at completion           |
 | `island-diversity` | All five container colors on the island at completion         |
 | `full-ship`        | Five containers aboard the ship at completion                 |
-| `warehouse-six`    | At least six containers in the warehouse store at completion  |
+| `warehouse-five`   | Five containers in the warehouse store at completion          |
+
+## Threshold attainability audit
+
+`warehouse-six` was an invalid review-candidate ID and is retired, not repurposed.
+Its replacement is `warehouse-five`. Revision 1 remains an unpublished candidate.
+
+| Feats                     | Legal limits checked                                                                                                                                                                                |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Three/four factories      | `BuyFactory` requires fewer than four factories and a new color; four is the cap, with five colors available.                                                                                       |
+| Three/five warehouses     | `BuyWarehouse` requires fewer than five; setup supplies five warehouse pieces per seat.                                                                                                             |
+| Warehouse stock five      | `BuyFromFactory` requires stock below warehouse count: one container per warehouse, hence five total.                                                                                               |
+| Full ship                 | `BuyFromWarehouse` requires fewer than five cargo containers.                                                                                                                                       |
+| Island five/ten/diversity | No island holding cap; auctions transfer cargo to the island. Setup supplies 12/16/20 containers of each of five colors for 3/4/5 seats. Ten holdings and five colors fit even the smallest supply. |
+| Score 100/150             | Settled score, not cash; no score ceiling. Accepted bids add matching bank subsidies, and island holdings contribute to scoring. These thresholds are not constrained by a fixed cash supply.       |
+| Debt-free feats           | Zero outstanding loans is legal; borrowing is optional and loans can be repaid.                                                                                                                     |
+| Wins/player counts        | Supported 3/4/5-seat games; no solo threshold or solo victory inferred.                                                                                                                             |
+
+The legal attainability regression starts from setup, buys warehouses and stock
+using available moves, and completes a seeded game with five warehouse containers.
+It checks capacities throughout and replays the serialized completed game to the
+same awards. It does not inject final holdings or alter money/supply/phase.
 
 ## Rules and authority
 
@@ -41,6 +62,8 @@ never applies scoring a second time or mistakes it for remaining cash.
 The existing wrapper ranks by score then island-container count. Achievements
 use those same comparisons, but do **not** use array/seat order to break an exact
 tie: tied leaders get `draw`, others `loss`, and no win achievements are granted.
+The existing wrapper assigns sequential rankings even for exact ties; that
+separate ranking bug is intentionally not changed by these achievement hooks.
 Bot and dropped seats receive no rows, but their results remain opponents'
 results; filtering eligibility cannot turn a loss into a win. Player count means
 original seats, including bots/drops. Singleton/unsupported games get no rows.
@@ -54,11 +77,27 @@ inputs, and each manifest call returns a fresh object graph.
 
 ## Integration prerequisites / release boundary
 
--   BGS must call the hook with the authoritative completed serialized state, map
-    zero-based seats to eligible human accounts, and reject cancelled, analysis,
-    tutorial and otherwise ineligible games using platform metadata. This engine
-    has no cancellation flag or account IDs. The hook additionally filters the
-    engine's `isAI` and `isDropped` flags.
+-   BGS calls the hook with authoritative completed serialized state and maps
+    zero-based seats to accounts. In the reviewed platform code, capture excludes
+    `game.cancelled`, `game.winClaim`, and `game.soloEditedAt`, requires ended status,
+    and skips already-ended games/existing evidence. Bot, dropped and quit seats
+    are mapped to null and discarded; other human seats can still earn feats.
+    See `apps/game-server/app/services/game-achievements.ts` (capture/extraction).
+    Admin edit-data and replay routes set `soloEditedAt` even for multiplayer games.
+    Container itself has no cancellation flag or account IDs; the hook additionally
+    filters its `isAI` and `isDropped` flags.
+-   **No blanket practice exclusion is established.** Capture does not consult
+    `soloRanked` or test custom seeds, `platformRewoundAt`, `soloAnalysisAt`, unlisted
+    games, or a generic tutorial/practice marker. Solo ranking policy is separate
+    (`packages/models/solo-ranking.ts`), and does not establish Container eligibility.
+    Platform analysis uses separate analysis records; Container tutorials run the
+    engine locally in the viewer. Neither fact is a general capture-time exclusion.
+    Container's `GameState` contains optional `analysisCash` (created by
+    `createAnalysisScenario`), but `createAnalysis` has no durable provenance flag;
+    the achievement hook does not classify practice from these states. No
+    multiplayer Container exposure through those paths has been demonstrated.
+    Broader practice exclusion, if required, remains a coordinator/platform policy
+    prerequisite rather than a guarantee of this implementation.
 -   Install published protocol **0.11.0** using the committed lockfile. No local
     unpublished protocol dependency is used.
 -   Coordinator review/activation is required. This branch does not upload to BGS,

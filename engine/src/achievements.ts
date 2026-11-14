@@ -20,7 +20,7 @@ const definitions = [
     ['island-ten', 'Island Portfolio', 'Finish with at least ten containers on your island.'],
     ['island-diversity', 'A Colorful Portfolio', 'Finish with all five container colors on your island.'],
     ['full-ship', 'Loaded Freighter', 'Finish with five containers aboard your ship.'],
-    ['warehouse-six', 'Stocked for Trade', 'Finish with at least six containers in your warehouse store.'],
+    ['warehouse-five', 'Stocked for Trade', 'Finish with five containers in your warehouse store.'],
 ];
 
 export function achievementDefinitions(): AchievementManifest {
@@ -37,7 +37,8 @@ function compare(a: Player, b: Player): number {
 
 export function achievements(G: GameState): SeatAchievements[] {
     // Container supports 3–5 seats. There is no solo victory or engine cancellation
-    // flag. External cancellations, analysis games and account eligibility are BGS gates.
+    // flag. Platform cancellation/account eligibility must be checked by BGS;
+    // this state cannot establish general practice or analysis provenance.
     if (!ended(G) || G.newTurn === false || G.players.length < 3 || G.players.length > 5) return [];
     if (G.currentPlayers.length || G.players.some((p) => !Number.isFinite(p.money))) return [];
     const best = G.players.reduce((a, b) => (compare(a, b) >= 0 ? a : b));
@@ -63,7 +64,7 @@ export function achievements(G: GameState): SeatAchievements[] {
                 ['island-ten', p.containersOnIsland.length >= 10],
                 ['island-diversity', new Set(p.containersOnIsland.map((c) => c.color)).size === 5],
                 ['full-ship', p.ship.containers.length === 5],
-                ['warehouse-six', p.containersOnWarehouseStore.length >= 6],
+                ['warehouse-five', p.containersOnWarehouseStore.length === 5],
             ] as const;
             return { seat, earned: earned.filter(([, met]) => met).map(([id]) => id), outcome };
         })

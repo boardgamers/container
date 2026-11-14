@@ -3,8 +3,9 @@ import { expect } from 'chai';
 import { cloneDeep } from 'lodash';
 import seedrandom from 'seedrandom';
 import * as wrapper from '../wrapper';
-import { setup } from './engine';
+import { move, moveAI, setup } from './engine';
 import { containerColors, GameState, Phase } from './gamestate';
+import { MoveName } from './move';
 
 // Compile against the published optional hooks, not a local protocol imitation.
 const hooks: Pick<Engine<GameState>, 'achievementDefinitions' | 'achievements'> = wrapper;
@@ -81,6 +82,62 @@ describe('per-game achievements', function () {
         }
     });
 
+    it('earns warehouse-five through legal purchases and completion, including replay', () => {
+        const random = Math.random;
+        Math.random = seedrandom('warehouse-1');
+        let G = setup(3, {}, 'warehouse-1');
+        let reachedCapacity = false;
+        try {
+            // The ordinary AI stops expanding at three warehouses. This legal policy
+            // invests surplus cash in warehouses and fills them from offered stock.
+            // No money, pieces, phase or available moves are injected into the state.
+            for (let i = 0; i < 20000 && !wrapper.ended(G); i++) {
+                const seat = G.currentPlayers[0];
+                const p = G.players[seat];
+                const available = p.availableMoves!;
+                if (available[MoveName.BuyWarehouse] && p.money >= p.warehouses.length + 13) {
+                    G = move(G, { name: MoveName.BuyWarehouse, data: true, extraData: G.warehousesLeft[0] }, seat);
+                } else if (available[MoveName.BuyFromFactory] && p.warehouses.length === 5 && p.money > 10) {
+                    G = move(
+                        G,
+                        {
+                            name: MoveName.BuyFromFactory,
+                            data: available[MoveName.BuyFromFactory]![0],
+                            extraData: { price: 6 },
+                        },
+                        seat
+                    );
+                } else {
+                    G = moveAI(G, seat);
+                }
+                for (const player of G.players) {
+                    expect(player.factories.length).to.be.at.most(4);
+                    expect(player.warehouses.length).to.be.at.most(5);
+                    expect(player.ship.containers.length).to.be.at.most(5);
+                    expect(player.containersOnWarehouseStore.length).to.be.at.most(player.warehouses.length);
+                    if (player.containersOnWarehouseStore.length === 5) {
+                        reachedCapacity = true;
+                        expect(player.availableMoves?.[MoveName.BuyFromFactory]).to.equal(undefined);
+                        expect(player.availableMoves?.[MoveName.BuyWarehouse]).to.equal(undefined);
+                    }
+                }
+            }
+        } finally {
+            Math.random = random;
+        }
+        expect(reachedCapacity).to.equal(true);
+        expect(wrapper.ended(G)).to.equal(true);
+        const saved: GameState = JSON.parse(JSON.stringify(G));
+        expect(saved.players[2].warehouses).to.have.length(5);
+        expect(saved.players[2].containersOnWarehouseStore).to.have.length(5);
+        const result = wrapper.achievements(freeze(saved));
+        expect(result[2].earned).to.include('warehouse-five');
+        expect(result[2].earned).to.include('five-warehouses');
+        expect(wrapper.achievements(wrapper.replay(saved))).to.deep.equal(result);
+        expect(wrapper.achievementDefinitions().achievements.map((d) => d.id)).not.to.include('warehouse-six');
+        expect(result.every((row) => !row.earned.includes('warehouse-six'))).to.equal(true);
+    });
+
     it('rejects ongoing, tentative, unsupported singleton, and unsettled states', () => {
         expect(wrapper.achievements(setup(3, {}, 'ongoing'))).to.deep.equal([]);
         for (const change of [
@@ -154,8 +211,8 @@ describe('per-game achievements', function () {
         expect(earned()).to.include('island-diversity');
         boundary('full-ship', 5, (n) => (p.ship.containers = containers(n)));
         boundary(
-            'warehouse-six',
-            6,
+            'warehouse-five',
+            5,
             (n) => (p.containersOnWarehouseStore = containers(n).map((piece) => ({ piece, price: 2, moved: false })))
         );
         p.loans = [{ id: 'L0' }];
