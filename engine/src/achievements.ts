@@ -16,7 +16,7 @@ const definitions = [
     ['four-factories', 'Factory Network', 'Finish owning four factories.'],
     ['three-warehouses', 'Distribution Network', 'Finish owning at least three warehouses.'],
     ['five-warehouses', 'Warehouse Empire', 'Finish owning five warehouses.'],
-    ['island-five', 'Island Investor', 'Finish with at least five containers on your island.'],
+    ['island-fifteen', 'Island Magnate', 'Finish with at least fifteen containers on your island.'],
     ['island-ten', 'Island Portfolio', 'Finish with at least ten containers on your island.'],
     ['island-diversity', 'A Colorful Portfolio', 'Finish with all five container colors on your island.'],
     ['full-ship', 'Loaded Freighter', 'Finish with five containers aboard your ship.'],
@@ -25,7 +25,7 @@ const definitions = [
 
 export function achievementDefinitions(): AchievementManifest {
     return {
-        revision: 1,
+        revision: 2,
         achievements: definitions.map(([id, name, description]) => ({ id, name, description })),
     };
 }
@@ -60,7 +60,7 @@ export function achievements(G: GameState): SeatAchievements[] {
                 ['four-factories', p.factories.length === 4],
                 ['three-warehouses', p.warehouses.length >= 3],
                 ['five-warehouses', p.warehouses.length === 5],
-                ['island-five', p.containersOnIsland.length >= 5],
+                ['island-fifteen', p.containersOnIsland.length >= 15],
                 ['island-ten', p.containersOnIsland.length >= 10],
                 ['island-diversity', new Set(p.containersOnIsland.map((c) => c.color)).size === 5],
                 ['full-ship', p.ship.containers.length === 5],

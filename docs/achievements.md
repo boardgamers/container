@@ -2,7 +2,7 @@
 
 The engine wrapper exports the optional `achievementDefinitions()` and
 `achievements(GameState)` hooks using the published `@boardgamers/protocol/engine`
-0.11.0 types. Manifest revision is **1**. IDs are permanent; never reuse them for
+0.11.0 types. The engine 2.1.9 review candidate has manifest revision **2**. IDs are permanent; never reuse them for
 another condition. Icons are omitted intentionally (platform generic fallback).
 
 ## Manifest
@@ -24,27 +24,41 @@ not require a victory.
 | `four-factories`   | Own four factories (the legal maximum) at completion          |
 | `three-warehouses` | Own at least three warehouses at completion                   |
 | `five-warehouses`  | Own five warehouses at completion                             |
-| `island-five`      | At least five containers on the island at completion          |
+| `island-fifteen`   | At least fifteen containers on the island at completion       |
 | `island-ten`       | At least ten containers on the island at completion           |
 | `island-diversity` | All five container colors on the island at completion         |
 | `full-ship`        | Five containers aboard the ship at completion                 |
 | `warehouse-five`   | Five containers in the warehouse store at completion          |
+
+## Revision 2 change (pending coordinator approval)
+
+Engine 2.1.9 replaces `island-five` / **Island Investor** (at least five island
+containers) with the new ID `island-fifteen` / **Island Magnate** (at least fifteen).
+The manifest still contains 17 definitions. `island-ten` and `warehouse-five`
+are unchanged. Tests cover fourteen failing and fifteen qualifying, plus a legal
+completed game reaching exactly fifteen and reproducing the award on replay.
+
+No existing award migration, deletion, or backfill is performed. The old ID is
+retired, never reused; any existing platform records are left untouched.
+Engine 2.1.8 / revision 1 remains the previously delivered release; this review
+candidate must not be uploaded or activated until coordinator authorization.
+The prior release receipt is unchanged.
 
 ## Threshold attainability audit
 
 `warehouse-six` was an invalid review-candidate ID and is retired, not repurposed.
 Its replacement is `warehouse-five`, included in revision 1 for engine 2.1.8.
 
-| Feats                     | Legal limits checked                                                                                                                                                                                |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Three/four factories      | `BuyFactory` requires fewer than four factories and a new color; four is the cap, with five colors available.                                                                                       |
-| Three/five warehouses     | `BuyWarehouse` requires fewer than five; setup supplies five warehouse pieces per seat.                                                                                                             |
-| Warehouse stock five      | `BuyFromFactory` requires stock below warehouse count: one container per warehouse, hence five total.                                                                                               |
-| Full ship                 | `BuyFromWarehouse` requires fewer than five cargo containers.                                                                                                                                       |
-| Island five/ten/diversity | No island holding cap; auctions transfer cargo to the island. Setup supplies 12/16/20 containers of each of five colors for 3/4/5 seats. Ten holdings and five colors fit even the smallest supply. |
-| Score 100/150             | Settled score, not cash; no score ceiling. Accepted bids add matching bank subsidies, and island holdings contribute to scoring. These thresholds are not constrained by a fixed cash supply.       |
-| Debt-free feats           | Zero outstanding loans is legal; borrowing is optional and loans can be repaid.                                                                                                                     |
-| Wins/player counts        | Supported 3/4/5-seat games; no solo threshold or solo victory inferred.                                                                                                                             |
+| Feats                        | Legal limits checked                                                                                                                                                                                                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Three/four factories         | `BuyFactory` requires fewer than four factories and a new color; four is the cap, with five colors available.                                                                                                                                                                                          |
+| Three/five warehouses        | `BuyWarehouse` requires fewer than five; setup supplies five warehouse pieces per seat.                                                                                                                                                                                                                |
+| Warehouse stock five         | `BuyFromFactory` requires stock below warehouse count: one container per warehouse, hence five total.                                                                                                                                                                                                  |
+| Full ship                    | `BuyFromWarehouse` requires fewer than five cargo containers.                                                                                                                                                                                                                                          |
+| Island fifteen/ten/diversity | No island holding cap; auctions transfer cargo to the island. Setup supplies 12/16/20 containers of each of five colors for 3/4/5 seats. Fifteen holdings across colors fit even the smallest supply of 60. A legal five-player completion/replay fixture finishes with exactly fifteen on one island. |
+| Score 100/150                | Settled score, not cash; no score ceiling. Accepted bids add matching bank subsidies, and island holdings contribute to scoring. These thresholds are not constrained by a fixed cash supply.                                                                                                          |
+| Debt-free feats              | Zero outstanding loans is legal; borrowing is optional and loans can be repaid.                                                                                                                                                                                                                        |
+| Wins/player counts           | Supported 3/4/5-seat games; no solo threshold or solo victory inferred.                                                                                                                                                                                                                                |
 
 The legal attainability regression starts from setup, buys warehouses and stock
 using available moves, and completes a seeded game with five warehouse containers.

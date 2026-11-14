@@ -10,11 +10,11 @@ import { MoveName } from './move';
 // Compile against the published optional hooks, not a local protocol imitation.
 const hooks: Pick<Engine<GameState>, 'achievementDefinitions' | 'achievements'> = wrapper;
 
-function complete(players: number): GameState {
+function complete(players: number, seed = `achievements-${players}`): GameState {
     const random = Math.random;
-    Math.random = seedrandom(`achievements-${players}`);
+    Math.random = seedrandom(seed);
     try {
-        let G = setup(players, {}, `achievements-${players}`);
+        let G = setup(players, {}, seed);
         for (let i = 0; i < 20000 && !wrapper.ended(G); i++) {
             G = wrapper.moveAI(G, G.currentPlayers[0]);
         }
@@ -40,10 +40,16 @@ describe('per-game achievements', function () {
         for (const count of [3, 4, 5]) completed.push(complete(count));
     });
 
-    it('publishes a fresh, stable, secret-free revision-one manifest', () => {
+    it('publishes a fresh, stable, secret-free revision-two manifest', () => {
         expect(hooks.achievementDefinitions).to.be.a('function');
         const manifest = wrapper.achievementDefinitions();
-        expect(manifest.revision).to.equal(1);
+        expect(manifest.revision).to.equal(2);
+        expect(manifest.achievements.map((d) => d.id)).not.to.include('island-five');
+        expect(manifest.achievements.find((d) => d.id === 'island-fifteen')).to.deep.equal({
+            id: 'island-fifteen',
+            name: 'Island Magnate',
+            description: 'Finish with at least fifteen containers on your island.',
+        });
         expect(manifest.achievements).to.have.length(17);
         expect(new Set(manifest.achievements.map((d) => d.id)).size).to.equal(17);
         for (const definition of manifest.achievements) {
@@ -80,6 +86,16 @@ describe('per-game achievements', function () {
             // Replaying the legal log independently reaches exactly the same awards.
             expect(wrapper.achievements(wrapper.replay(G))).to.deep.equal(result);
         }
+    });
+
+    it('earns island-fifteen in a legal completed game and replay', () => {
+        const G = complete(5, 'island-fifteen-11');
+        expect(G.players[4].containersOnIsland).to.have.length(15);
+        const result = wrapper.achievements(freeze(G));
+        expect(result[4].earned).to.include('island-fifteen');
+        expect(result[4].earned).to.include('island-ten');
+        expect(result.every((row) => !row.earned.includes('island-five'))).to.equal(true);
+        expect(wrapper.achievements(wrapper.replay(G))).to.deep.equal(result);
     });
 
     it('earns warehouse-five through legal purchases and completion, including replay', () => {
@@ -203,7 +219,8 @@ describe('per-game achievements', function () {
             boundary(id, n, (n) => (p.warehouses = Array.from({ length: n }, (_, i) => ({ id: `W${i}` }))));
         const containers = (n: number) =>
             Array.from({ length: n }, (_, i) => ({ id: `C${i}` as const, color: containerColors[i % 5] }));
-        boundary('island-five', 5, (n) => (p.containersOnIsland = containers(n)));
+        boundary('island-fifteen', 15, (n) => (p.containersOnIsland = containers(n)));
+        expect(earned()).not.to.include('island-five');
         boundary('island-ten', 10, (n) => (p.containersOnIsland = containers(n)));
         p.containersOnIsland = containers(4);
         expect(earned()).not.to.include('island-diversity');
