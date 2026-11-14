@@ -1,0 +1,149 @@
+{
+    "game": "container",
+    "engineVersion": "2.1.10",
+    "revision": 3,
+    "baseline": "99e60d5e8f4111f0435d9ea911e2431ec8ef2f7f",
+    "issue": "https://codeberg.org/boardgamers/boardgamers/issues/595",
+    "license": "MIT",
+    "provenance": "Original programmatic geometric compositions; no external artwork or fonts. Palette follows the five ContainerColor identities in engine/src/gamestate.ts, not commercial artwork.",
+    "generator": "scripts/generate-achievement-art.py",
+    "generatorSha256": "312845271eb7dcef83d1955f3d14e279a5c3233f6626f2222f0baf088063034f",
+    "assets": [
+        {
+            "id": "win",
+            "key": "achievement-win",
+            "svg": "achievement-win.svg",
+            "png": "achievement-win.png",
+            "svgSha256": "d11d9bb626328c6023bc2a5009fdad6d6119e3756375c0174d8c7151c228b36d",
+            "pngSha256": "744bf07b069b16d981c1e3018c38e046414445ac3fa1d2bec0745de35ebe7751"
+        },
+        {
+            "id": "win-three-player",
+            "key": "achievement-win-three-player",
+            "svg": "achievement-win-three-player.svg",
+            "png": "achievement-win-three-player.png",
+            "svgSha256": "06b217b50a074d36b481d90c2f7608d941f513733841039aa64f7f9fb9faaa2d",
+            "pngSha256": "26a4e3649c81cf05cf10bdb1332771839dda848b823af41497d4b37ebd8cbc0d"
+        },
+        {
+            "id": "win-four-player",
+            "key": "achievement-win-four-player",
+            "svg": "achievement-win-four-player.svg",
+            "png": "achievement-win-four-player.png",
+            "svgSha256": "b9f13375b54488141caa474af7bee000bc9305e7c616bab09957c7d43d430687",
+            "pngSha256": "68f1e79e5aae6a1b181f9ef1c917fb3e5cfe86abd7412ac88484255056f36ab3"
+        },
+        {
+            "id": "win-five-player",
+            "key": "achievement-win-five-player",
+            "svg": "achievement-win-five-player.svg",
+            "png": "achievement-win-five-player.png",
+            "svgSha256": "a0fdd3379e426db9ff7351fce886c0a631141eca767dae4eb7ffb19f62a045de",
+            "pngSha256": "47c7de6e78fdfa732fe3117e369d07e14189677b8158a919023092de1f470217"
+        },
+        {
+            "id": "debt-free-win",
+            "key": "achievement-debt-free-win",
+            "svg": "achievement-debt-free-win.svg",
+            "png": "achievement-debt-free-win.png",
+            "svgSha256": "8a011eb7176b21643afb1c2d6ecac13c89272b818b5641335ff04d732d1683af",
+            "pngSha256": "048beb52a19ac31b9ddb5522a0fafb63f65b9324f6d132c15652ba14ccaa6655"
+        },
+        {
+            "id": "score-100",
+            "key": "achievement-score-100",
+            "svg": "achievement-score-100.svg",
+            "png": "achievement-score-100.png",
+            "svgSha256": "06fdba90883c865188097ef55757e1a9e6f06a019cbb82701291ca277797a3f3",
+            "pngSha256": "3f834e340991586e0d4ccf3b92908c088b14be2e12da68b7051f0b5603e121bc"
+        },
+        {
+            "id": "score-150",
+            "key": "achievement-score-150",
+            "svg": "achievement-score-150.svg",
+            "png": "achievement-score-150.png",
+            "svgSha256": "b5fff030c63d454169e0912700d37d467d070420af354259c5201b18a3c6ab70",
+            "pngSha256": "dde34191376692685a16dffd33e69334149c219468febf364662e213c5e5cff0"
+        },
+        {
+            "id": "debt-free",
+            "key": "achievement-debt-free",
+            "svg": "achievement-debt-free.svg",
+            "png": "achievement-debt-free.png",
+            "svgSha256": "01964ff720747fb102fce03f8d10325bd611e15da8ee7d52b1959ca78c84eddf",
+            "pngSha256": "21cfa1ae75584599dfe557b09a52b3ab87194c6ad132df38210bf75714a3162c"
+        },
+        {
+            "id": "three-factories",
+            "key": "achievement-three-factories",
+            "svg": "achievement-three-factories.svg",
+            "png": "achievement-three-factories.png",
+            "svgSha256": "e4181da5e344a7fdd742ad62120c1ebdbb89e65ad0ba5446731c274f363321ca",
+            "pngSha256": "8dab494df843f8ec260dec693423ffab7f71b13abfa5211118241eb3595135a5"
+        },
+        {
+            "id": "four-factories",
+            "key": "achievement-four-factories",
+            "svg": "achievement-four-factories.svg",
+            "png": "achievement-four-factories.png",
+            "svgSha256": "035d17b32e279c526cc925ffd4e02a6759b0a2a79a5b5674cd15a1899e5845e8",
+            "pngSha256": "204b1e154042612b0b93d81ccf2ff3488510a293843ea0b7e715f546ef72b727"
+        },
+        {
+            "id": "three-warehouses",
+            "key": "achievement-three-warehouses",
+            "svg": "achievement-three-warehouses.svg",
+            "png": "achievement-three-warehouses.png",
+            "svgSha256": "c61719e1cd65421e7ec224bd4d38e782f134c85ded040c75a96dc76668d62f97",
+            "pngSha256": "84ca3b3e7ff3384271e90d12a23cb10427db76b1a9988d90a6a307b5b468cf29"
+        },
+        {
+            "id": "five-warehouses",
+            "key": "achievement-five-warehouses",
+            "svg": "achievement-five-warehouses.svg",
+            "png": "achievement-five-warehouses.png",
+            "svgSha256": "9300a1a5844311ad9e746daaaae549ea9ddfa1a3e8439a27408c31bbf9597cee",
+            "pngSha256": "235e3ad728b327db538c899c3e8ed9af5c6520fb90f57ff45cacfe7846d2c75b"
+        },
+        {
+            "id": "island-fifteen",
+            "key": "achievement-island-fifteen",
+            "svg": "achievement-island-fifteen.svg",
+            "png": "achievement-island-fifteen.png",
+            "svgSha256": "00f99f6551100bdc0b1df2ba4bac918a74cf55ce82dd80af94f929576cd527b1",
+            "pngSha256": "96c9fd2d89bfa2ab0c0ef5414131575665a8afe6091baf08090a58b50635d00a"
+        },
+        {
+            "id": "island-ten",
+            "key": "achievement-island-ten",
+            "svg": "achievement-island-ten.svg",
+            "png": "achievement-island-ten.png",
+            "svgSha256": "e03931267faad0ada2ad82826d68447a128bea05e04bf4dddaf64ec389f9cb44",
+            "pngSha256": "83cca008b31fe8e2e1b47f36224e95116889c5bcb3d01222da00632e16628c83"
+        },
+        {
+            "id": "island-diversity",
+            "key": "achievement-island-diversity",
+            "svg": "achievement-island-diversity.svg",
+            "png": "achievement-island-diversity.png",
+            "svgSha256": "2bd2bfb4b9cde261a54af8c14bfabe453f3caf848d2c2e0c2041183f25584f53",
+            "pngSha256": "e01ebf35ee933677f24d5a32a9a95ace5cb578ee28384a521daa65a1d3999961"
+        },
+        {
+            "id": "full-ship",
+            "key": "achievement-full-ship",
+            "svg": "achievement-full-ship.svg",
+            "png": "achievement-full-ship.png",
+            "svgSha256": "25e695a850fc41dc712c67c3d1b55caac80e8cb0c7391fff9d6175e690763a3b",
+            "pngSha256": "3ea1d6fb4fa01d1cfcd8e40f8414e70a31fc2185380c8fd10a22e6321ddf8535"
+        },
+        {
+            "id": "warehouse-five",
+            "key": "achievement-warehouse-five",
+            "svg": "achievement-warehouse-five.svg",
+            "png": "achievement-warehouse-five.png",
+            "svgSha256": "f1f0ea5c55c8e52ec7edcfaca95ebe0874bea85e1edb5c2543401428bd55725d",
+            "pngSha256": "cffc0a10d81f0b99c896b834bce85cf846c1acefd66c52489fa9e06b6655cbcd"
+        }
+    ]
+}

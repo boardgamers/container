@@ -2,8 +2,12 @@
 
 The engine wrapper exports the optional `achievementDefinitions()` and
 `achievements(GameState)` hooks using the published `@boardgamers/protocol/engine`
-0.11.0 types. The engine 2.1.9 review candidate has manifest revision **2**. IDs are permanent; never reuse them for
-another condition. Icons are omitted intentionally (platform generic fallback).
+0.11.0 types. The engine 2.1.10 artwork review candidate has manifest revision **3**.
+IDs are permanent; never reuse them for another condition. All 17 definitions now
+reference stable `achievement-<id>` assets. Original SVG/PNG artwork, provenance,
+reproduction instructions and contact sheets are in [achievement-art](achievement-art/README.md).
+Revision 3 changes only icon references; the revision 2 definitions and evaluator
+are unchanged. Upload and activation remain gated on independent review approval.
 
 ## Manifest
 

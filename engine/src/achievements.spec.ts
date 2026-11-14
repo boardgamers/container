@@ -40,19 +40,21 @@ describe('per-game achievements', function () {
         for (const count of [3, 4, 5]) completed.push(complete(count));
     });
 
-    it('publishes a fresh, stable, secret-free revision-two manifest', () => {
+    it('publishes a fresh, stable, secret-free revision-three manifest', () => {
         expect(hooks.achievementDefinitions).to.be.a('function');
         const manifest = wrapper.achievementDefinitions();
-        expect(manifest.revision).to.equal(2);
+        expect(manifest.revision).to.equal(3);
         expect(manifest.achievements.map((d) => d.id)).not.to.include('island-five');
         expect(manifest.achievements.find((d) => d.id === 'island-fifteen')).to.deep.equal({
             id: 'island-fifteen',
             name: 'Island Magnate',
             description: 'Finish with at least fifteen containers on your island.',
+            icon: { type: 'asset', key: 'achievement-island-fifteen' },
         });
         expect(manifest.achievements).to.have.length(17);
         expect(new Set(manifest.achievements.map((d) => d.id)).size).to.equal(17);
         for (const definition of manifest.achievements) {
+            expect(definition.icon).to.deep.equal({ type: 'asset', key: `achievement-${definition.id}` });
             expect(definition.id).to.match(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
             expect(definition.id.length).to.be.at.most(64);
             expect(definition.name).not.to.equal('');

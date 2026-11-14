@@ -25,8 +25,13 @@ const definitions = [
 
 export function achievementDefinitions(): AchievementManifest {
     return {
-        revision: 2,
-        achievements: definitions.map(([id, name, description]) => ({ id, name, description })),
+        revision: 3,
+        achievements: definitions.map(([id, name, description]) => ({
+            id,
+            name,
+            description,
+            icon: { type: 'asset', key: `achievement-${id}` },
+        })),
     };
 }
 
