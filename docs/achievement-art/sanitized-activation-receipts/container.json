@@ -1,0 +1,417 @@
+{
+    "schema": 1,
+    "game": "container",
+    "status": "activated-and-verified",
+    "sourceCommit": "7170c8a0bbc56e9ebb514a863a1cfc4695e1ad47",
+    "envelopeSha256": "c5bcf87f3a20fdece6a3ea46ff2a76d2e78c6a9c99c8322be83190f3934c3c81",
+    "privateReceiptSha256": "f2c6038eeeb9f9a3e4262c64065d27f8ceaa18b7ee46d2868f066b47f2aee2d1",
+    "assets": {
+        "achievement-debt-free": {
+            "sourceSha256": "21cfa1ae75584599dfe557b09a52b3ab87194c6ad132df38210bf75714a3162c",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-debt-free/567e4e26932e793a/achievement-debt-free.webp",
+            "sha256": "567e4e26932e793a4f9b6fb5ad891960f691df64dfdaf58d886298cb14352587",
+            "size": 6526,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:21.743Z",
+            "metadataPreserved": true
+        },
+        "achievement-debt-free-win": {
+            "sourceSha256": "048beb52a19ac31b9ddb5522a0fafb63f65b9324f6d132c15652ba14ccaa6655",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-debt-free-win/b8cc763a85fff7fd/achievement-debt-free-win.webp",
+            "sha256": "b8cc763a85fff7fdae46dd074e2af5fd3e900afef449c1292d0f6e2a581ae404",
+            "size": 7312,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:21.774Z",
+            "metadataPreserved": true
+        },
+        "achievement-five-warehouses": {
+            "sourceSha256": "235e3ad728b327db538c899c3e8ed9af5c6520fb90f57ff45cacfe7846d2c75b",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-five-warehouses/91702c4cd6a7acb7/achievement-five-warehouses.webp",
+            "sha256": "91702c4cd6a7acb7a1ace20ca74165e877fc99175aae39e6eda8b40d5ee8b9a5",
+            "size": 7932,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:21.801Z",
+            "metadataPreserved": true
+        },
+        "achievement-four-factories": {
+            "sourceSha256": "204b1e154042612b0b93d81ccf2ff3488510a293843ea0b7e715f546ef72b727",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-four-factories/0764b6407d158641/achievement-four-factories.webp",
+            "sha256": "0764b6407d15864127bb459e233cbf22e7b73c6fbe4962bbcee41a94f9eaa7f9",
+            "size": 7736,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:21.827Z",
+            "metadataPreserved": true
+        },
+        "achievement-full-ship": {
+            "sourceSha256": "3ea1d6fb4fa01d1cfcd8e40f8414e70a31fc2185380c8fd10a22e6321ddf8535",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-full-ship/43795cf876cf56bf/achievement-full-ship.webp",
+            "sha256": "43795cf876cf56bf56deda833b25b2bb9f0ca4a91c9a6c9509fffe5558fabdc9",
+            "size": 7202,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.095Z",
+            "metadataPreserved": true
+        },
+        "achievement-island-diversity": {
+            "sourceSha256": "e01ebf35ee933677f24d5a32a9a95ace5cb578ee28384a521daa65a1d3999961",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-island-diversity/a2c10818c891410d/achievement-island-diversity.webp",
+            "sha256": "a2c10818c891410d316045bc112b0fc546fba1d0b7d11c74ccfe0c006499df6d",
+            "size": 9012,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.123Z",
+            "metadataPreserved": true
+        },
+        "achievement-island-fifteen": {
+            "sourceSha256": "96c9fd2d89bfa2ab0c0ef5414131575665a8afe6091baf08090a58b50635d00a",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-island-fifteen/f67a5934ab593970/achievement-island-fifteen.webp",
+            "sha256": "f67a5934ab593970aabe4bc208c593547b76ef7fe654a3521ea0b9cd1ba516c0",
+            "size": 10592,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.148Z",
+            "metadataPreserved": true
+        },
+        "achievement-island-ten": {
+            "sourceSha256": "83cca008b31fe8e2e1b47f36224e95116889c5bcb3d01222da00632e16628c83",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-island-ten/582385aaca323df1/achievement-island-ten.webp",
+            "sha256": "582385aaca323df1b20ed0df25a5064def47b4ddb97097db6df8a07900438dac",
+            "size": 9698,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.180Z",
+            "metadataPreserved": true
+        },
+        "achievement-score-100": {
+            "sourceSha256": "3f834e340991586e0d4ccf3b92908c088b14be2e12da68b7051f0b5603e121bc",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-score-100/1a536d667267f00e/achievement-score-100.webp",
+            "sha256": "1a536d667267f00ea614266fdd98922edd8b668ff8bec9fd42cbf2eb40888f55",
+            "size": 7594,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.208Z",
+            "metadataPreserved": true
+        },
+        "achievement-score-150": {
+            "sourceSha256": "dde34191376692685a16dffd33e69334149c219468febf364662e213c5e5cff0",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-score-150/1e7df559f2e4f006/achievement-score-150.webp",
+            "sha256": "1e7df559f2e4f006e4696db8e7d852ad8e7e00be51672b920ab4b3d7b1aeb640",
+            "size": 8768,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.235Z",
+            "metadataPreserved": true
+        },
+        "achievement-three-factories": {
+            "sourceSha256": "8dab494df843f8ec260dec693423ffab7f71b13abfa5211118241eb3595135a5",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-three-factories/f093bd44e74be16b/achievement-three-factories.webp",
+            "sha256": "f093bd44e74be16b1160635caf9510146d97ea3106e5c5af41e5cbed190ab985",
+            "size": 7428,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.267Z",
+            "metadataPreserved": true
+        },
+        "achievement-three-warehouses": {
+            "sourceSha256": "84ca3b3e7ff3384271e90d12a23cb10427db76b1a9988d90a6a307b5b468cf29",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-three-warehouses/69fd2d83eafa7a40/achievement-three-warehouses.webp",
+            "sha256": "69fd2d83eafa7a40331e8454244d805c261494eebf1b2b29cdab5fb9b271abc7",
+            "size": 7114,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.295Z",
+            "metadataPreserved": true
+        },
+        "achievement-warehouse-five": {
+            "sourceSha256": "cffc0a10d81f0b99c896b834bce85cf846c1acefd66c52489fa9e06b6655cbcd",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-warehouse-five/62cf1209c5f54d14/achievement-warehouse-five.webp",
+            "sha256": "62cf1209c5f54d1419c378cdc04ba33e26e4b870cdf277621e9109d59f724070",
+            "size": 7346,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.324Z",
+            "metadataPreserved": true
+        },
+        "achievement-win": {
+            "sourceSha256": "744bf07b069b16d981c1e3018c38e046414445ac3fa1d2bec0745de35ebe7751",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-win/a1b3b8b0afea900c/achievement-win.webp",
+            "sha256": "a1b3b8b0afea900c1aa0481be355d680c5b95a7d31acd5fe00134d16d49e91e4",
+            "size": 6704,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.357Z",
+            "metadataPreserved": true
+        },
+        "achievement-win-five-player": {
+            "sourceSha256": "47c7de6e78fdfa732fe3117e369d07e14189677b8158a919023092de1f470217",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-win-five-player/3d4acae7f1e34a3f/achievement-win-five-player.webp",
+            "sha256": "3d4acae7f1e34a3f51a2f6ee8333537130ce30ed59b6534fcb23047333ba0cf4",
+            "size": 7666,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.489Z",
+            "metadataPreserved": true
+        },
+        "achievement-win-four-player": {
+            "sourceSha256": "68f1e79e5aae6a1b181f9ef1c917fb3e5cfe86abd7412ac88484255056f36ab3",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-win-four-player/e7fe0c89b27a0ac2/achievement-win-four-player.webp",
+            "sha256": "e7fe0c89b27a0ac2f4995a705a46914061bc4d6d1cad4e7f02137e55e3fb72ba",
+            "size": 7392,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.514Z",
+            "metadataPreserved": true
+        },
+        "achievement-win-three-player": {
+            "sourceSha256": "26a4e3649c81cf05cf10bdb1332771839dda848b823af41497d4b37ebd8cbc0d",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/achievements/container/achievement-win-three-player/e721f1015d8c4927/achievement-win-three-player.webp",
+            "sha256": "e721f1015d8c49276d50c4fe01b8d4d8377d4f860aafa88f2bbea4e52c573416",
+            "size": 7336,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.541Z",
+            "metadataPreserved": true
+        }
+    },
+    "preserved": {
+        "pictogram": {
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/assets/container/pictogram/bee804d124fb822a/pictogram.webp",
+            "sha256": "bee804d124fb822a231d3d3d12920fb7670edbe68e53a0467445c75be785c0e1",
+            "size": 11332,
+            "format": "webp",
+            "width": 256,
+            "height": 256,
+            "verifiedAt": "2026-11-14T12:45:22.731Z"
+        },
+        "screenshot-showcase-1": {
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/assets/container/screenshot-showcase-1/7d2d6bc1c731546e/screenshot-showcase-1.webp",
+            "sha256": "7d2d6bc1c731546e6737e356c2689ea45f684b72be0892b394d8c8102bb273e0",
+            "size": 99590,
+            "format": "webp",
+            "width": 1536,
+            "height": 898,
+            "verifiedAt": "2026-11-14T12:45:22.811Z"
+        },
+        "screenshot-showcase-2": {
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/assets/container/screenshot-showcase-2/8e79c3a32155aa22/screenshot-showcase-2.webp",
+            "sha256": "8e79c3a32155aa22aaf9448af2b010b3d4c6922b1fa52f7891267a8a5c43e206",
+            "size": 99576,
+            "format": "webp",
+            "width": 1536,
+            "height": 900,
+            "verifiedAt": "2026-11-14T12:45:22.886Z"
+        }
+    },
+    "planSha256": "b94282d2c6a451204f41501541c27002000557e7aa6dc6668c6337bef03947ce",
+    "activationReceiptSha256": "9a2f486c5019feb2dda094e35ed1f0558b39704cd772b8114834f63396966f60",
+    "tgzSha256": "806185b4f15dd7809132529a2cf7224793824ee3d9bc0e24e8e14d1f23c36653",
+    "package": {
+        "name": "container-engine",
+        "version": "2.1.10",
+        "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/engine/806185b4f15dd780/container-engine-2.1.10.tgz"
+    },
+    "hostedPackage": {
+        "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/engine/806185b4f15dd780/container-engine-2.1.10.tgz",
+        "size": 55414,
+        "sha256": "806185b4f15dd7809132529a2cf7224793824ee3d9bc0e24e8e14d1f23c36653"
+    },
+    "manifest": {
+        "revision": 3,
+        "achievements": [
+            {
+                "id": "win",
+                "name": "Shipping Magnate",
+                "description": "Win a completed game of Container.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-win"
+                }
+            },
+            {
+                "id": "win-three-player",
+                "name": "Three-Company Champion",
+                "description": "Win a completed three-player game.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-win-three-player"
+                }
+            },
+            {
+                "id": "win-four-player",
+                "name": "Four-Company Champion",
+                "description": "Win a completed four-player game.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-win-four-player"
+                }
+            },
+            {
+                "id": "win-five-player",
+                "name": "Five-Company Champion",
+                "description": "Win a completed five-player game.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-win-five-player"
+                }
+            },
+            {
+                "id": "debt-free-win",
+                "name": "Solvent Champion",
+                "description": "Win a completed game with no outstanding loans.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-debt-free-win"
+                }
+            },
+            {
+                "id": "score-100",
+                "name": "Healthy Balance Sheet",
+                "description": "Finish with a final score of at least 100.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-score-100"
+                }
+            },
+            {
+                "id": "score-150",
+                "name": "Economic Powerhouse",
+                "description": "Finish with a final score of at least 150.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-score-150"
+                }
+            },
+            {
+                "id": "debt-free",
+                "name": "Books Balanced",
+                "description": "Finish with no outstanding loans.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-debt-free"
+                }
+            },
+            {
+                "id": "three-factories",
+                "name": "Industrial Expansion",
+                "description": "Finish owning at least three factories.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-three-factories"
+                }
+            },
+            {
+                "id": "four-factories",
+                "name": "Factory Network",
+                "description": "Finish owning four factories.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-four-factories"
+                }
+            },
+            {
+                "id": "three-warehouses",
+                "name": "Distribution Network",
+                "description": "Finish owning at least three warehouses.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-three-warehouses"
+                }
+            },
+            {
+                "id": "five-warehouses",
+                "name": "Warehouse Empire",
+                "description": "Finish owning five warehouses.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-five-warehouses"
+                }
+            },
+            {
+                "id": "island-fifteen",
+                "name": "Island Magnate",
+                "description": "Finish with at least fifteen containers on your island.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-island-fifteen"
+                }
+            },
+            {
+                "id": "island-ten",
+                "name": "Island Portfolio",
+                "description": "Finish with at least ten containers on your island.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-island-ten"
+                }
+            },
+            {
+                "id": "island-diversity",
+                "name": "A Colorful Portfolio",
+                "description": "Finish with all five container colors on your island.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-island-diversity"
+                }
+            },
+            {
+                "id": "full-ship",
+                "name": "Loaded Freighter",
+                "description": "Finish with five containers aboard your ship.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-full-ship"
+                }
+            },
+            {
+                "id": "warehouse-five",
+                "name": "Stocked for Trade",
+                "description": "Finish with five containers in your warehouse store.",
+                "icon": {
+                    "type": "asset",
+                    "key": "achievement-warehouse-five"
+                }
+            }
+        ]
+    },
+    "verification": {
+        "publicCatalog": true,
+        "allAssets": true,
+        "unchangedMetadata": true
+    },
+    "sourceDelivery": {
+        "reviewer": "sub-1794658480422-eef8c1ca",
+        "approval": "sub-1794658480422-eef8c1ca",
+        "manifestSha256": "1efc0f7e05f94cd22fa8d8be90cb9edb6e22bd8211efdff279578146e521dafb",
+        "canonicalRemote": "git@github.com:boardgamers/container",
+        "branch": "master",
+        "publicGetVerifiedAt": "2026-11-14T13:01:47.372493+00:00",
+        "checks": [
+            "17 source artwork hashes and decoded images; unchanged evaluator",
+            "exact original package: revision 3, 17 refs, legal 3/4/5-player completion and replay",
+            "51 engine tests passed",
+            "public catalog manifest/package and 20 asset URLs matched; all hosted asset and package bytes SHA-256 verified"
+        ],
+        "scope": "Source and sanitized receipt delivery only; no uploads, engine POST, repack, or viewer/settings/visibility changes. Existing activation receipt attests unchanged metadata."
+    }
+}
