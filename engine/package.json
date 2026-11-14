@@ -23,6 +23,7 @@
         "test": "mocha -r ts-node/register src/**/*.spec.ts src/*.spec.ts"
     },
     "dependencies": {
+        "@boardgamers/protocol": "0.11.0",
         "@types/lodash": "^4.14.149",
         "@types/seedrandom": "^2.4.27",
         "lodash": "^4.17.15",

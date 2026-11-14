@@ -87,6 +87,7 @@ export function factions(G: GameState) {
     return G.players.map((pl) => engine.playerColors[pl.id]);
 }
 
+export { achievementDefinitions, achievements } from './src/achievements';
 export { ended, scores, stripSecret } from './src/engine';
 
 /**
