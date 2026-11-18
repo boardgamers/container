@@ -2,6 +2,7 @@ import Calculator from '@/components/Calculator.vue';
 import Game from '@/components/Game.vue';
 import OffshoreBank from '@/components/OffshoreBank.vue';
 import OffshoreCargo from '@/components/OffshoreCargo.vue';
+import Container from '@/components/pieces/Container.vue';
 import PlayerToken from '@/components/PlayerToken.vue';
 import { legalBankAction } from '@/offshore-actions';
 import { escapeJournal, offshoreJournal } from '@/offshore-journal';
@@ -184,13 +185,30 @@ describe('Offshore bank viewer', () => {
         wrapper.destroy();
     });
 
+    it('cancels a bank cash draft locally with Bid 0', async () => {
+        const { wrapper, submitted } = gameFixture();
+        wrapper.findComponent(OffshoreBank).vm.$emit('choose-offer', { type: 'containers', lot: 2 });
+        await wrapper.vm.$nextTick();
+        expect(wrapper.find('.bank-draft').findAllComponents({ name: 'Button' }).length).toBe(0);
+        wrapper.findComponent(Calculator).vm.$emit('bid', 0);
+        await wrapper.vm.$nextTick();
+        expect(submitted).toEqual([]);
+        expect(wrapper.find('.bank-draft').exists()).toBe(false);
+        expect(wrapper.findComponent(OffshoreBank).props('selectedOffer')).toBe(null);
+        wrapper.destroy();
+    });
+
     it('requires explicit confirmation for multiple cargo pieces and supports cancel', async () => {
         const { wrapper, submitted, factory, warehouse } = gameFixture();
         wrapper.findComponent(OffshoreBank).vm.$emit('choose-offer', { type: 'cash', lot: 1 });
         await wrapper.vm.$nextTick();
-        const cargo = wrapper.find('.bank-draft').findComponent(OffshoreCargo);
-        cargo.vm.$emit('select', factory.id);
-        cargo.vm.$emit('select', warehouse.id);
+        const pieces = wrapper.findAllComponents(Container);
+        expect(pieces.wrappers.every((piece) => !piece.props('canDrag'))).toBe(true);
+        for (const id of [factory.id, warehouse.id]) {
+            const piece = pieces.wrappers.find((piece) => piece.props('pieceId') === id)!;
+            expect(piece.props('bidEligible')).toBe(true);
+            piece.vm.$emit('bid-select');
+        }
         await wrapper.vm.$nextTick();
         expect(submitted.length).toBe(0);
         const buttons = wrapper.find('.bank-draft').findAllComponents({ name: 'Button' });
@@ -206,12 +224,14 @@ describe('Offshore bank viewer', () => {
 
     it('cancels a draft without submitting and paginates large cargo without losing access', async () => {
         const { wrapper, submitted } = gameFixture();
+        const before = wrapper.findAllComponents(Container).wrappers.map((p) => !!p.props('canDrag'));
         wrapper.findComponent(OffshoreBank).vm.$emit('choose-offer', { type: 'cash', lot: 0 });
         await wrapper.vm.$nextTick();
         wrapper.find('.bank-draft').findAllComponents({ name: 'Button' }).at(1).vm.$emit('click');
         await wrapper.vm.$nextTick();
         expect(wrapper.find('.bank-draft').exists()).toBe(false);
         expect(submitted.length).toBe(0);
+        expect(wrapper.findAllComponents(Container).wrappers.map((p) => !!p.props('canDrag'))).toEqual(before);
         wrapper.destroy();
         const pieces = Array.from({ length: 103 }, (_, i) => ({ id: `large-${i}`, color: 'orange' }));
         const cargo = mount(OffshoreCargo, {

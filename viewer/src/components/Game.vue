@@ -45,6 +45,7 @@
                 ><span class="player-board-name" :data-bgs-player="i">{{ i === player ? 'You' : p.name }}</span>
             </button>
             <button v-if="G.options.offshoreIsland" @click="viewBank()">Bank</button>
+            <button v-if="bankCashOffer" @click="viewBank(true)">Bid ({{ offshoreContainers.size }})</button>
         </div>
         <div v-if="!ui.selected && mobileOffers.length" class="mobile-trade" aria-label="Containers for sale">
             <span>Buy from {{ G.players[mobilePlayer].name }}</span>
@@ -243,6 +244,9 @@
                                 rotate: container.rotate,
                             }"
                             :canDrag="canDragContainer(container)"
+                            :bidEligible="bankContainerHighlights.includes(container.id)"
+                            :bidSelected="offshoreContainers.has(container.id)"
+                            @bid-select="toggleBankContainer(container.id)"
                             :color="container.color"
                             :owner="container.owner"
                             :state="container.state"
@@ -386,9 +390,10 @@
                         :aria-label="bankDraft.type === 'cash' ? 'Offer cargo' : 'Offer cash'"
                     >
                         <rect
+                            v-if="bankDraft.type === 'cash' || !preferences.disableHelp"
                             x="-5"
                             y="-5"
-                            :width="bankDraft.type === 'cash' ? 194 : 180"
+                            :width="bankDraft.type === 'cash' ? 194 : 140"
                             :height="bankDraft.type === 'cash' ? bankCargoActionsY + 40 : 220"
                             fill="transparent"
                             stroke="blue"
@@ -407,14 +412,7 @@
                             @bid="bankBid"
                         />
                         <template v-else>
-                            <OffshoreCargo
-                                :pieces="bankBidCargo"
-                                :columns="8"
-                                :rows="8"
-                                :selectable="bankContainerHighlights"
-                                :selected="Array.from(offshoreContainers)"
-                                @select="toggleBankContainer"
-                            />
+                            <text x="0" y="12" font-size="14">{{ offshoreContainers.size }}</text>
                             <Button
                                 :transform="`translate(0 ${bankCargoActionsY})`"
                                 :width="88"
@@ -435,10 +433,9 @@
                             Invalid offer
                         </text>
                         <Button
-                            :transform="
-                                bankDraft.type === 'cash' ? `translate(96 ${bankCargoActionsY})` : 'translate(140 180)'
-                            "
-                            :width="bankDraft.type === 'cash' ? 88 : 30"
+                            v-if="bankDraft.type === 'cash'"
+                            :transform="`translate(96 ${bankCargoActionsY})`"
+                            :width="88"
                             text="Cancel"
                             icon="cancel"
                             @click="resetBankDraft"
@@ -462,22 +459,7 @@
                         />
                     </template>
 
-                    <template v-if="!preferences.disableHelp && canMove">
-                        <g v-for="pieceId in bankContainerHighlights" :key="'bank-cargo-' + pieceId">
-                            <rect
-                                v-for="piece in containers.filter((p) => p.id === pieceId)"
-                                :key="piece.id"
-                                :x="piece.x - 2"
-                                :y="piece.y - 2"
-                                width="24"
-                                height="14"
-                                fill="none"
-                                stroke="blue"
-                                stroke-width="2"
-                            />
-                        </g>
-                    </template>
-                    <template v-if="!preferences.disableHelp">
+                    <template v-if="!preferences.disableHelp && !bankCashOffer">
                         <template v-if="ui.dragged == null && ui.selected == null">
                             <rect
                                 v-if="canBuyFactory('orange')"
@@ -846,7 +828,6 @@
 <script lang="ts">
 import InlineLog from './InlineLog.vue';
 import OffshoreBank from './OffshoreBank.vue';
-import OffshoreCargo from './OffshoreCargo.vue';
 import { legalBankAction } from '../offshore-actions';
 import { islandValue } from '../island-value';
 import ColorBlindButton from './buttons/ColorBlindButton.vue';
@@ -878,7 +859,6 @@ import { GameEventName, LogMove } from 'container-engine/src/log';
     components: {
         InlineLog,
         OffshoreBank,
-        OffshoreCargo,
         PlayerBoard,
         Container,
         Factory,
@@ -1332,7 +1312,10 @@ export default class Game extends Vue {
         this.mobilePlayer = index;
         this.$nextTick(() => {
             const board = this.$refs.boardScroll as HTMLElement;
-            board.scrollTo({ left: (index * 250 * board.scrollWidth) / 1250, behavior: 'smooth' });
+            board?.scrollTo?.({
+                left: (index * 250 * board.scrollWidth) / 1250,
+                behavior: this.bankCashOffer ? 'auto' : 'smooth',
+            });
         });
     }
 
@@ -1382,6 +1365,7 @@ export default class Game extends Vue {
     }
 
     onPieceDrop(e: PieceComponent, d: any) {
+        if (this.bankCashOffer) return;
         this.ui.selected = null;
         const currentPlayer = this.G!.currentPlayers[0];
         switch (e.pieceType) {
@@ -1647,9 +1631,16 @@ export default class Game extends Vue {
         )
             return;
         this.resetBankDraft();
+        this.ui.selected = null;
+        (this.ui.dragged as PieceComponent | null)?.cancelDrag();
         this.bankDraft = { ...offer };
         this.draftsVersion++;
-        this.viewBank(true);
+        if (offer.type === 'cash') {
+            this.viewPlayerBoard(this.player!);
+            this.$nextTick(() =>
+                this.$el.querySelector('.bid-eligible')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+            );
+        } else this.viewBank(true);
     }
     sendBankMove(action: Move) {
         if (this.canMove && this.G && legalBankAction(this.G, this.player, action)) {
@@ -1672,14 +1663,16 @@ export default class Game extends Vue {
     }
     bankBid(cash: number) {
         if (this.bankDraft?.type !== 'containers') return;
+        if (cash === 0) {
+            this.resetBankDraft();
+            return;
+        }
         this.sendBankMove({ name: MoveName.CallBank, data: { ...this.bankDraft }, extraData: { cash } });
     }
     get bankCargoActionsY() {
-        return (
-            Math.min(8, Math.max(1, Math.ceil(this.bankBidCargo.length / 8))) * 13 +
-            (this.bankBidCargo.length > 64 ? 26 : 12)
-        );
+        return 25;
     }
+
     get bankBidCargo() {
         if (!this.canMove) return [];
         const p = this.G!.players[this.player!];
@@ -1733,6 +1726,7 @@ export default class Game extends Vue {
     }
 
     sendMove(move: Move) {
+        if (this.bankCashOffer) return;
         if (
             [
                 MoveName.CallBank,
@@ -1785,7 +1779,7 @@ export default class Game extends Vue {
     }
 
     canDragContainer(container: Piece) {
-        if (!this.canMove) return false;
+        if (!this.canMove || this.bankCashOffer) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1830,7 +1824,7 @@ export default class Game extends Vue {
     }
 
     canDragFactory(factory: Piece) {
-        if (!this.canMove) return false;
+        if (!this.canMove || this.bankCashOffer) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1842,7 +1836,7 @@ export default class Game extends Vue {
     }
 
     canDragWarehouse(warehouse: Piece) {
-        if (!this.canMove) return false;
+        if (!this.canMove || this.bankCashOffer) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1853,7 +1847,7 @@ export default class Game extends Vue {
     }
 
     canDragLoan(loanCard: Piece) {
-        if (!this.canMove) return false;
+        if (!this.canMove || this.bankCashOffer) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1868,7 +1862,7 @@ export default class Game extends Vue {
     }
 
     canDragShip(ship: Piece) {
-        if (!this.canMove) return false;
+        if (!this.canMove || this.bankCashOffer) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;
@@ -1877,7 +1871,7 @@ export default class Game extends Vue {
     }
 
     canPass() {
-        if (!this.canMove) return false;
+        if (!this.canMove || this.bankCashOffer) return false;
 
         const currentPlayer = this.G!.players[this.player!];
         const availableMoves = currentPlayer.availableMoves!;

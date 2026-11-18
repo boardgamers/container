@@ -103,6 +103,22 @@ try {
             );
             assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width + 1, 'complete draft visible horizontally');
         };
+        // Zero cancels this bank draft only, by either mouse or keyboard.
+        for (const keyboard of [false, true]) {
+            const zeroCalculator = page.locator('[data-tutorial="bank-bid"]');
+            assert.equal(
+                await page.locator('.bank-draft').getByRole('button', { name: 'Cancel', exact: true }).count(),
+                0
+            );
+            if (keyboard) {
+                await zeroCalculator.focus();
+                await zeroCalculator.press('0');
+                await zeroCalculator.press('Enter');
+            } else await zeroCalculator.getByRole('button', { name: 'Bid', exact: true }).click();
+            assert.equal(await page.locator('.bank-draft, .offshore-lot.selected').count(), 0);
+            assert.equal(await page.evaluate(() => moves.length), 0);
+            await page.locator('.offshore-lot[data-type="containers"][data-lot="2"]').click();
+        }
         await checkDraft('containers', 2);
         const calculator = page.locator('[data-tutorial="bank-bid"]');
         await calculator.focus();
@@ -147,9 +163,36 @@ try {
         state.players[player].containersOnWarehouseStore.push({ piece: second, price: 3, moved: false });
         await push();
         await page.locator('.offshore-lot[data-type="cash"][data-lot="1"]').click();
-        await page.locator(`.bank-draft [data-piece-id="${offered.id}"]`).click();
-        await page.locator(`.bank-draft [data-piece-id="${second.id}"]`).click();
+        await page.locator(`.piece.bid-eligible[data-piece-id="${offered.id}"]`).click();
+        await page.locator(`.piece.bid-eligible[data-piece-id="${second.id}"]`).click();
         assert.equal(await page.evaluate(() => moves.length), 0, 'selection never auto-submits');
+        assert.equal(await page.locator('.piece.canDrag, .loan.canDrag, .offshore-lot.legal').count(), 0);
+        assert.equal(await page.locator('.piece.bid-selected').count(), 2);
+        assert.equal(
+            await page.locator('rect[stroke="blue"]').count(),
+            1,
+            'only draft frame remains, no ordinary action outlines'
+        );
+        const selectedPiece = page.locator(`.piece[data-piece-id="${second.id}"]`);
+        await selectedPiece.focus();
+        await selectedPiece.press('Space');
+        assert.equal(await selectedPiece.getAttribute('aria-pressed'), 'false');
+        await selectedPiece.press('Enter');
+        assert.equal(await selectedPiece.getAttribute('aria-pressed'), 'true');
+        if (width < 600) await page.locator('.player-board-tab').nth(player).click();
+        await page.screenshot({ path: `/tmp/container-offshore-cargo-focus-${width}.png`, fullPage: true });
+
+        await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+        assert.equal(await page.locator('.bid-eligible, .bid-selected, .bank-draft').count(), 0);
+        assert.ok((await page.locator('.piece.canDrag').count()) > 0, 'cancel restores ordinary actions');
+        assert.equal(await page.evaluate(() => moves.length), 0);
+        await page.locator('.offshore-lot[data-type="cash"][data-lot="1"]').click();
+        await page.locator(`.piece.bid-eligible[data-piece-id="${offered.id}"]`).click();
+        await page.locator(`.piece.bid-eligible[data-piece-id="${second.id}"]`).click();
+        if (width < 600) {
+            await page.getByRole('button', { name: 'Bid (2)', exact: true }).click();
+            assert.equal(await page.locator('.piece.bid-selected').count(), 2, 'navigation preserves draft');
+        }
         await checkDraft('cash', 1);
         await page.screenshot({ path: `/tmp/container-offshore-cargo-draft-${width}.png`, fullPage: true });
         const confirmBounds = await page.getByRole('button', { name: 'Confirm offer', exact: true }).boundingBox();

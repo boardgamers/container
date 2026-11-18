@@ -19,7 +19,7 @@
                     <rect
                         class="offshore-lot"
                         :class="{
-                            legal: offer(type, i - 1),
+                            legal: selectedOffer?.type !== 'cash' && offer(type, i - 1),
                             selected: !bank.decision && selectedOffer?.type === type && selectedOffer?.lot === i - 1,
                             destination:
                                 bank.decision?.kind === 'distribute' &&
