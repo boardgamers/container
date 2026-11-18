@@ -1222,7 +1222,7 @@ export default class Game extends Vue {
                     this.ships.push({
                         id: player.ship.piece.id,
                         x: 373,
-                        y: 660 + pi * 42,
+                        y: 663 + pi * 42,
                         rotate: 90,
                         color,
                         containers: player.ship.containers,

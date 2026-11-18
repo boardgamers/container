@@ -361,8 +361,10 @@ describe('Offshore bank viewer', () => {
             // A 30×80 ship rotated around (15,40) spans x-25..x+55 and y+25..y+55.
             expect(ship.x - 25).toBeGreaterThanOrEqual(342);
             expect(ship.x + 55).toBeLessThanOrEqual(444);
-            expect(ship.y + 25).toBe(685 + i * 42);
-            expect(ship.y + 55).toBeLessThan(722 + i * 42);
+            const berthTop = 684 + i * 42;
+            const berthBottom = berthTop + 38;
+            expect(ship.y + 25 - berthTop).toBe(4);
+            expect(berthBottom - (ship.y + 55)).toBe(4);
         });
         game.destroy();
     });
