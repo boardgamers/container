@@ -104,6 +104,20 @@ describe('Offshore bank viewer', () => {
             });
             const tokens = wrapper.findAll('.bank-bidder');
             expect(tokens.length).toBe(2);
+            expect(tokens.wrappers.map((t) => t.attributes('transform'))).toEqual([
+                'translate(16 52)',
+                'translate(16 86)',
+            ]);
+            tokens.wrappers.forEach((t) => expect(t.find('circle').attributes('r')).toBe('9'));
+            const amount = wrapper.find('.bank-bid-amount');
+            expect(amount.attributes('x')).toBe('32');
+            expect(amount.attributes('y')).toBe('86');
+            expect(amount.attributes('text-anchor')).toBe('start');
+            const escrow = wrapper
+                .findAllComponents(OffshoreCargo)
+                .wrappers.find((c) => c.attributes('transform') === 'translate(32 47)')!;
+            expect(escrow.props('columns')).toBe(2);
+            expect(escrow.props('rows')).toBe(2);
             tokens.wrappers.forEach((token) => {
                 expect(token.attributes('aria-label')).toBe(name);
                 expect(token.attributes('translate')).toBe('no');
@@ -123,6 +137,10 @@ describe('Offshore bank viewer', () => {
         const { render } = fixture();
         const wrapper = render();
         expect(wrapper.findAll('.offshore-lot').length).toBe(6);
+        await wrapper.setProps({ selectedOffer: { type: 'cash', lot: 1 } });
+        expect(wrapper.findAll('.offshore-lot.selected').length).toBe(1);
+        expect(wrapper.find('.offshore-lot.selected').attributes('data-lot')).toBe('1');
+        expect(wrapper.find('.offshore-lot.selected').attributes('aria-pressed')).toBe('true');
         for (const type of ['cash', 'containers'])
             for (let lot = 0; lot < 3; lot++) {
                 await wrapper.find(`[data-type="${type}"][data-lot="${lot}"]`).trigger('click');
@@ -321,6 +339,14 @@ describe('Offshore bank viewer', () => {
                 emitter: new EventEmitter(),
                 preferences: { sound: false },
             },
+        });
+        const berths = game.findAll('.bank-harbor');
+        expect(berths.length).toBe(5);
+        berths.wrappers.forEach((berth, i) => {
+            expect(berth.attributes('transform')).toBe(`translate(336 ${684 + i * 42})`);
+            expect(berth.props('width')).toBe(108);
+            expect(berth.props('height')).toBe(38);
+            expect(berth.props('enabled')).toBe(i === state.currentPlayers[0]);
         });
         const ships = (game.vm as any).ships;
         expect(ships).toHaveLength(5);

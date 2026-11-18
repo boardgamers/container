@@ -79,10 +79,31 @@ try {
         assert.ok(pierBounds.x - lotBounds.x - lotBounds.width < 12, 'harbor joins the bank, not a distant area');
         assert.equal(await page.getByText('BANK HARBOR', { exact: true }).count(), 0);
         await page.locator('.offshore-lot[data-type="containers"][data-lot="2"]').click();
-        assert.equal(
-            (await page.locator('.bank-bid-guidance').textContent()).trim(),
-            'Bid cash to win these containers.'
-        );
+        const checkDraft = async (type, lot) => {
+            const selected = page.locator('.offshore-lot.selected');
+            assert.equal(await selected.count(), 1);
+            assert.equal(await selected.getAttribute('data-type'), type);
+            assert.equal(await selected.getAttribute('data-lot'), String(lot));
+            assert.equal(await selected.getAttribute('aria-pressed'), 'true');
+            assert.equal(await selected.evaluate((el) => getComputedStyle(el).stroke), 'rgb(0, 0, 255)');
+            assert.equal(await page.locator('.bank-bid-guidance').count(), 0);
+            const draft = page.locator('.bank-draft');
+            await draft.scrollIntoViewIfNeeded();
+            const bounds = await draft.boundingBox();
+            const svg = await draft.evaluate((el) => {
+                const r = el.ownerSVGElement.getBoundingClientRect();
+                return { x: r.x, y: r.y, right: r.right, bottom: r.bottom };
+            });
+            assert.ok(
+                bounds.x >= svg.x &&
+                    bounds.y >= svg.y &&
+                    bounds.x + bounds.width <= svg.right + 1 &&
+                    bounds.y + bounds.height <= svg.bottom + 1,
+                'draft within SVG'
+            );
+            assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width + 1, 'complete draft visible horizontally');
+        };
+        await checkDraft('containers', 2);
         const calculator = page.locator('[data-tutorial="bank-bid"]');
         await calculator.focus();
         await calculator.press('9');
@@ -100,6 +121,13 @@ try {
         await push();
         assert.match(await page.locator('.bank-bid-amount').textContent(), /^\$2/);
         assert.equal(await page.locator('.bank-bid-amount').getAttribute('font-size'), '16');
+        const tokenBounds = await page.locator('.bank-bidder circle').first().boundingBox();
+        const amountBounds = await page.locator('.bank-bid-amount').boundingBox();
+        assert.ok(amountBounds.x > tokenBounds.x + tokenBounds.width, 'cash bid is beside, not below, the token');
+        assert.ok(
+            Math.abs(amountBounds.y + amountBounds.height / 2 - tokenBounds.y - tokenBounds.height / 2) < 8,
+            'cash bid and token are aligned'
+        );
         assert.equal(await page.getByRole('button', { name: 'Sail to bank', exact: true }).count(), 0);
         const bidder = page.locator('.bank-bidder');
         assert.equal(await bidder.getAttribute('aria-label'), state.players[player].name);
@@ -122,6 +150,11 @@ try {
         await page.locator(`.bank-draft [data-piece-id="${offered.id}"]`).click();
         await page.locator(`.bank-draft [data-piece-id="${second.id}"]`).click();
         assert.equal(await page.evaluate(() => moves.length), 0, 'selection never auto-submits');
+        await checkDraft('cash', 1);
+        await page.screenshot({ path: `/tmp/container-offshore-cargo-draft-${width}.png`, fullPage: true });
+        const confirmBounds = await page.getByRole('button', { name: 'Confirm offer', exact: true }).boundingBox();
+        const cancelBounds = await page.getByRole('button', { name: 'Cancel', exact: true }).boundingBox();
+        assert.equal(confirmBounds.y, cancelBounds.y, 'cargo actions share one row');
         await page.getByRole('button', { name: 'Confirm offer', exact: true }).click();
         const cargoBid = await page.evaluate(() => moves.at(-1));
         assert.equal(cargoBid.at(-1).name, 'callBank');
@@ -203,6 +236,9 @@ try {
             .locator('.piece')
             .filter({ hasText: `${state.players[player].name}'s Ship` })
             .click();
+        assert.equal(await page.locator('.bank-harbor').count(), 5);
+        assert.equal(await page.locator('.bank-harbor.showDrop').count(), 1);
+        assert.equal(await page.locator('.bank-harbor.canClick').getAttribute('data-berth'), String(player));
         await page.locator('.bank-harbor.canClick').click();
         const sailing = await page.evaluate(() => moves.at(-1));
         assert.deepEqual(sailing.at(-1), { name: 'sail', data: 'offshoreBank' });

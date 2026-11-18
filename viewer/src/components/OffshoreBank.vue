@@ -18,7 +18,15 @@
                 >
                     <rect
                         class="offshore-lot"
-                        :class="{ legal: offer(type, i - 1) }"
+                        :class="{
+                            legal: offer(type, i - 1),
+                            selected: selectedOffer?.type === type && selectedOffer?.lot === i - 1,
+                        }"
+                        :aria-pressed="
+                            offer(type, i - 1)
+                                ? selectedOffer?.type === type && selectedOffer?.lot === i - 1
+                                : undefined
+                        "
                         :data-type="type"
                         :data-lot="i - 1"
                         width="100"
@@ -60,7 +68,7 @@
                     <g v-if="auction(type, i - 1)">
                         <PlayerToken
                             class="bank-bidder"
-                            :transform="`translate(16 ${type === 'cash' ? 33 : 94})`"
+                            :transform="`translate(16 ${type === 'cash' ? 52 : 86})`"
                             :owner="auction(type, i - 1).bidder"
                             :name="owner(auction(type, i - 1).bidder)"
                             :color="playerColors[auction(type, i - 1).bidder]"
@@ -68,11 +76,11 @@
                         <OffshoreCargo
                             v-if="type === 'cash'"
                             :pieces="escrow(auction(type, i - 1))"
-                            transform="translate(6 44)"
-                            :columns="3"
+                            transform="translate(32 47)"
+                            :columns="2"
                             :rows="2"
                         />
-                        <text v-else class="bank-money bank-bid-amount" x="94" y="94" font-size="16" text-anchor="end"
+                        <text v-else class="bank-money bank-bid-amount" x="32" y="86" font-size="16" text-anchor="start"
                             >${{ auction(type, i - 1).cash }}<title>Cash bid</title></text
                         >
                     </g>
@@ -196,6 +204,7 @@ import PlayerToken from './PlayerToken.vue';
 export default class OffshoreBank extends Vue {
     @Prop({ required: true }) state!: GameState;
     @Prop() player?: number;
+    @Prop() selectedOffer?: { type: BankAuctionType; lot: number };
     @Prop({ default: () => ({}) }) availableMoves!: AvailableMoves;
     @Prop({ default: () => playerColors }) playerColors!: string[];
     names = MoveName;
@@ -280,9 +289,14 @@ export default class OffshoreBank extends Vue {
 </script>
 <style scoped>
 .offshore-lot.legal {
-    stroke: #1b6c87;
+    stroke: blue;
     stroke-width: 2;
     cursor: pointer;
+}
+.offshore-lot.selected {
+    fill: #d6e4ff;
+    stroke: blue;
+    stroke-width: 3;
 }
 .offshore-lot[role='button']:hover,
 .offshore-lot[role='button']:focus-visible,

@@ -195,6 +195,7 @@
 
                     <g v-if="G && G.options.offshoreIsland">
                         <OffshoreBank
+                            :selectedOffer="bankDraft"
                             :state="G"
                             :player="player"
                             :player-colors="playerColors"
@@ -203,17 +204,21 @@
                             @choose-offer="chooseBankOffer"
                         />
                     </g>
-                    <DropZone
-                        v-if="G && G.options.offshoreIsland"
-                        class="bank-harbor"
-                        transform="translate(336 684)"
-                        :width="108"
-                        :height="210"
-                        :enabled="true"
-                        :accepts="'ship'"
-                        :data="{ type: 'offshoreBank' }"
-                        :available-moves="getCurrentPlayerMoves()"
-                    />
+                    <template v-if="G && G.options.offshoreIsland">
+                        <DropZone
+                            v-for="berth in 5"
+                            :key="'bank-berth-' + berth"
+                            class="bank-harbor"
+                            :data-berth="berth - 1"
+                            :transform="`translate(336 ${684 + (berth - 1) * 42})`"
+                            :width="108"
+                            :height="38"
+                            :enabled="canMove && player === berth - 1"
+                            :accepts="'ship'"
+                            :data="{ type: 'offshoreBank' }"
+                            :available-moves="getCurrentPlayerMoves()"
+                        />
+                    </template>
                     <Ship
                         v-for="ship in ships"
                         :key="ship.id"
@@ -373,18 +378,23 @@
                         </template>
                     </template>
 
-                    <g v-if="bankDraft && canMove" class="bank-draft" transform="translate(470 700)">
-                        <text x="0" y="-26" font-size="12">
-                            {{ bankDraft.type === 'cash' ? 'Offer cargo' : 'Offer cash' }} · Lot
-                            {{ ['I', 'II', 'III'][bankDraft.lot] }}
-                        </text>
-                        <text class="bank-bid-guidance" x="0" y="-9" font-size="12" fill="#45585b">
-                            {{
-                                bankDraft.type === 'cash'
-                                    ? 'Bid containers to win this cash.'
-                                    : 'Bid cash to win these containers.'
-                            }}
-                        </text>
+                    <g
+                        v-if="bankDraft && canMove"
+                        class="bank-draft"
+                        transform="translate(470 680)"
+                        role="group"
+                        :aria-label="bankDraft.type === 'cash' ? 'Offer cargo' : 'Offer cash'"
+                    >
+                        <rect
+                            x="-5"
+                            y="-5"
+                            :width="bankDraft.type === 'cash' ? 194 : 180"
+                            :height="bankDraft.type === 'cash' ? bankCargoActionsY + 40 : 220"
+                            fill="transparent"
+                            stroke="blue"
+                            stroke-width="2"
+                            rx="2"
+                        />
                         <Calculator
                             v-if="bankDraft.type === 'containers'"
                             :key="bankDraft.lot + ':' + draftsVersion"
@@ -406,15 +416,33 @@
                                 @select="toggleBankContainer"
                             />
                             <Button
-                                transform="translate(0 155)"
-                                :width="130"
-                                text="Confirm offer"
+                                :transform="`translate(0 ${bankCargoActionsY})`"
+                                :width="88"
+                                text="Bid"
+                                tooltip="Confirm offer"
                                 :enabled="validContainerBid"
                                 @click="confirmBankContainers"
                             />
                         </template>
-                        <text v-if="bankBidError" x="0" y="215" font-size="11" fill="#9b2424">Invalid offer</text>
-                        <Button transform="translate(0 220)" :width="130" text="Cancel" @click="resetBankDraft" />
+                        <text
+                            v-if="bankBidError"
+                            x="0"
+                            :y="bankDraft.type === 'cash' ? bankCargoActionsY + 49 : 232"
+                            font-size="11"
+                            fill="#9b2424"
+                            role="alert"
+                        >
+                            Invalid offer
+                        </text>
+                        <Button
+                            :transform="
+                                bankDraft.type === 'cash' ? `translate(96 ${bankCargoActionsY})` : 'translate(140 180)'
+                            "
+                            :width="bankDraft.type === 'cash' ? 88 : 30"
+                            text="Cancel"
+                            icon="cancel"
+                            @click="resetBankDraft"
+                        />
                     </g>
 
                     <Button
@@ -1605,7 +1633,7 @@ export default class Game extends Vue {
             const target = this.$el.querySelector(
                 action ? '.bank-draft' : this.G?.offshoreBank?.decision ? '.bank-decision' : '.bank-board'
             );
-            target?.scrollIntoView?.({ block: 'nearest', inline: 'start', behavior: 'auto' });
+            target?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
         });
     }
     chooseBankOffer(offer: { type: 'cash' | 'containers'; lot: number }) {
@@ -1641,6 +1669,12 @@ export default class Game extends Vue {
     bankBid(cash: number) {
         if (this.bankDraft?.type !== 'containers') return;
         this.sendBankMove({ name: MoveName.CallBank, data: { ...this.bankDraft }, extraData: { cash } });
+    }
+    get bankCargoActionsY() {
+        return (
+            Math.min(8, Math.max(1, Math.ceil(this.bankBidCargo.length / 8))) * 13 +
+            (this.bankBidCargo.length > 64 ? 26 : 12)
+        );
     }
     get bankBidCargo() {
         if (!this.canMove) return [];
