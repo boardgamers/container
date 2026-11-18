@@ -78,8 +78,10 @@ lot to offer cash or select stored cargo, then confirm the offer. During payment
 click a container below the lots; a connecting line and highlighted lot show its
 fixed destination. Repricing and default choices appear beside the bank.
 
-Each player's colored bank harbor row contains separate ship and waiting-cargo
-spaces. Won containers remain in that row until clicked to load on arrival.
+Each player's open-water berth has solid player-colored piers; shared piers split
+evenly between adjacent colors. Won containers wait directly in the berth, without
+a separate holding box or harbor token, until clicked to load on arrival. Cargo
+moves beside a docked ship within the same unpartitioned berth.
 Empty harbor rows stay visible, and large cargo lists are paginated. There is no
 separate expansion banner or collapsible card panel.
 

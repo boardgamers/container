@@ -262,9 +262,9 @@ try {
             .boundingBox();
         assert.ok(shipBounds.x + shipBounds.width < holdingBounds.x, 'ship never overlaps waiting cargo');
         assert.equal(await page.locator('.bank-berth').count(), 3);
-        assert.equal(await ownBerth.locator('[data-piece-id]').count(), 5);
+        assert.equal(await ownBerth.locator('[data-piece-id]').count(), 2);
         await ownBerth.getByRole('button', { name: 'Next cargo page' }).click();
-        assert.equal(await ownBerth.locator('[data-piece-id]').count(), 3);
+        assert.equal(await ownBerth.locator('[data-piece-id]').count(), 2);
         await ownBerth.getByRole('button', { name: 'Previous cargo page' }).click();
         await page.screenshot({ path: `/tmp/container-offshore-harbor-${width}.png`, fullPage: true });
         // Arrival-only pickup still uses the displayed holding cargo.
@@ -375,6 +375,8 @@ try {
         await push();
         await page.waitForTimeout(1200);
         assert.equal(await page.locator('.bank-berth').count(), 5);
+        assert.equal(await page.locator('.bank-berth .player-token, .bank-berth [fill-opacity]').count(), 0);
+        assert.equal(await page.locator('.bank-berth-border[fill="none"][stroke-width="2"]').count(), 5);
         for (let i = 0; i < 5; i++) {
             const berth = page.locator(`.bank-berth[data-owner="${i}"]`);
             const cargo = await berth.locator('.bank-holding').boundingBox();
@@ -384,6 +386,8 @@ try {
                 .boundingBox();
             const bounds = await berth.boundingBox();
             assert.ok(ship.x + ship.width < cargo.x);
+            assert.ok(cargo.x >= bounds.x && cargo.x + cargo.width <= bounds.x + bounds.width + 1);
+            assert.ok(cargo.y >= bounds.y && cargo.y + cargo.height <= bounds.y + bounds.height);
             assert.ok(
                 ship.y >= bounds.y - 2 && ship.y + ship.height <= bounds.y + bounds.height + 2,
                 JSON.stringify({ i, ship, bounds })

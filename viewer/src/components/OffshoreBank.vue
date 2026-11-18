@@ -116,6 +116,7 @@
         </g>
         <g class="bank-piers" transform="translate(332 680)">
             <rect width="4" height="214" fill="#c6c6b8" />
+            <rect v-for="i in 6" :key="'pier-' + i" x="4" :y="(i - 1) * 42" width="156" height="4" fill="#c6c6b8" />
             <g
                 v-for="(p, i) in state.players"
                 :key="i"
@@ -123,36 +124,29 @@
                 class="bank-berth"
                 :data-owner="i"
             >
-                <rect
-                    width="268"
-                    height="38"
-                    :fill="playerColors[i]"
-                    fill-opacity=".16"
+                <!-- Shared four-pixel piers split evenly between adjacent owners; water stays open. -->
+                <path
+                    class="bank-berth-border"
+                    :d="`M156 -1 H-2 V39 H156`"
+                    fill="none"
                     :stroke="playerColors[i]"
-                    stroke-width="1"
+                    stroke-width="2"
                     pointer-events="none"
                 />
-                <path d="M112 1 V37" :stroke="playerColors[i]" stroke-opacity=".5" pointer-events="none" />
-                <g class="bank-holding" :data-owner="i" transform="translate(112 0)">
+                <path
+                    v-if="i === 0 || i === state.players.length - 1"
+                    :d="`M0 ${i === 0 ? -3 : 41} H156`"
+                    :stroke="playerColors[i]"
+                    stroke-width="2"
+                    pointer-events="none"
+                />
+                <rect x="-4" y="0" width="4" height="38" :fill="playerColors[i]" pointer-events="none" />
+                <g class="bank-holding" :data-owner="i" :transform="docked(i) ? 'translate(104 3)' : 'translate(8 3)'">
                     <title>{{ owner(i) }}: waiting cargo</title>
-                    <PlayerToken transform="translate(12 19)" :owner="i" :name="owner(i)" :color="playerColors[i]" />
-                    <rect
-                        v-if="!p.bankHolding?.length"
-                        x="28"
-                        y="3"
-                        width="20"
-                        height="10"
-                        rx="1"
-                        fill="none"
-                        :stroke="playerColors[i]"
-                        stroke-opacity=".4"
-                        stroke-dasharray="2 2"
-                        pointer-events="none"
-                    />
                     <OffshoreCargo
                         :pieces="p.bankHolding || []"
-                        transform="translate(28 3)"
-                        :columns="5"
+                        :columns="docked(i) ? 2 : 6"
+                        :compact-pagination="docked(i)"
                         :rows="1"
                         :selectable="
                             canAct && i === player
@@ -168,7 +162,7 @@
         <g
             v-if="bank.decision"
             class="bank-decision"
-            :transform="bank.decision.kind === 'distribute' ? 'translate(20 950)' : 'translate(630 680)'"
+            :transform="bank.decision.kind === 'distribute' ? 'translate(20 950)' : 'translate(520 680)'"
         >
             <text v-if="decisionTitle" x="0" y="0" font-size="14">{{ decisionTitle }}</text>
             <g
@@ -265,7 +259,7 @@
 </template>
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { BankAuction, BankAuctionType, GameState } from 'container-engine/src/gamestate';
+import { BankAuction, BankAuctionType, GameState, ShipPosition } from 'container-engine/src/gamestate';
 import { AvailableMoves } from 'container-engine/src/available-moves';
 import { playerColors } from 'container-engine/src/engine';
 import { Move, MoveName, Moves } from 'container-engine/src/move';
@@ -339,6 +333,9 @@ export default class OffshoreBank extends Vue {
     get distributionLot() {
         const lots = [0, 1, 2].filter((i) => !this.bank?.auctions.some((a) => a.type === 'containers' && a.lot === i));
         return lots[(this.bank?.decision?.cursor || 0) % lots.length];
+    }
+    docked(index: number) {
+        return this.state.players[index].ship.shipPosition === ShipPosition.OffshoreBank;
     }
     owner(index: number) {
         return this.state.players[index]?.name || String(index + 1);

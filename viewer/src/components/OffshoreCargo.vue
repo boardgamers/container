@@ -39,21 +39,31 @@
                 @keydown.enter.prevent.stop="page = (currentPage + pages - 1) % pages"
                 @keydown.space.prevent.stop="page = (currentPage + pages - 1) % pages"
             >
-                <rect width="20" height="16" fill="#c6c6b8" /><text x="10" y="12" text-anchor="middle" font-size="12"
+                <rect :width="compactPagination ? 12 : 20" height="16" fill="#c6c6b8" /><text
+                    :x="compactPagination ? 6 : 10"
+                    y="12"
+                    text-anchor="middle"
+                    font-size="12"
                     >‹</text
                 >
             </g>
-            <text x="23" y="12" font-size="8">{{ currentPage + 1 }}/{{ pages }}</text>
+            <text :x="compactPagination ? 14 : 23" y="12" :font-size="compactPagination ? 6 : 8"
+                >{{ currentPage + 1 }}/{{ pages }}</text
+            >
             <g
                 role="button"
                 tabindex="0"
                 aria-label="Next cargo page"
-                :transform="`translate(${columns * 23 - 22} 0)`"
+                :transform="`translate(${columns * 23 - (compactPagination ? 14 : 22)} 0)`"
                 @click.stop="page = (currentPage + 1) % pages"
                 @keydown.enter.prevent.stop="page = (currentPage + 1) % pages"
                 @keydown.space.prevent.stop="page = (currentPage + 1) % pages"
             >
-                <rect width="20" height="16" fill="#c6c6b8" /><text x="10" y="12" text-anchor="middle" font-size="12"
+                <rect :width="compactPagination ? 12 : 20" height="16" fill="#c6c6b8" /><text
+                    :x="compactPagination ? 6 : 10"
+                    y="12"
+                    text-anchor="middle"
+                    font-size="12"
                     >›</text
                 >
             </g>
@@ -72,6 +82,7 @@ export default class OffshoreCargo extends Vue {
     @Prop({ default: () => [] }) selected!: string[];
     @Prop({ default: '' }) actionLabel!: string;
     @Prop({ default: 3 }) columns!: number;
+    @Prop({ default: false }) compactPagination!: boolean;
 
     @Prop({ default: 2 }) rows!: number;
     page = 0;

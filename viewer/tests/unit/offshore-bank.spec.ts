@@ -128,7 +128,7 @@ describe('Offshore bank viewer', () => {
                 );
             });
             expect(wrapper.findAll('.bank-board text').wrappers.some((text) => text.text().includes(name))).toBe(false);
-            expect(wrapper.findAllComponents(PlayerToken).length).toBe(2 + state.players.length);
+            expect(wrapper.findAllComponents(PlayerToken).length).toBe(2);
             wrapper.destroy();
         }
     });
@@ -350,7 +350,7 @@ describe('Offshore bank viewer', () => {
         expect(berths.length).toBe(5);
         berths.wrappers.forEach((berth, i) => {
             expect(berth.attributes('transform')).toBe(`translate(336 ${684 + i * 42})`);
-            expect(berth.props('width')).toBe(108);
+            expect(berth.props('width')).toBe(156);
             expect(berth.props('height')).toBe(38);
             expect(berth.props('enabled')).toBe(i === state.currentPlayers[0]);
         });
@@ -367,7 +367,7 @@ describe('Offshore bank viewer', () => {
         game.destroy();
     });
 
-    it('reserves colored ship and cargo bays for all five players, even when empty', async () => {
+    it('outlines open berths with solid split piers and places cargo directly in the water', async () => {
         const state = setup(5, { offshoreIsland: true }, 'bank-holding-berths');
         const player = state.currentPlayers[0];
         const colors = ['#123456', '#234567', '#345678', '#456789', '#56789a'];
@@ -384,15 +384,26 @@ describe('Offshore bank viewer', () => {
         expect(wrapper.findAll('.bank-berth')).toHaveLength(5);
         wrapper.findAll('.bank-berth').wrappers.forEach((berth, i) => {
             expect(berth.attributes('transform')).toBe(`translate(4 ${i * 42 + 4})`);
-            expect(berth.find('rect').attributes('fill')).toBe(colors[i]);
-            expect(berth.find('.player-token text').text()).toBe(String(i + 1));
-            expect(berth.find('.bank-holding').attributes('transform')).toBe('translate(112 0)');
+            expect(berth.find('.bank-berth-border').attributes('stroke')).toBe(colors[i]);
+            expect(berth.find('.bank-berth-border').attributes('fill')).toBe('none');
+            expect(berth.find('.bank-berth-border').attributes('stroke-width')).toBe('2');
+            expect(berth.find('.bank-berth-border').attributes('d')).toBe('M156 -1 H-2 V39 H156');
+            expect(berth.find('.player-token').exists()).toBe(false);
+            expect(berth.find('[fill-opacity]').exists()).toBe(false);
+            expect(berth.find('.bank-holding').attributes('transform')).toBe('translate(104 3)');
         });
         expect(wrapper.find(`.bank-berth[data-owner="${player}"] [data-piece-id]`).exists()).toBe(false);
         const holding = wrapper.find(`.bank-holding[data-owner="${other}"]`);
-        expect(holding.findAll('[data-piece-id]')).toHaveLength(5);
+        expect(holding.findAll('[data-piece-id]')).toHaveLength(2);
         await holding.find('[aria-label="Next cargo page"]').trigger('click');
-        expect(holding.findAll('[data-piece-id]')).toHaveLength(3);
+        expect(holding.findAll('[data-piece-id]')).toHaveLength(2);
+        state.players[other].ship.shipPosition = ShipPosition.OpenSea;
+        await wrapper.setProps({ state: { ...state } });
+        await holding.find('[aria-label="Previous cargo page"]').trigger('click');
+        expect(holding.attributes('transform')).toBe('translate(8 3)');
+        expect(holding.findAll('[data-piece-id]')).toHaveLength(6);
+        await holding.find('[aria-label="Next cargo page"]').trigger('click');
+        expect(holding.findAll('[data-piece-id]')).toHaveLength(2);
         await wrapper.setProps({ player: undefined });
         expect(wrapper.findAll('.bank-berth')).toHaveLength(5);
         expect(wrapper.find('.bank-holding [data-piece-id][role="button"]').exists()).toBe(false);

@@ -193,6 +193,21 @@
                         :data="{ type: 'islandHarbor' }"
                     />
 
+                    <template v-if="G && G.options.offshoreIsland">
+                        <DropZone
+                            v-for="berth in 5"
+                            :key="'bank-berth-' + berth"
+                            class="bank-harbor"
+                            :data-berth="berth - 1"
+                            :transform="`translate(336 ${684 + (berth - 1) * 42})`"
+                            :width="156"
+                            :height="38"
+                            :enabled="canMove && player === berth - 1"
+                            :accepts="'ship'"
+                            :data="{ type: 'offshoreBank' }"
+                            :available-moves="getCurrentPlayerMoves()"
+                        />
+                    </template>
                     <g v-if="G && G.options.offshoreIsland">
                         <OffshoreBank
                             :selectedOffer="bankDraft"
@@ -204,21 +219,6 @@
                             @choose-offer="chooseBankOffer"
                         />
                     </g>
-                    <template v-if="G && G.options.offshoreIsland">
-                        <DropZone
-                            v-for="berth in 5"
-                            :key="'bank-berth-' + berth"
-                            class="bank-harbor"
-                            :data-berth="berth - 1"
-                            :transform="`translate(336 ${684 + (berth - 1) * 42})`"
-                            :width="108"
-                            :height="38"
-                            :enabled="canMove && player === berth - 1"
-                            :accepts="'ship'"
-                            :data="{ type: 'offshoreBank' }"
-                            :available-moves="getCurrentPlayerMoves()"
-                        />
-                    </template>
                     <Ship
                         v-for="ship in ships"
                         :key="ship.id"
@@ -381,7 +381,7 @@
                     <g
                         v-if="bankDraft && canMove"
                         class="bank-draft"
-                        transform="translate(630 680)"
+                        transform="translate(520 680)"
                         role="group"
                         :aria-label="bankDraft.type === 'cash' ? 'Offer cargo' : 'Offer cash'"
                     >
