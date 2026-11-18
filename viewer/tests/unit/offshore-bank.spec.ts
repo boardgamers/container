@@ -2,6 +2,7 @@ import Calculator from '@/components/Calculator.vue';
 import Game from '@/components/Game.vue';
 import OffshoreBank from '@/components/OffshoreBank.vue';
 import OffshoreCargo from '@/components/OffshoreCargo.vue';
+import PlayerToken from '@/components/PlayerToken.vue';
 import { legalBankAction } from '@/offshore-actions';
 import { escapeJournal, offshoreJournal } from '@/offshore-journal';
 import { mount, shallowMount } from '@vue/test-utils';
@@ -66,13 +67,56 @@ describe('Offshore bank viewer', () => {
         const wrapper = render();
         expect(wrapper.findAll('.bank-lot-guide text').wrappers.map((node) => node.text())).toEqual(['I', 'II', 'III']);
         const money = wrapper.findAll('.bank-money');
-        expect(money.wrappers.map((node) => node.text())).toEqual(['1', '2', '3']);
+        expect(money.wrappers.map((node) => node.text())).toEqual(['$1', '$2', '$3']);
         expect(money.wrappers.every((node) => node.attributes('font-size') === '16')).toBe(true);
-        expect(wrapper.find('.bank-piers').exists()).toBe(true);
+        expect(wrapper.find('.bank-piers > rect').attributes('height')).toBe('214');
+        expect(wrapper.find('.bank-piers > rect').attributes('width')).toBe('4');
+        expect(wrapper.find('[aria-label="Sail to bank"]').exists()).toBe(false);
         expect(wrapper.text()).not.toContain('BANK HARBOR');
         expect(wrapper.findAll('.offshore-lot title').at(0).text()).toBe('Bid containers to win this cash.');
         expect(wrapper.findAll('.offshore-lot title').at(3).text()).toBe('Bid cash to win these containers.');
         wrapper.destroy();
+    });
+
+    it('uses player tokens instead of visible bidder names for both auction types', () => {
+        const { state, player, own } = fixture();
+        const name = '<Trader with a long name>';
+        own.name = name;
+        state.offshoreBank!.auctions = [
+            { type: 'containers', lot: 0, bidder: player, cash: 3, containers: [] },
+            {
+                type: 'cash',
+                lot: 1,
+                bidder: player,
+                cash: 0,
+                containers: [{ container: own.containersOnFactoryStore[0], district: 'factory' }],
+            },
+        ];
+        for (const colorBlind of [false, true]) {
+            const wrapper = mount(OffshoreBank, {
+                provide: { __reactiveInject__: { preferences: { colorBlind } } },
+                propsData: {
+                    state,
+                    player,
+                    availableMoves: own.availableMoves,
+                    playerColors: ['#123456', '#234567', '#345678'],
+                },
+            });
+            const tokens = wrapper.findAll('.bank-bidder');
+            expect(tokens.length).toBe(2);
+            tokens.wrappers.forEach((token) => {
+                expect(token.attributes('aria-label')).toBe(name);
+                expect(token.attributes('translate')).toBe('no');
+                expect(token.find('title').text()).toBe(name);
+                expect(token.find('circle').attributes('fill')).toBe(['#123456', '#234567', '#345678'][player]);
+                expect(token.findAll('text').wrappers.map((text) => text.text())).toEqual(
+                    colorBlind ? [String(player + 1)] : []
+                );
+            });
+            expect(wrapper.findAll('.bank-board text').wrappers.some((text) => text.text().includes(name))).toBe(false);
+            expect(wrapper.findAllComponents(PlayerToken).length).toBe(2);
+            wrapper.destroy();
+        }
     });
 
     it('selects the exact type and lot through all six SVG lots', async () => {
@@ -285,8 +329,8 @@ describe('Offshore bank viewer', () => {
             // A 30×80 ship rotated around (15,40) spans x-25..x+55 and y+25..y+55.
             expect(ship.x - 25).toBeGreaterThanOrEqual(342);
             expect(ship.x + 55).toBeLessThanOrEqual(444);
-            expect(ship.y + 25).toBe(690 + i * 44);
-            expect(ship.y + 55).toBeLessThan(724 + i * 44);
+            expect(ship.y + 25).toBe(685 + i * 42);
+            expect(ship.y + 55).toBeLessThan(722 + i * 42);
         });
         game.destroy();
     });

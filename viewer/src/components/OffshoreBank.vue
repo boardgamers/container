@@ -47,9 +47,9 @@
                             }}
                         </title>
                     </rect>
-                    <text v-if="type === 'cash'" class="bank-money" x="6" y="18" font-size="16" pointer-events="none">{{
-                        bank.cashLots[i - 1]
-                    }}</text>
+                    <text v-if="type === 'cash'" class="bank-money" x="6" y="18" font-size="16" pointer-events="none"
+                        >${{ bank.cashLots[i - 1] }}</text
+                    >
                     <OffshoreCargo
                         v-else
                         :pieces="bank.containerLots[i - 1]"
@@ -58,18 +58,13 @@
                         :rows="2"
                     />
                     <g v-if="auction(type, i - 1)">
-                        <rect
-                            x="1"
-                            :y="type === 'cash' ? 29 : 87"
-                            width="3"
-                            height="11"
-                            :fill="playerColors[auction(type, i - 1).bidder]"
+                        <PlayerToken
+                            class="bank-bidder"
+                            :transform="`translate(16 ${type === 'cash' ? 33 : 94})`"
+                            :owner="auction(type, i - 1).bidder"
+                            :name="owner(auction(type, i - 1).bidder)"
+                            :color="playerColors[auction(type, i - 1).bidder]"
                         />
-                        <title translate="no">{{ owner(auction(type, i - 1).bidder) }}</title>
-                        <text x="6" :y="type === 'cash' ? 36 : 94" font-size="12" fill="#203a45" translate="no"
-                            >{{ playerLabel(auction(type, i - 1).bidder, 6)
-                            }}<title translate="no">{{ owner(auction(type, i - 1).bidder) }}</title></text
-                        >
                         <OffshoreCargo
                             v-if="type === 'cash'"
                             :pieces="escrow(auction(type, i - 1))"
@@ -78,22 +73,15 @@
                             :rows="2"
                         />
                         <text v-else class="bank-money bank-bid-amount" x="94" y="94" font-size="16" text-anchor="end"
-                            >{{ auction(type, i - 1).cash }}<title>Cash bid</title></text
+                            >${{ auction(type, i - 1).cash }}<title>Cash bid</title></text
                         >
                     </g>
                 </g>
             </template>
-            <Button
-                v-if="canSail"
-                transform="translate(0 240)"
-                :width="130"
-                text="Sail to bank"
-                @click="emitMove({ name: names.Sail, data: 'offshoreBank' })"
-            />
         </g>
         <g class="bank-piers" pointer-events="none" transform="translate(332 680)">
-            <rect width="10" height="230" fill="#c6c6b8" />
-            <rect v-for="i in 6" :key="i" x="10" :y="(i - 1) * 44" width="102" height="10" fill="#c6c6b8" />
+            <rect width="4" height="214" fill="#c6c6b8" />
+            <rect v-for="i in 6" :key="i" x="4" :y="(i - 1) * 42" width="108" height="4" fill="#c6c6b8" />
         </g>
         <g
             v-for="({ p, i }, index) in holdings"
@@ -102,10 +90,7 @@
             class="bank-holding"
             :data-owner="i"
         >
-            <rect x="0" y="-8" width="3" height="12" :fill="playerColors[i]" />
-            <text x="7" y="0" font-size="12" fill="#203a45" translate="no"
-                >{{ playerLabel(i) }}<title translate="no">{{ owner(i) }}: bank holding</title></text
-            >
+            <PlayerToken transform="translate(9 0)" :owner="i" :name="owner(i)" :color="playerColors[i]" />
             <OffshoreCargo
                 :pieces="p.bankHolding || []"
                 transform="translate(0 12)"
@@ -122,10 +107,12 @@
         <g v-if="bank.decision" class="bank-decision" transform="translate(470 680)">
             <text x="0" y="0" font-size="14">{{ decisionTitle }}</text>
             <template v-if="!decisionMoves.length">
-                <text x="0" y="20" font-size="12" fill="#203a45" translate="no"
-                    >{{ playerLabel(bank.decision.player)
-                    }}<title translate="no">{{ owner(bank.decision.player) }}</title></text
-                >
+                <PlayerToken
+                    transform="translate(9 20)"
+                    :owner="bank.decision.player"
+                    :name="owner(bank.decision.player)"
+                    :color="playerColors[bank.decision.player]"
+                />
                 <OffshoreCargo :pieces="pendingCargo" transform="translate(0 35)" :columns="10" :rows="8" />
             </template>
             <template v-else>
@@ -196,15 +183,16 @@
 </template>
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { BankAuction, BankAuctionType, GameState, ShipPosition } from 'container-engine/src/gamestate';
+import { BankAuction, BankAuctionType, GameState } from 'container-engine/src/gamestate';
 import { AvailableMoves } from 'container-engine/src/available-moves';
 import { playerColors } from 'container-engine/src/engine';
 import { Move, MoveName, Moves } from 'container-engine/src/move';
 import { legalBankAction } from '../offshore-actions';
 import Button from './buttons/Button.vue';
 import OffshoreCargo from './OffshoreCargo.vue';
+import PlayerToken from './PlayerToken.vue';
 
-@Component({ components: { OffshoreCargo, Button } })
+@Component({ components: { OffshoreCargo, PlayerToken, Button } })
 export default class OffshoreBank extends Vue {
     @Prop({ required: true }) state!: GameState;
     @Prop() player?: number;
@@ -232,13 +220,6 @@ export default class OffshoreBank extends Vue {
                     (p.bankHolding || []).length ||
                     (i === this.player && !!this.availableMoves[MoveName.LoadBankContainer])
             );
-    }
-    get canSail() {
-        return (
-            this.canAct &&
-            !!this.availableMoves[MoveName.Sail] &&
-            legalBankAction(this.state, this.player, { name: MoveName.Sail, data: ShipPosition.OffshoreBank })
-        );
     }
 
     get bank() {
@@ -284,10 +265,6 @@ export default class OffshoreBank extends Vue {
     }
     owner(index: number) {
         return this.state.players[index]?.name || String(index + 1);
-    }
-    playerLabel(index: number, limit = 18) {
-        const name = this.owner(index);
-        return name.length > limit ? name.slice(0, limit - 1) + '…' : name;
     }
     auction(type: BankAuctionType, lot: number) {
         return this.bank?.auctions.find((a) => a.type === type && a.lot === lot);

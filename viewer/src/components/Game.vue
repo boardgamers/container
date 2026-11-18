@@ -206,8 +206,8 @@
                     <DropZone
                         v-if="G && G.options.offshoreIsland"
                         class="bank-harbor"
-                        transform="translate(342 690)"
-                        :width="102"
+                        transform="translate(336 684)"
+                        :width="108"
                         :height="210"
                         :enabled="true"
                         :accepts="'ship'"
@@ -1190,7 +1190,7 @@ export default class Game extends Vue {
                     this.ships.push({
                         id: player.ship.piece.id,
                         x: 373,
-                        y: 665 + pi * 44,
+                        y: 660 + pi * 42,
                         rotate: 90,
                         color,
                         containers: player.ship.containers,

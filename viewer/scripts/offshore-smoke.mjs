@@ -98,9 +98,17 @@ try {
         assert.equal(bid.at(-1).data.lot, 2);
         for (const action of bid) state = engine.move(state, action, player);
         await push();
-        assert.match(await page.locator('.bank-bid-amount').textContent(), /^2/);
+        assert.match(await page.locator('.bank-bid-amount').textContent(), /^\$2/);
         assert.equal(await page.locator('.bank-bid-amount').getAttribute('font-size'), '16');
-        assert.ok(!(await page.locator('.bank-bid-amount').textContent()).includes('$'));
+        assert.equal(await page.getByRole('button', { name: 'Sail to bank', exact: true }).count(), 0);
+        const bidder = page.locator('.bank-bidder');
+        assert.equal(await bidder.getAttribute('aria-label'), state.players[player].name);
+        assert.equal((await bidder.locator('text').textContent()).trim(), String(player + 1));
+        await page.evaluate(() => host.emit('preferences', { colorBlind: false }));
+        await page.waitForFunction(() => !document.querySelector('.bank-bidder text'));
+        assert.equal(await bidder.locator('text').count(), 0, 'normal mode shows only a player token');
+        await page.evaluate(() => host.emit('preferences', { colorBlind: true }));
+        await page.waitForFunction(() => !!document.querySelector('.bank-bidder text'));
 
         // A fresh turn fixture: calling the bank twice in one turn is illegal.
         state = engine.setup(3, { offshoreIsland: true }, 'offshore-browser');
@@ -183,17 +191,30 @@ try {
         await page.screenshot({ path: `/tmp/container-offshore-${width}.png`, fullPage: true });
         await page.evaluate(() => host.emit('preferences', { locale: 'en' }));
 
-        // Arrival-only pickup, using the displayed holding cargo (no component internals).
-        state.players[player].ship.shipPosition = 'offshoreBank';
-        state.players[player].lastMove = { name: 'sail', data: 'offshoreBank' };
+        // Sail using the normal ship selection/destination flow, without a separate button.
+        state.players[player].ship.shipPosition = engine.ShipPosition.OpenSea;
+        state.players[player].lastMove = null;
+        state.players[player].actions = 2;
         const pickup = state.containersLeft.pop();
         state.players[player].bankHolding.push(pickup);
         state.newTurn = true;
         await push();
+        await page
+            .locator('.piece')
+            .filter({ hasText: `${state.players[player].name}'s Ship` })
+            .click();
+        await page.locator('.bank-harbor.canClick').click();
+        const sailing = await page.evaluate(() => moves.at(-1));
+        assert.deepEqual(sailing.at(-1), { name: 'sail', data: 'offshoreBank' });
+        for (const action of sailing) state = engine.move(state, action, player);
+        assert.equal(state.players[player].ship.shipPosition, 'offshoreBank');
+        await push();
+        // Arrival-only pickup still uses the displayed holding cargo.
         await page.locator(`.bank-holding [data-piece-id="${pickup.id}"]`).click();
         const loading = await page.evaluate(() => moves.at(-1));
         assert.equal(loading.at(-1).name, 'loadBankContainer');
-        for (const action of loading) state = engine.move(state, action, player);
+        // The emitted turn buffer includes sailing, already applied to this fixture above.
+        state = engine.move(state, loading.at(-1), player);
         assert.ok(state.players[player].ship.containers.some((piece) => piece.id === pickup.id));
         await push();
 
