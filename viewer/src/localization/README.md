@@ -10,4 +10,6 @@ For rich text that is split into icons and spans, call `translateText` on the co
 
 Run `node scripts/check-locales.mjs viewer/src/localization` to verify catalogue coverage and placeholders. The viewer's normal build and browser tests should also cover language switching, action controls, translated tutorial progression and narrow layouts. Browser text must remain readable if a translation is missing; English is the fallback.
 
+The Offshore Island expansion currently includes UI strings in English and French. Its newly added entries in other catalogues explicitly retain English as a readable fallback pending translation; they are not silently omitted. Classic translations are unchanged.
+
 Persian (`fa`, including `fa-IR`) was authored with game-specific context. Scoped RTL prose leaves the SVG board, coordinates, sale slots and calculator in their original physical order. Player names and chat remain user content; technical extraction keys retain their source spelling.

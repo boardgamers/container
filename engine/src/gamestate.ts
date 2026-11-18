@@ -4,6 +4,7 @@ import { Move } from './move';
 
 export interface GameOptions {
     beginner?: boolean;
+    offshoreIsland?: boolean;
 }
 
 export enum ContainerColor {
@@ -33,6 +34,7 @@ export interface ContainerOnStore {
 }
 
 export enum ShipPosition {
+    OffshoreBank = 'offshoreBank',
     OpenSea = 'sea',
     PlayerHarbor01 = 'playerHarbor01',
     PlayerHarbor02 = 'playerHarbor02',
@@ -64,6 +66,8 @@ export interface Ship {
 }
 
 export interface Player {
+    bankHolding?: ContainerPiece[];
+    offshoreStats?: { cashAuctionsWon: number; containerAuctionsWon: number };
     id: number;
     pointCard: PointCard | null;
     factories: FactoryPiece[];
@@ -90,6 +94,7 @@ export interface Player {
 }
 
 export enum Phase {
+    BankDecision = 'bankDecision',
     Move = 'move',
     Bid = 'bid',
     AcceptDecline = 'acceptDecline',
@@ -119,7 +124,40 @@ export interface ShipPiece {
     id: `S${number}`;
 }
 
+export type BankAuctionType = 'cash' | 'containers';
+export interface BankEscrowContainer {
+    container: ContainerOnStore;
+    district: 'factory' | 'warehouse';
+}
+export interface BankAuction {
+    type: BankAuctionType;
+    lot: number;
+    bidder: number;
+    cash: number;
+    containers: BankEscrowContainer[];
+}
+export interface OffshoreBank {
+    initialContainerLots: ContainerPiece[][];
+    cashLots: number[];
+    containerLots: ContainerPiece[][];
+    auctions: BankAuction[];
+    called: boolean;
+    won: boolean;
+    decision?: {
+        kind: 'return' | 'distribute' | 'seize';
+        player: number;
+        resumePlayer: number;
+        containers: BankEscrowContainer[];
+        payment: ContainerPiece[];
+        cursor: number;
+        debtor?: number;
+        remaining?: number;
+        settlement?: BankAuction;
+        ending?: boolean;
+    };
+}
 export interface GameState {
+    offshoreBank?: OffshoreBank;
     liveUpdate?: boolean;
     analysisCash?: number[];
     pendingMessages?: string[];

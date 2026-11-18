@@ -59,6 +59,14 @@
                 </button>
             </div>
         </div>
+        <OffshoreBank
+            v-if="G && G.options.offshoreIsland"
+            :state="G"
+            :player="player"
+            :color-blind="preferences.colorBlind"
+            :available-moves="canMove ? G.players[player].availableMoves : {}"
+            @move="sendMove"
+        />
         <div key="board-and-journal" class="board-and-journal">
             <div ref="boardScroll" class="board-scroll" tabindex="0" aria-label="Game board">
                 <svg
@@ -191,6 +199,12 @@
                         :data="{ type: 'islandHarbor' }"
                     />
 
+                    <g v-if="G && G.options.offshoreIsland" pointer-events="none">
+                        <rect x="675" y="430" width="90" height="220" rx="12" fill="#f6f4e9" stroke="#8ca9aa" />
+                        <text x="720" y="425" text-anchor="middle" fill="#315f66" font-size="9">
+                            Offshore bank harbor
+                        </text>
+                    </g>
                     <Ship
                         v-for="ship in ships"
                         :key="ship.id"
@@ -701,7 +715,9 @@
                                 '$2 containers',
                                 'Discarded color',
                                 'Containers in Warehouses ($2 each)',
-                                'Containers on Ship ($3 each)',
+                                G.options.offshoreIsland
+                                    ? 'Containers on Ship and in Holding ($3 each)'
+                                    : 'Containers on Ship ($3 each)',
                                 'Loans (-$11 each)',
                             ]"
                             :key="'FC_' + cat"
@@ -733,12 +749,14 @@
 </template>
 <script lang="ts">
 import InlineLog from './InlineLog.vue';
+import OffshoreBank from './OffshoreBank.vue';
 import { islandValue } from '../island-value';
 import ColorBlindButton from './buttons/ColorBlindButton.vue';
 import { colorBadgeHtml } from '../color-blind';
 import { playerColors, playerTextColor, playerSymbol } from '../player-colors';
 import { journalPieces } from '../journal-pieces';
 import { journalOrder } from '../journal-order';
+import { offshoreJournal, escapeJournal } from '../offshore-journal';
 import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
 import { bidRevision, MoveName, ended, isLoanReversal, move as engineMove } from 'container-engine';
 import type { GameState, Move } from 'container-engine';
@@ -761,6 +779,7 @@ import { GameEventName, LogMove } from 'container-engine/src/log';
     },
     components: {
         InlineLog,
+        OffshoreBank,
         PlayerBoard,
         Container,
         Factory,
@@ -1085,6 +1104,19 @@ export default class Game extends Vue {
         this.G?.players.forEach((player, pi) => {
             const color = this.playerColors[pi];
             switch (player.ship.shipPosition) {
+                case ShipPosition.OffshoreBank:
+                    this.ships.push({
+                        id: player.ship.piece.id,
+                        x: 700,
+                        y: 410 + pi * 44,
+                        rotate: 90,
+                        color,
+                        containers: player.ship.containers,
+                        owner: pi,
+                        position: player.ship.shipPosition,
+                    });
+                    break;
+
                 case ShipPosition.OpenSea:
                     this.ships.push({
                         id: player.ship.piece.id,
@@ -1678,6 +1710,7 @@ export default class Game extends Vue {
         if (!this.G || ended(this.G)) {
             return 'Game ended!';
         } else if (this.player !== undefined && this.G?.currentPlayers.includes(this.player)) {
+            if (this.G.offshoreBank?.decision) return 'Choose your bank decision in the Offshore Island panel.';
             if (this.G.players[this.player].availableMoves![MoveName.Bid]) {
                 if (this.G.highestBidders.length != 0) {
                     return "It's a tie, choose your ADDITIONAL bid!";
@@ -1698,7 +1731,10 @@ export default class Game extends Vue {
                     ', '
                 )} to play...`;
 
-            let log = (this.G.log[this.G.log.length - 1] as LogMove).pretty;
+            const last = this.G.log[this.G.log.length - 1] as LogMove;
+            const bankMessage = offshoreJournal(last, this.G);
+            if (bankMessage) return bankMessage;
+            let log = last.pretty;
             while (log?.indexOf('>') != -1) {
                 log = log?.substr(0, log.indexOf('<')) + log.substr(log.indexOf('>') + 1);
             }
@@ -1881,7 +1917,14 @@ export default class Game extends Vue {
                         logReversed.push('New event: ' + log.event.name);
                     }
                 } else if (log.type == 'move') {
-                    logReversed.push(journalPieces(log.pretty, this.preferences.colorBlind, this.playerColors));
+                    const bankMessage = offshoreJournal(log, this.G!);
+                    logReversed.push(
+                        journalPieces(
+                            bankMessage ? escapeJournal(bankMessage) : log.pretty,
+                            this.preferences.colorBlind,
+                            this.playerColors
+                        )
+                    );
                 }
             });
 
@@ -1904,7 +1947,9 @@ export default class Game extends Vue {
                         logReversed.push('New event: ' + log.event.name);
                     }
                 } else if (log.type == 'move') {
-                    logReversed.push(log.simple.replaceAll('darkslategray', 'dark green'));
+                    logReversed.push(
+                        offshoreJournal(log, this.G!) || log.simple.replaceAll('darkslategray', 'dark green')
+                    );
                 }
             });
 

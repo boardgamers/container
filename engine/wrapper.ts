@@ -11,7 +11,11 @@ import { isLoanReversal, Move, MoveName } from './src/move';
 import { asserts } from './src/utils';
 
 export async function init(nbPlayers: number, expansions: string[], options: {}, seed?: string): Promise<GameState> {
-    return engine.setup(nbPlayers, options, seed);
+    return engine.setup(
+        nbPlayers,
+        expansions.includes('offshore-island') ? { ...options, offshoreIsland: true } : options,
+        seed
+    );
 }
 
 export function setPlayerMetaData(G: GameState, player: number, metaData: { name: string }) {
@@ -203,6 +207,10 @@ export async function dropPlayer(G: GameState, player: number) {
     // (`nextPlayer` recursion, the `!isDropped` filters in the auction logic).
     if (G.currentPlayers.includes(player)) {
         switch (G.phase) {
+            case Phase.BankDecision:
+                while (G.phase === Phase.BankDecision && G.currentPlayers.includes(player))
+                    G = engine.moveAI(G, player);
+                break;
             case Phase.Bid:
                 // A dropped bidder bids nothing (also covers the additional-bid round)
                 G = engine.move(G, { name: MoveName.Bid, data: true, extraData: { price: 0 } }, player);
@@ -298,6 +306,10 @@ function observedCash(G: GameState, seed: string): number[] | undefined {
         ];
         const containers = [
             ...replayed.containersLeft,
+            ...(replayed.offshoreBank?.containerLots.reduce(
+                (all, lot) => all.concat(lot),
+                [] as typeof replayed.containersLeft
+            ) || []),
             ...replayed.players.reduce(
                 (all, p) => all.concat(p.containersOnFactoryStore.map((c) => c.piece)),
                 [] as typeof replayed.containersLeft
@@ -314,6 +326,18 @@ function observedCash(G: GameState, seed: string): number[] | undefined {
             p.factories = [factory];
             p.containersOnFactoryStore = [{ piece: container, price: 2, moved: false }];
             p.actions = p.id === G.startingPlayer ? 2 : 0;
+        }
+        if (replayed.offshoreBank) {
+            replayed.offshoreBank.initialContainerLots = cloneDeep(G.offshoreBank!.initialContainerLots);
+            replayed.offshoreBank.containerLots = cloneDeep(G.offshoreBank!.initialContainerLots);
+            for (const piece of replayed.offshoreBank.containerLots.reduce(
+                (all, lot) => all.concat(lot),
+                [] as typeof replayed.containersLeft
+            )) {
+                const i = containers.findIndex((c) => c.id === piece.id);
+                if (i < 0) return undefined;
+                containers.splice(i, 1);
+            }
         }
         replayed.factoriesLeft = factories;
         replayed.containersLeft = containers;
@@ -333,10 +357,13 @@ function observedCash(G: GameState, seed: string): number[] | undefined {
                 'containersOnFactoryStore',
                 'containersOnWarehouseStore',
                 'containersOnIsland',
+                'bankHolding',
+                'offshoreStats',
             ] as const) {
                 if (!isEqual(p[key], actual[key])) return undefined;
             }
         }
+        if (G.offshoreBank && !isEqual(G.offshoreBank, replayed.offshoreBank)) return undefined;
         return replayed.players.map((p, i) => p.money + (G.players[i].loans.length - p.loans.length) * 10);
     } catch {
         return undefined;

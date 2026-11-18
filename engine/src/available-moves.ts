@@ -1,8 +1,14 @@
 import { remove } from 'lodash';
 import { ContainerColor, ContainerOnStore, ContainerPiece, GameState, Phase, Player, ShipPosition } from './gamestate';
 import { MoveName } from './move';
+import { bankMoves, bankProductionAllowed, reserved } from './offshore';
 
 export interface AvailableMoves {
+    [MoveName.CallBank]?: { type: 'cash' | 'containers'; lot: number }[];
+    [MoveName.ReturnBankContainer]?: ContainerPiece[];
+    [MoveName.DistributeBankContainer]?: ContainerPiece[];
+    [MoveName.SeizeBankContainer]?: ContainerPiece[];
+    [MoveName.LoadBankContainer]?: ContainerPiece[];
     [MoveName.DomesticSale]?: ContainerPiece[];
     [MoveName.BuyFromFactory]?: Array<{
         player: number;
@@ -27,6 +33,7 @@ export interface AvailableMoves {
 }
 
 export function availableMoves(G: GameState, player: Player): AvailableMoves {
+    if (G.offshoreBank && G.phase === Phase.BankDecision) return bankMoves(G, player);
     switch (G.phase) {
         case Phase.Bid: {
             const moves = {
@@ -65,7 +72,10 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
 
             // BuyFromFactory
             if (player.actions > 0 || player.lastMove?.name === MoveName.BuyFromFactory) {
-                if (player.containersOnWarehouseStore.length < player.warehouses.length) {
+                if (
+                    player.containersOnWarehouseStore.length + reserved(G, player, 'warehouse') <
+                    player.warehouses.length
+                ) {
                     const containersAvailable: {
                         player: number;
                         container: ContainerOnStore;
@@ -101,6 +111,7 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
                 player.lastMove?.name === MoveName.BuyFromWarehouse
             ) {
                 if (
+                    player.ship.shipPosition !== ShipPosition.OffshoreBank &&
                     player.ship.shipPosition !== ShipPosition.Island &&
                     player.ship.shipPosition !== ShipPosition.OpenSea &&
                     player.ship.containers.length < 5
@@ -242,6 +253,7 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
 
                     remove(positions, (pos) => G.players.map((p) => p.ship.shipPosition).indexOf(pos) != -1);
 
+                    if (G.offshoreBank) positions.push(ShipPosition.OffshoreBank);
                     if (player.ship.containers.length > 0) {
                         positions.push(ShipPosition.Island);
                     }
@@ -266,7 +278,8 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
                 player.lastMove?.name === MoveName.Produce
             ) {
                 if (
-                    player.containersOnFactoryStore.length < player.factories.length * 2 &&
+                    player.containersOnFactoryStore.length + reserved(G, player, 'factory') <
+                        player.factories.length * 2 &&
                     player.produced.length < player.factories.length
                 ) {
                     const canProduce: ContainerColor[] = [];
@@ -280,7 +293,7 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
                             ).length;
 
                             if (totalFactories > producedContainers && containersLeft.indexOf(factory.color) !== -1)
-                                canProduce.push(factory.color);
+                                if (bankProductionAllowed(G, player, factory.color)) canProduce.push(factory.color);
                         }
                     });
 
@@ -292,6 +305,8 @@ export function availableMoves(G: GameState, player: Player): AvailableMoves {
                 }
             }
 
+            if (G.offshoreBank && !(player.lastMove?.name === MoveName.Produce && moves[MoveName.Produce]))
+                Object.assign(moves, bankMoves(G, player));
             return moves;
         }
 

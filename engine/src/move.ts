@@ -1,6 +1,21 @@
 import { ContainerColor, ContainerPiece, FactoryPiece, ShipPosition, WarehousePiece } from './gamestate';
 
 export declare namespace Moves {
+    export interface MoveCallBank {
+        name: MoveName.CallBank;
+        data: { type: 'cash' | 'containers'; lot: number };
+        extraData: { cash?: number; containers?: string[] };
+    }
+    export interface MoveBankContainer {
+        name:
+            | MoveName.ReturnBankContainer
+            | MoveName.DistributeBankContainer
+            | MoveName.SeizeBankContainer
+            | MoveName.LoadBankContainer;
+        data: ContainerPiece;
+        extraData?: { price: number };
+    }
+
     export interface MoveBuyFromFactory {
         name: MoveName.BuyFromFactory;
         data: {
@@ -91,6 +106,8 @@ export declare namespace Moves {
 }
 
 export type Move = (
+    | Moves.MoveCallBank
+    | Moves.MoveBankContainer
     | Moves.MoveBuyFromFactory
     | Moves.MoveBuyFromWarehouse
     | Moves.MoveBuyFactory
@@ -109,6 +126,11 @@ export type Move = (
 ) & { revision?: string };
 
 export enum MoveName {
+    CallBank = 'callBank',
+    ReturnBankContainer = 'returnBankContainer',
+    DistributeBankContainer = 'distributeBankContainer',
+    SeizeBankContainer = 'seizeBankContainer',
+    LoadBankContainer = 'loadBankContainer',
     DomesticSale = 'domesticSale',
     BuyWarehouse = 'buyWarehouse',
     BuyFactory = 'buyFactory',

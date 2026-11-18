@@ -2,37 +2,54 @@
 
 The engine wrapper exports the optional `achievementDefinitions()` and
 `achievements(GameState)` hooks using the published `@boardgamers/protocol/engine`
-0.11.0 types. The engine 2.1.10 artwork review candidate has manifest revision **3**.
-IDs are permanent; never reuse them for another condition. All 17 definitions now
-reference stable `achievement-<id>` assets. Original SVG/PNG artwork, provenance,
-reproduction instructions and contact sheets are in [achievement-art](achievement-art/README.md).
-Revision 3 changes only icon references; the revision 2 definitions and evaluator
-are unchanged. Upload and activation remain gated on independent review approval.
+0.11.0 types. The working manifest is revision **4** with 19 achievements; no
+package version bump, publication or activation is part of this expansion work.
+IDs are permanent; never reuse them for another condition. The original 17
+definitions, conditions and stable `achievement-<id>` asset references remain
+unchanged. Original SVG/PNG artwork, provenance, reproduction instructions and
+contact sheets are in [achievement-art](achievement-art/README.md).
+The historical revision-3 artwork manifest and release receipt are preserved,
+not regenerated. Upload and activation remain gated on independent review approval.
+
+Revision 4 adds **Offshore Magnate** (`offshore-win`) and **Two-Way Trade**
+(`offshore-trader`). Both require `options.offshoreIsland === true` and the same
+committed completion and human-seat eligibility checks as base achievements.
+Offshore Magnate requires a sole game victory (not a draw). Two-Way Trade requires
+both `player.offshoreStats.cashAuctionsWon >= 1` and
+`player.offshoreStats.containerAuctionsWon >= 1` in that completed game; it does
+not require winning the game. Missing/partial counters cannot prove both auctions.
+Disabled or absent expansion options never earn either new award, even if counters
+are present. The engine records counters on bank auction settlement and reproduces
+them on replay; final holdings alone are not evidence of these auction wins.
+Protocol 0.11.0 supports text badges, not emoji: the new icons use built-in `OI`
+and `BANK` badges and require no nonexistent artwork or upload.
 
 ## Manifest
 
 All conditions require a committed, completed 3–5-player game. Non-win feats do
 not require a victory.
 
-| ID                 | Condition                                                     |
-| ------------------ | ------------------------------------------------------------- |
-| `win`              | Sole winner after final score and island-container tiebreaker |
-| `win-three-player` | Win a three-player game                                       |
-| `win-four-player`  | Win a four-player game                                        |
-| `win-five-player`  | Win a five-player game                                        |
-| `debt-free-win`    | Win with zero outstanding loans                               |
-| `score-100`        | Final score at least 100                                      |
-| `score-150`        | Final score at least 150                                      |
-| `debt-free`        | Zero outstanding loans at completion                          |
-| `three-factories`  | Own at least three factories at completion                    |
-| `four-factories`   | Own four factories (the legal maximum) at completion          |
-| `three-warehouses` | Own at least three warehouses at completion                   |
-| `five-warehouses`  | Own five warehouses at completion                             |
-| `island-fifteen`   | At least fifteen containers on the island at completion       |
-| `island-ten`       | At least ten containers on the island at completion           |
-| `island-diversity` | All five container colors on the island at completion         |
-| `full-ship`        | Five containers aboard the ship at completion                 |
-| `warehouse-five`   | Five containers in the warehouse store at completion          |
+| ID                 | Condition                                                                                 |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| `win`              | Sole winner after final score and island-container tiebreaker                             |
+| `win-three-player` | Win a three-player game                                                                   |
+| `win-four-player`  | Win a four-player game                                                                    |
+| `win-five-player`  | Win a five-player game                                                                    |
+| `debt-free-win`    | Win with zero outstanding loans                                                           |
+| `score-100`        | Final score at least 100                                                                  |
+| `score-150`        | Final score at least 150                                                                  |
+| `debt-free`        | Zero outstanding loans at completion                                                      |
+| `three-factories`  | Own at least three factories at completion                                                |
+| `four-factories`   | Own four factories (the legal maximum) at completion                                      |
+| `three-warehouses` | Own at least three warehouses at completion                                               |
+| `five-warehouses`  | Own five warehouses at completion                                                         |
+| `island-fifteen`   | At least fifteen containers on the island at completion                                   |
+| `island-ten`       | At least ten containers on the island at completion                                       |
+| `island-diversity` | All five container colors on the island at completion                                     |
+| `full-ship`        | Five containers aboard the ship at completion                                             |
+| `warehouse-five`   | Five containers in the warehouse store at completion                                      |
+| `offshore-win`     | Sole winner of a completed Offshore Island expansion game                                 |
+| `offshore-trader`  | Win a cash bank auction and a container bank auction in the same completed expansion game |
 
 ## Revision 2 change (pending coordinator approval)
 
@@ -69,6 +86,12 @@ using available moves, and completes a seeded game with five warehouse container
 It checks capacities throughout and replays the serialized completed game to the
 same awards. It does not inject final holdings or alter money/supply/phase.
 
+The expansion regression starts from seeded Offshore Island setup, makes legal
+bank calls from seat zero (first bidding a stored container for cash, then bidding
+cash for bank containers), and otherwise uses legal AI moves through completion.
+The serialized finished game earns Two-Way Trade and awards Offshore Magnate to
+the sole winner; replay reproduces all awards without injecting counters or state.
+
 ## Rules and authority
 
 This is Container, not Gaia Project. The engine ends after two supply colors run
@@ -87,8 +110,9 @@ results; filtering eligibility cannot turn a loss into a win. Player count means
 original seats, including bots/drops. Singleton/unsupported games get no rows.
 
 Island holdings come from auctions (including retaining one's own cargo), but do
-not prove any particular number of auction victories or deliveries. There are no
-historical shipping, auction, production or borrowing feats. In particular,
+not prove any particular number of auction victories or deliveries. Base achievements have no
+historical shipping, auction, production or borrowing feats; only the expansion
+trading feat reads the explicit bank-auction counters. In particular,
 `debt-free` does not claim the player never borrowed. No log, objective card,
 secret breakdown or extra evidence is exposed or required. Hooks do not mutate
 inputs, and each manifest call returns a fresh object graph.

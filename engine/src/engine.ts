@@ -17,11 +17,12 @@ import {
 } from './gamestate';
 import { GameEventName, LogItem, LogMove } from './log';
 import { Move, MoveName, Moves } from './move';
+import { applyBankMove, bankUpkeep, payBankCash, settleBank } from './offshore';
 import { asserts, shuffle } from './utils';
 
 export const playerColors = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'];
 
-export function setup(numPlayers: number, { beginner = true }: GameOptions, seed?: string): GameState {
+export function setup(numPlayers: number, { beginner = true, offshoreIsland }: GameOptions, seed?: string): GameState {
     seed = seed ?? Math.random().toString();
     const rng = seedrandom(seed);
 
@@ -104,6 +105,28 @@ export function setup(numPlayers: number, { beginner = true }: GameOptions, seed
         player.warehouses.push(G.warehousesLeft.pop()!);
     });
 
+    if (offshoreIsland) {
+        G.options.offshoreIsland = true;
+        G.offshoreBank = {
+            initialContainerLots: [],
+            cashLots: [1, 2, 3],
+            containerLots: [[], [], []],
+            auctions: [],
+            called: false,
+            won: false,
+        };
+        const bankColors = shuffle(containerColors, rng() + '');
+        for (let i = 0; i < 3; i++) {
+            const index = G.containersLeft.findIndex((c) => c.color === bankColors[i]);
+            G.offshoreBank.containerLots[i < 2 ? 0 : 1].push(G.containersLeft.splice(index, 1)[0]);
+        }
+        G.offshoreBank.initialContainerLots = G.offshoreBank.containerLots.map((lot) => lot.slice());
+        G.players.forEach((p) => {
+            p.bankHolding = [];
+            p.offshoreStats = { cashAuctionsWon: 0, containerAuctionsWon: 0 };
+        });
+    }
+
     G.log.push({ type: 'event', event: { name: GameEventName.GameStart } });
 
     G.players[startingPlayer].actions = 2;
@@ -162,13 +185,46 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
         "Can't bid more money than you have!"
     );
 
+    if (G.offshoreBank && move.name === MoveName.Produce) {
+        assert(
+            move.extraData?.piece?.color === move.data &&
+                G.containersLeft.some((c) => isEqual(c, move.extraData.piece)),
+            'Invalid produced container'
+        );
+        assert(
+            Number.isInteger(move.extraData.price) && move.extraData.price >= 1 && move.extraData.price <= 4,
+            'Invalid production price'
+        );
+    }
     G.liveUpdate = revision;
     const previousBid = revision
         ? G.hiddenLog
               .map((e) => e.type === 'move' && e.player === playerNumber && e.move.name === MoveName.Bid)
               .lastIndexOf(true)
         : -1;
+    const bankResult = applyBankMove(G, move, player);
+    if (bankResult.handled) {
+        G.log.push({
+            type: 'move',
+            player: playerNumber,
+            move,
+            simple: `${player.name} ${move.name}`,
+            pretty: `${player.name} ${move.name}`,
+        });
+        if (bankResult.ending && !fake) {
+            G.phase = Phase.GameEnd;
+            G.currentPlayers = [];
+            calculateEndScore(G);
+        }
+    }
     switch (move.name) {
+        // These moves were executed by applyBankMove; common bookkeeping follows below.
+        case MoveName.CallBank:
+        case MoveName.LoadBankContainer:
+        case MoveName.ReturnBankContainer:
+        case MoveName.DistributeBankContainer:
+        case MoveName.SeizeBankContainer:
+            break;
         case MoveName.DomesticSale: {
             asserts<Moves.MoveDomesticSale>(move);
             if (player.containersOnFactoryStore.length > 0) {
@@ -551,9 +607,11 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 if ([...new Set(G.containersLeft.map((c) => c.color))].length >= 4) {
                     doUpkeep(G);
                 } else {
-                    G.phase = Phase.GameEnd;
-                    G.currentPlayers = [];
-                    calculateEndScore(G);
+                    if (!G.offshoreBank || !settleBank(G, true)) {
+                        G.phase = Phase.GameEnd;
+                        G.currentPlayers = [];
+                        calculateEndScore(G);
+                    }
                 }
             }
 
@@ -579,6 +637,7 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
             player.ship.containers = [];
             const bid = G.players[G.highestBidders[0]].bid + G.players[G.highestBidders[0]].additionalBid;
             player.money -= bid;
+            payBankCash(G, bid);
             G.players.forEach((p) => {
                 p.bid = p.additionalBid = 0;
             });
@@ -594,9 +653,11 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 if ([...new Set(G.containersLeft.map((c) => c.color))].length >= 4) {
                     doUpkeep(G);
                 } else {
-                    G.phase = Phase.GameEnd;
-                    G.currentPlayers = [];
-                    calculateEndScore(G);
+                    if (!G.offshoreBank || !settleBank(G, true)) {
+                        G.phase = Phase.GameEnd;
+                        G.currentPlayers = [];
+                        calculateEndScore(G);
+                    }
                 }
             }
 
@@ -631,9 +692,11 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
                 if ([...new Set(G.containersLeft.map((c) => c.color))].length >= 4) {
                     doUpkeep(G);
                 } else {
-                    G.phase = Phase.GameEnd;
-                    G.currentPlayers = [];
-                    calculateEndScore(G);
+                    if (!G.offshoreBank || !settleBank(G, true)) {
+                        G.phase = Phase.GameEnd;
+                        G.currentPlayers = [];
+                        calculateEndScore(G);
+                    }
                 }
             }
 
@@ -664,13 +727,91 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
         move.name === MoveName.Accept ||
         move.name === MoveName.Decline ||
         move.name === MoveName.Bid;
-    G.newTurn = turnBoundary || !(lastLog?.type === 'move' && G.currentPlayers.includes(lastLog.player));
+    G.newTurn =
+        (bankResult.handled && move.name !== MoveName.LoadBankContainer && move.name !== MoveName.CallBank) ||
+        (bankResult.handled && G.phase === Phase.BankDecision) ||
+        turnBoundary ||
+        !(lastLog?.type === 'move' && G.currentPlayers.includes(lastLog.player));
 
+    while (G.offshoreBank && G.phase === Phase.BankDecision && G.players[G.currentPlayers[0]].isDropped) {
+        G = moveAI(G, G.currentPlayers[0]);
+    }
     return G;
 }
 
 export function moveAI(G: GameState, playerNumber: number): GameState {
     const player = G.players[playerNumber];
+    if (G.offshoreBank && G.phase === Phase.BankDecision) {
+        const name = Object.keys(player.availableMoves!)[0] as MoveName;
+        const data = player.availableMoves![name]![0];
+        const c = G.offshoreBank.decision?.containers.find((c) => c.container.piece.id === (data as ContainerPiece).id);
+        return move(
+            G,
+            {
+                name,
+                data,
+                ...(name === MoveName.ReturnBankContainer ? { extraData: { price: c!.container.price } } : {}),
+            } as Move,
+            playerNumber
+        );
+    }
+    // Keep expansion decisions deterministic and entirely outside the classic random stream.
+    if (G.offshoreBank && G.phase === Phase.Move) {
+        const moves = player.availableMoves!;
+        const load = moves[MoveName.LoadBankContainer];
+        if (load?.length) return move(G, { name: MoveName.LoadBankContainer, data: load[0] }, playerNumber);
+
+        // Collect paid-for cargo before shopping for more. Do not detour a full ship.
+        if (player.bankHolding!.length && player.ship.containers.length < 5) {
+            const destination = moves[MoveName.Sail]?.includes(ShipPosition.OffshoreBank)
+                ? ShipPosition.OffshoreBank
+                : player.ship.shipPosition !== ShipPosition.OpenSea &&
+                  player.ship.shipPosition !== ShipPosition.OffshoreBank &&
+                  moves[MoveName.Sail]?.includes(ShipPosition.OpenSea)
+                ? ShipPosition.OpenSea
+                : undefined;
+            if (destination) return move(G, { name: MoveName.Sail, data: destination }, playerNumber);
+        }
+
+        let offer: Move | undefined;
+        let bestProfit = 0;
+        for (const data of moves[MoveName.CallBank] || []) {
+            const active = G.offshoreBank.auctions.find((a) => a.type === data.type);
+            if (data.type === 'containers') {
+                const count = G.offshoreBank.containerLots[data.lot].length;
+                const cash = (active?.cash || 0) + 1;
+                // Value cargo conservatively, cap the backlog, and reserve working cash plus interest.
+                const profit = count * 2 - cash;
+                if (
+                    count &&
+                    count + player.bankHolding!.length <= 5 &&
+                    cash <= player.money - player.loans.length - 5 &&
+                    profit > bestProfit
+                ) {
+                    offer = { name: MoveName.CallBank, data, extraData: { cash } };
+                    bestProfit = profit;
+                }
+            } else {
+                const count = (active?.containers.length || 0) + 1;
+                const stock = [
+                    ...player.containersOnFactoryStore.map((c) => ({ c, value: Math.max(2, c.price) })),
+                    ...player.containersOnWarehouseStore.map((c) => ({ c, value: Math.max(3, c.price) })),
+                ].sort((a, b) => a.value - b.value);
+                const payment = stock.slice(0, count);
+                const profit = G.offshoreBank.cashLots[data.lot] - payment.reduce((sum, c) => sum + c.value, 0);
+                // Stored cargo is productive inventory: only exchange it for a clear cash gain.
+                if (payment.length === count && profit >= 2 && profit > bestProfit) {
+                    offer = {
+                        name: MoveName.CallBank,
+                        data,
+                        extraData: { containers: payment.map((c) => c.c.piece.id) },
+                    };
+                    bestProfit = profit;
+                }
+            }
+        }
+        if (offer) return move(G, offer, playerNumber);
+    }
     let moveName, data;
     let retry = 0;
     do {
@@ -691,7 +832,7 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
             moveName = MoveName.Sail;
             data = player.ship.shipPosition == ShipPosition.OpenSea ? ShipPosition.Island : ShipPosition.OpenSea;
         } else {
-            const moves = Object.keys(player.availableMoves!);
+            const moves = Object.keys(player.availableMoves!).filter((n) => n !== MoveName.CallBank);
 
             if (
                 player.lastMove?.name == MoveName.Sail &&
@@ -725,6 +866,8 @@ export function moveAI(G: GameState, playerNumber: number): GameState {
             } else if (moveName == MoveName.Sail) {
                 if (data == ShipPosition.Island) {
                     if (player.ship.containers.length == 0) moveName = null;
+                } else if (G.offshoreBank && data === ShipPosition.OffshoreBank) {
+                    if (!player.bankHolding!.length || player.ship.containers.length === 5) moveName = null;
                 } else if (data.startsWith('playerHarbor0')) {
                     if (G.players[0].containersOnWarehouseStore.length == 0) moveName = null;
                 } else if (data.startsWith('playerHarbor1')) {
@@ -904,8 +1047,8 @@ function calculateEndScore(G: GameState) {
 
         player.finalScoreBreakdown.push('$' + player.containersOnWarehouseStore.length * 2);
         player.money += player.containersOnWarehouseStore.length * 2;
-        player.finalScoreBreakdown.push('$' + player.ship.containers.length * 3);
-        player.money += player.ship.containers.length * 3;
+        player.finalScoreBreakdown.push('$' + (player.ship.containers.length + (player.bankHolding?.length || 0)) * 3);
+        player.money += (player.ship.containers.length + (player.bankHolding?.length || 0)) * 3;
         player.finalScoreBreakdown.push('-$' + player.loans.length * 11);
         player.money += player.loans.length * -11;
     });
@@ -933,7 +1076,7 @@ function doUpkeep(G: GameState) {
     // Pass/Accept/Decline log entry), so together they pin a per-upkeep random stream.
     const rng = seedrandom(`${G.seed}:upkeep:${G.log.length}`);
     const player = G.players[G.currentPlayers[0]];
-    const loanCount = player.loans.length;
+    const loanCount = G.offshoreBank ? 0 : player.loans.length;
     const interest: string[] = [];
     for (let i = 0; i < loanCount; i++) {
         if (player.money > 0) {
@@ -1053,6 +1196,7 @@ function doUpkeep(G: GameState) {
     if (currentPlayer == G.startingPlayer) {
         G.round++;
     }
+    if (G.offshoreBank) bankUpkeep(G);
 }
 
 function remove(array, value) {
@@ -1066,6 +1210,8 @@ function removeRandom<T>(array: T[], rng: () => number): T {
 
 function prettyShipPosition(G: GameState, data: ShipPosition, simple = false): string {
     switch (data) {
+        case ShipPosition.OffshoreBank:
+            return 'the Off-Shore Bank';
         case ShipPosition.Island:
             return 'the island harbor';
         case ShipPosition.OpenSea:

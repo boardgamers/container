@@ -8,6 +8,8 @@ From the repository root, install with `pnpm install`.
 pnpm --dir viewer serve
 ```
 
+Add `?offshoreIsland=1` to opt into Offshore Island in the local demo. Without that query parameter the demo remains classic. The expansion panel displays public auctions, escrow and holding areas; its bid, return-price, distribution, default and loading controls follow the engine's legal moves.
+
 Add `?chapter=supply-chain` to open a tutorial. The other chapter IDs are
 `buildings`, `selling`, `bidding`, `keep-cargo` and `scoring`.
 
@@ -18,6 +20,7 @@ pnpm --dir viewer check
 pnpm --dir viewer test:tutorial
 NODE_OPTIONS=--openssl-legacy-provider pnpm --dir viewer package
 pnpm --dir viewer test:browser
+pnpm --dir viewer test:offshore:browser
 pnpm --dir viewer test:tutorial:browser
 ```
 

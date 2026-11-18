@@ -13,7 +13,9 @@ function launchSelfContained(selector = '#app') {
     mountSoundTests(emitter);
     installLocalChat(emitter);
 
-    let gameState = setup(5, {});
+    // Explicit local opt-in; the normal demo and published game defaults stay classic.
+    const offshoreIsland = new URLSearchParams(window.location.search).get('offshoreIsland') === '1';
+    let gameState = setup(5, offshoreIsland ? { offshoreIsland: true } : {});
 
     for (let i = 0; i < gameState.players.length; i++) {
         gameState.players[i].name = `Player ${i + 1}`;

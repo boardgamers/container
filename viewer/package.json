@@ -13,6 +13,7 @@
         "package": "vue-cli-service build --target lib --name container-viewer src/wrapper.ts",
         "prepublishOnly": "npm run package",
         "test:browser": "node scripts/protocol-smoke.mjs",
+        "test:offshore:browser": "node scripts/offshore-smoke.mjs",
         "test:tutorial": "node --test tests/tutorial/lessons.cjs",
         "check": "tsc --noEmit",
         "test:tutorial:browser": "node scripts/tutorial-smoke.mjs",

@@ -25,13 +25,28 @@ const definitions = [
 
 export function achievementDefinitions(): AchievementManifest {
     return {
-        revision: 3,
-        achievements: definitions.map(([id, name, description]) => ({
-            id,
-            name,
-            description,
-            icon: { type: 'asset', key: `achievement-${id}` },
-        })),
+        revision: 4,
+        achievements: [
+            ...definitions.map(([id, name, description]) => ({
+                id,
+                name,
+                description,
+                icon: { type: 'asset' as const, key: `achievement-${id}` },
+            })),
+            {
+                id: 'offshore-win',
+                name: 'Offshore Magnate',
+                description: 'Win a completed game with the Offshore Island expansion.',
+                icon: { type: 'text', text: 'OI' },
+            },
+            {
+                id: 'offshore-trader',
+                name: 'Two-Way Trade',
+                description:
+                    'Win at least one cash auction and one container auction at the bank in the same completed Offshore Island game.',
+                icon: { type: 'text', text: 'BANK' },
+            },
+        ],
     };
 }
 
@@ -70,6 +85,13 @@ export function achievements(G: GameState): SeatAchievements[] {
                 ['island-diversity', new Set(p.containersOnIsland.map((c) => c.color)).size === 5],
                 ['full-ship', p.ship.containers.length === 5],
                 ['warehouse-five', p.containersOnWarehouseStore.length === 5],
+                ['offshore-win', G.options.offshoreIsland === true && win],
+                [
+                    'offshore-trader',
+                    G.options.offshoreIsland === true &&
+                        (p.offshoreStats?.cashAuctionsWon ?? 0) >= 1 &&
+                        (p.offshoreStats?.containerAuctionsWon ?? 0) >= 1,
+                ],
             ] as const;
             return { seat, earned: earned.filter(([, met]) => met).map(([id]) => id), outcome };
         })

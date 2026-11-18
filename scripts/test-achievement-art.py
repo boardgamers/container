@@ -12,9 +12,13 @@ OUT = ROOT / 'docs/achievement-art'
 manifest = json.loads((OUT / 'manifest.json').read_text())
 source = (ROOT / 'engine/src/achievements.ts').read_text()
 baseline = subprocess.check_output(['git', 'show', manifest['baseline']+':engine/src/achievements.ts'], cwd=ROOT, text=True)
-# Entire definitions and entire evaluator byte-for-byte, not a selection of conditions.
+# Historical definitions stay byte-for-byte; strip only the two additive expansion rules
+# before comparing the full historical evaluator. Artwork provenance remains revision 3.
 assert source.split('export function achievementDefinitions')[0] == baseline.split('export function achievementDefinitions')[0]
-assert source.split('/** Money is already')[1] == baseline.split('/** Money is already')[1]
+historical_evaluator = re.sub(
+    r"                \['offshore-win',.*?\n                \],\n",
+    '', source.split('/** Money is already')[1], flags=re.S)
+assert historical_evaluator == baseline.split('/** Money is already')[1]
 ids = re.findall(r"^    \['([^']+)',", source, re.M)
 assert [a['id'] for a in manifest['assets']] == ids
 assert len(ids) == len(set(ids)) == 17
@@ -39,4 +43,4 @@ for size in (32,48,64):
     with Image.open(OUT/f'contact-sheet-{size}.png') as im:
         im.load()
         assert im.width == 880
-print('PASS: 17 IDs and full evaluator unchanged; refs, source hashes, unique decoded 256px assets, 32/48/64px sheets')
+print('PASS: 17 historical IDs and base evaluator unchanged; refs, source hashes, unique decoded 256px assets, 32/48/64px sheets')

@@ -28,4 +28,6 @@ npm run serve
 
 It will use the engine in its sibling folder
 
+Optional expansion: see [Offshore Island rules, setup, and release notes](docs/offshore-island.md).
+
 Viewer releases: see [uploading the complete viewer build](docs/viewer-publishing.md).

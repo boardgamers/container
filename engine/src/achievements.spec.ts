@@ -40,10 +40,10 @@ describe('per-game achievements', function () {
         for (const count of [3, 4, 5]) completed.push(complete(count));
     });
 
-    it('publishes a fresh, stable, secret-free revision-three manifest', () => {
+    it('publishes a fresh, stable, secret-free revision-four manifest', () => {
         expect(hooks.achievementDefinitions).to.be.a('function');
         const manifest = wrapper.achievementDefinitions();
-        expect(manifest.revision).to.equal(3);
+        expect(manifest.revision).to.equal(4);
         expect(manifest.achievements.map((d) => d.id)).not.to.include('island-five');
         expect(manifest.achievements.find((d) => d.id === 'island-fifteen')).to.deep.equal({
             id: 'island-fifteen',
@@ -51,10 +51,14 @@ describe('per-game achievements', function () {
             description: 'Finish with at least fifteen containers on your island.',
             icon: { type: 'asset', key: 'achievement-island-fifteen' },
         });
-        expect(manifest.achievements).to.have.length(17);
-        expect(new Set(manifest.achievements.map((d) => d.id)).size).to.equal(17);
+        expect(manifest.achievements).to.have.length(19);
+        expect(new Set(manifest.achievements.map((d) => d.id)).size).to.equal(19);
         for (const definition of manifest.achievements) {
-            expect(definition.icon).to.deep.equal({ type: 'asset', key: `achievement-${definition.id}` });
+            expect(definition.icon).to.deep.equal(
+                definition.id.startsWith('offshore-')
+                    ? { type: 'text', text: definition.id === 'offshore-win' ? 'OI' : 'BANK' }
+                    : { type: 'asset', key: `achievement-${definition.id}` }
+            );
             expect(definition.id).to.match(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
             expect(definition.id.length).to.be.at.most(64);
             expect(definition.name).not.to.equal('');
@@ -188,6 +192,103 @@ describe('per-game achievements', function () {
         expect(wrapper.achievements(G)[0].earned).to.include('score-100');
         G.players[2].isDropped = true;
         expect(wrapper.achievements(G)).to.deep.equal([]);
+    });
+
+    it('earns both expansion awards through legal completion and serialized replay', () => {
+        const random = Math.random;
+        Math.random = seedrandom('offshore-achievements');
+        let G = setup(3, { offshoreIsland: true }, 'offshore-achievements');
+        try {
+            for (let i = 0; i < 20000 && !wrapper.ended(G); i++) {
+                const seat = G.currentPlayers[0];
+                const p = G.players[seat];
+                // Seat zero pursues both auction types while opponents use the bank too.
+                // First sell stored containers, then buy bank stock with cash.
+                const offer =
+                    seat === 0 &&
+                    p.availableMoves?.[MoveName.CallBank]?.find(
+                        (offer) => offer.type === (p.offshoreStats!.cashAuctionsWon ? 'containers' : 'cash')
+                    );
+                if (offer && !p.offshoreStats!.containerAuctionsWon) {
+                    const active = G.offshoreBank!.auctions.find((a) => a.type === offer.type);
+                    G = move(
+                        G,
+                        {
+                            name: MoveName.CallBank,
+                            data: offer,
+                            extraData:
+                                offer.type === 'cash'
+                                    ? {
+                                          containers: [...p.containersOnFactoryStore, ...p.containersOnWarehouseStore]
+                                              .slice(0, (active?.containers.length || 0) + 1)
+                                              .map((c) => c.piece.id),
+                                      }
+                                    : { cash: (active?.cash || 0) + 1 },
+                        },
+                        seat
+                    );
+                } else {
+                    G = moveAI(G, seat);
+                }
+            }
+        } finally {
+            Math.random = random;
+        }
+        expect(wrapper.ended(G), 'legal expansion policy finishes').to.equal(true);
+        const saved: GameState = JSON.parse(JSON.stringify(G));
+        const before = JSON.stringify(saved);
+        const result = wrapper.achievements(freeze(saved));
+        expect(result[0].earned).to.include('offshore-trader');
+        expect(result.some((row) => row.earned.includes('offshore-win'))).to.equal(true);
+        expect(wrapper.achievements(wrapper.replay(saved))).to.deep.equal(result);
+        expect(JSON.stringify(saved)).to.equal(before);
+    });
+
+    it('gates expansion awards on the option, both counters, completion and seat eligibility', () => {
+        const G = cloneDeep(completed[0]);
+        G.players.forEach((p, seat) => {
+            p.money = 100 - seat;
+            p.containersOnIsland = [];
+            p.offshoreStats = { cashAuctionsWon: 1, containerAuctionsWon: 1 };
+        });
+        const earned = (seat = 0) => wrapper.achievements(G).find((row) => row.seat === seat)!.earned;
+        for (const option of [undefined, false]) {
+            G.options.offshoreIsland = option;
+            expect(earned()).not.to.include('offshore-win');
+            expect(earned()).not.to.include('offshore-trader');
+        }
+        G.options.offshoreIsland = true;
+        expect(earned()).to.include('offshore-win');
+        expect(earned()).to.include('offshore-trader');
+        expect(earned(1)).not.to.include('offshore-win');
+        expect(earned(1)).to.include('offshore-trader');
+        for (const stats of [
+            undefined,
+            {},
+            { cashAuctionsWon: 1 },
+            { containerAuctionsWon: 1 },
+            { cashAuctionsWon: 0, containerAuctionsWon: 1 },
+            { cashAuctionsWon: 1, containerAuctionsWon: 0 },
+        ]) {
+            // Partial counters model old or incomplete serialized evidence.
+            G.players[0].offshoreStats = stats as GameState['players'][number]['offshoreStats'];
+            expect(earned()).not.to.include('offshore-trader');
+            expect(earned()).to.include('offshore-win');
+        }
+        G.players[0].offshoreStats = { cashAuctionsWon: 2, containerAuctionsWon: 3 };
+        expect(earned()).to.include('offshore-trader');
+        G.players[1].money = G.players[0].money;
+        expect(earned()).not.to.include('offshore-win');
+        expect(earned()).to.include('offshore-trader');
+        G.players[0].isAI = true;
+        G.players[1].isDropped = true;
+        expect(wrapper.achievements(G).map((row) => row.seat)).to.deep.equal([2]);
+        G.newTurn = false;
+        expect(wrapper.achievements(G)).to.deep.equal([]);
+        G.newTurn = true;
+        G.phase = Phase.Move;
+        expect(wrapper.achievements(G)).to.deep.equal([]);
+        expect(wrapper.achievements(setup(3, { offshoreIsland: true }, 'offshore-ongoing'))).to.deep.equal([]);
     });
 
     it('checks every numeric and diversity boundary independently of winning', () => {

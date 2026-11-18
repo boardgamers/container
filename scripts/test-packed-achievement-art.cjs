@@ -10,12 +10,21 @@ const { setup } = require(path.join(packed, 'dist/index.js'));
 const manifest = require(path.join(root, 'docs/achievement-art/manifest.json'));
 assert.equal(require(path.join(packed, 'package.json')).version, manifest.engineVersion);
 const definitions = hooks.achievementDefinitions();
-assert.equal(definitions.revision, manifest.revision);
+assert.equal(definitions.revision, 4);
+const historical = definitions.achievements.filter((a) => !a.id.startsWith('offshore-'));
+const expansion = definitions.achievements.filter((a) => a.id.startsWith('offshore-'));
 assert.deepEqual(
-    definitions.achievements.map((a) => a.id),
+    expansion.map((a) => [a.id, a.icon]),
+    [
+        ['offshore-win', { type: 'text', text: 'OI' }],
+        ['offshore-trader', { type: 'text', text: 'BANK' }],
+    ]
+);
+assert.deepEqual(
+    historical.map((a) => a.id),
     manifest.assets.map((a) => a.id)
 );
-for (const a of definitions.achievements) {
+for (const a of historical) {
     assert.deepEqual(a.icon, { type: 'asset', key: `achievement-${a.id}` });
     assert.ok(fs.existsSync(path.join(root, 'docs/achievement-art', `${a.icon.key}.png`)));
 }
@@ -42,5 +51,5 @@ for (const n of [3, 4, 5]) {
     }
 }
 console.log(
-    'PASS: exact extracted 2.1.10 package, revision 3, all 17 asset refs, legal 3/4/5-player completion and replay'
+    'PASS: exact extracted 2.1.10 package, revision 4, 17 historical asset refs and 2 text badges, legal 3/4/5-player completion and replay'
 );
