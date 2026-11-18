@@ -439,6 +439,23 @@
                         />
                     </template>
 
+                    <rect
+                        v-for="zone in bankBidZones"
+                        :key="'bank-bid-' + zone.district"
+                        class="bank-bid-storage-zone"
+                        :data-district="zone.district"
+                        :data-owner="player"
+                        :x="6 + player * 250"
+                        :y="zone.y"
+                        :width="zone.width"
+                        height="44"
+                        fill="none"
+                        stroke="blue"
+                        stroke-width="2px"
+                        rx="2px"
+                        pointer-events="none"
+                    />
+
                     <template v-if="!preferences.disableHelp && !bankCashOffer">
                         <template v-if="ui.dragged == null && ui.selected == null">
                             <rect
@@ -1662,6 +1679,15 @@ export default class Game extends Vue {
         return [...p.containersOnFactoryStore, ...p.containersOnWarehouseStore]
             .filter((c) => !c.moved)
             .map((c) => ({ ...c.piece, price: c.price }));
+    }
+    get bankBidZones() {
+        if (!this.bankCashOffer) return [];
+        const eligible = new Set(this.bankBidCargo.map((c) => c.id));
+        const p = this.G!.players[this.player!];
+        return [
+            { district: 'factory', cargo: p.containersOnFactoryStore, y: 158, width: 188 },
+            { district: 'warehouse', cargo: p.containersOnWarehouseStore, y: 248, width: 236 },
+        ].filter((zone) => zone.cargo.some((c) => eligible.has(c.piece.id)));
     }
     get bankContainerHighlights() {
         return this.bankCashOffer ? this.bankBidCargo.map((c) => c.id) : [];

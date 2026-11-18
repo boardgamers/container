@@ -281,6 +281,35 @@ describe('Offshore bank viewer', () => {
         wrapper.destroy();
     });
 
+    it('highlights only own storage zones containing eligible bid cargo', async () => {
+        const { wrapper, state, player, own } = gameFixture();
+        const normalOutlines = wrapper.findAll('rect[stroke="blue"]').length;
+        const bank = wrapper.findComponent(OffshoreBank);
+        bank.vm.$emit('choose-offer', { type: 'cash', lot: 1 });
+        await wrapper.vm.$nextTick();
+        const zones = () => wrapper.findAll('.bank-bid-storage-zone');
+        expect(zones().wrappers.map((z) => z.attributes('data-district'))).toEqual(['factory', 'warehouse']);
+        expect(zones().wrappers.every((z) => z.attributes('data-owner') === String(player))).toBe(true);
+        expect(zones().wrappers.every((z) => z.attributes('pointer-events') === 'none')).toBe(true);
+        expect(wrapper.findAll('rect[stroke="blue"]').length).toBe(2);
+        own.containersOnFactoryStore.forEach((c) => (c.moved = true));
+        await wrapper.setProps({ state: JSON.parse(JSON.stringify(state)) });
+        bank.vm.$emit('choose-offer', { type: 'cash', lot: 1 });
+        await wrapper.vm.$nextTick();
+        expect(zones().wrappers.map((z) => z.attributes('data-district'))).toEqual(['warehouse']);
+        own.containersOnWarehouseStore = [];
+        await wrapper.setProps({ state: JSON.parse(JSON.stringify(state)) });
+        bank.vm.$emit('choose-offer', { type: 'cash', lot: 1 });
+        await wrapper.vm.$nextTick();
+        expect(zones().length).toBe(0);
+        bank.vm.$emit('cancel-draft');
+        await wrapper.vm.$nextTick();
+        expect(zones().length).toBe(0);
+        expect(normalOutlines).toBeGreaterThan(0);
+        expect(wrapper.findAll('rect[stroke="blue"]').length).toBeGreaterThan(0);
+        wrapper.destroy();
+    });
+
     it('requires explicit confirmation for multiple cargo pieces and supports cancel', async () => {
         const { wrapper, submitted, factory, warehouse } = gameFixture();
         wrapper.findComponent(OffshoreBank).vm.$emit('choose-offer', { type: 'cash', lot: 1 });

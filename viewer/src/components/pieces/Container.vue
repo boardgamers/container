@@ -58,10 +58,6 @@ export default class Container extends Mixins(Piece) {
 .bid-eligible {
     cursor: pointer;
 }
-.bid-eligible > rect {
-    stroke: blue;
-    stroke-width: 1.5;
-}
 .bid-selected > rect {
     stroke: #ffe154;
     stroke-width: 2.5;

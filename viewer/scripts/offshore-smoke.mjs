@@ -163,6 +163,22 @@ try {
         state.players[player].containersOnWarehouseStore.push({ piece: second, price: 3, moved: false });
         await push();
         await page.locator('.offshore-lot[data-type="cash"][data-lot="1"]').click();
+        assert.deepEqual(
+            await page
+                .locator('.bank-bid-storage-zone')
+                .evaluateAll((els) => els.map((el) => [el.dataset.district, el.dataset.owner])),
+            [
+                ['factory', String(player)],
+                ['warehouse', String(player)],
+            ]
+        );
+        assert.equal(
+            await page
+                .locator(`.piece.bid-eligible[data-piece-id="${offered.id}"] > rect`)
+                .evaluate((el) => getComputedStyle(el).stroke),
+            'rgb(33, 52, 59)',
+            'eligible cargo retains its normal border'
+        );
         await page.locator(`.piece.bid-eligible[data-piece-id="${offered.id}"]`).click();
         await checkDraft('cash', 1);
         assert.equal(await page.locator('.bank-lot-draft [data-piece-id]').count(), 1);
@@ -173,8 +189,8 @@ try {
         assert.equal(await page.locator('.piece.bid-selected').count(), 2);
         assert.equal(
             await page.locator('rect[stroke="blue"]').count(),
-            0,
-            'no sidebar frame or ordinary action outlines'
+            2,
+            'only the two eligible own storage zones have action outlines'
         );
         const selectedPiece = page.locator(`.piece[data-piece-id="${second.id}"]`);
         await selectedPiece.focus();
@@ -190,6 +206,8 @@ try {
         assert.equal(await page.locator('.bank-lot-draft [data-piece-id]').count(), 0);
         await page.getByRole('button', { name: 'Cancel', exact: true }).click();
         assert.equal(await page.locator('.bid-eligible, .bid-selected, .bank-draft').count(), 0);
+        assert.equal(await page.locator('.bank-bid-storage-zone').count(), 0);
+        assert.ok((await page.locator('rect[stroke="blue"]').count()) > 0, 'cancel restores normal action outlines');
         assert.ok((await page.locator('.piece.canDrag').count()) > 0, 'cancel restores ordinary actions');
         assert.equal(await page.evaluate(() => moves.length), 0);
         await page.locator('.offshore-lot[data-type="cash"][data-lot="1"]').click();
