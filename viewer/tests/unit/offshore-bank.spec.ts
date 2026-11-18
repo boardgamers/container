@@ -198,6 +198,89 @@ describe('Offshore bank viewer', () => {
         wrapper.destroy();
     });
 
+    it('previews the local bidder instead of public escrow, restores it on cancel, and rejects a small bid', async () => {
+        const { state, player, factory, warehouse, refresh, render } = fixture();
+        const opponent = (player + 1) % state.players.length;
+        const escrow = state.containersLeft.pop()!;
+        state.offshoreBank!.auctions = [
+            {
+                type: 'cash',
+                lot: 1,
+                bidder: opponent,
+                containers: [{ source: 'factory', container: { piece: escrow, price: 2, moved: false } }],
+                cash: 0,
+            } as any,
+        ];
+        refresh();
+        const before = JSON.stringify(state.offshoreBank);
+        const wrapper = render();
+        await wrapper.setProps({ selectedOffer: { type: 'cash', lot: 1 }, draftCargo: [], validDraft: false });
+        expect(wrapper.find('.bank-draft-action').text()).toContain('Cancel');
+        expect(wrapper.find('.bank-lot-draft').findComponent(PlayerToken).props('owner')).toBe(player);
+        expect(wrapper.find('.bank-bidder').exists()).toBe(false);
+        await wrapper.setProps({ draftCargo: [factory] });
+        expect(wrapper.find('.bank-draft-action').attributes('aria-disabled')).toBe('true');
+        await wrapper.find('.bank-draft-action').trigger('click');
+        expect(wrapper.emitted('confirm-draft')).toBeUndefined();
+        await wrapper.setProps({ draftCargo: [factory, warehouse], validDraft: true });
+        expect(wrapper.find('.bank-lot-draft').findAll('[data-piece-id]').length).toBe(2);
+        await wrapper.setProps({ draftCargo: [] });
+        expect(wrapper.find('.bank-lot-draft').findAll('[data-piece-id]').length).toBe(0);
+        await wrapper.find('.bank-draft-action').trigger('click');
+        expect(wrapper.emitted('cancel-draft')).toHaveLength(1);
+        expect(wrapper.emitted('confirm-draft')).toBeUndefined();
+        await wrapper.setProps({ draftCargo: null, selectedOffer: null });
+        expect(wrapper.find('.bank-bidder').findComponent(PlayerToken).props('owner')).toBe(opponent);
+        expect(wrapper.find(`[data-piece-id="${escrow.id}"]`).exists()).toBe(true);
+        expect(JSON.stringify(state.offshoreBank)).toBe(before);
+        await wrapper.setProps({ player: undefined, selectedOffer: { type: 'cash', lot: 1 }, draftCargo: [factory] });
+        expect(wrapper.find('.bank-lot-draft').exists()).toBe(false);
+        expect(wrapper.find('.bank-draft-action').exists()).toBe(false);
+        wrapper.destroy();
+    });
+
+    it('validates selected board cargo against the existing public bid and toggles the preview', async () => {
+        const { wrapper, state, player, own, factory, warehouse, submitted } = gameFixture();
+        state.offshoreBank!.auctions = [
+            {
+                type: 'cash',
+                lot: 1,
+                bidder: (player + 1) % 3,
+                containers: [
+                    { source: 'factory', container: { piece: state.containersLeft.pop()!, price: 2, moved: false } },
+                ],
+                cash: 0,
+            } as any,
+        ];
+        own.availableMoves = availableMoves(state, own);
+        await wrapper.setProps({ state: JSON.parse(JSON.stringify(state)) });
+        await wrapper.vm.$nextTick();
+        const bank = wrapper.findComponent(OffshoreBank);
+        bank.vm.$emit('choose-offer', { type: 'cash', lot: 1 });
+        await wrapper.vm.$nextTick();
+        const piece = (id: string) =>
+            wrapper.findAllComponents(Container).wrappers.find((p) => p.props('pieceId') === id)!;
+        piece(factory.id).vm.$emit('bid-select');
+        await wrapper.vm.$nextTick();
+        expect(bank.props('validDraft')).toBe(false);
+        expect(bank.props('draftCargo').map((p) => p.id)).toEqual([factory.id]);
+        piece(warehouse.id).vm.$emit('bid-select');
+        await wrapper.vm.$nextTick();
+        expect(bank.props('validDraft')).toBe(true);
+        piece(factory.id).vm.$emit('bid-select');
+        await wrapper.vm.$nextTick();
+        expect(bank.props('draftCargo').map((p) => p.id)).toEqual([warehouse.id]);
+        expect(bank.props('validDraft')).toBe(false);
+        piece(warehouse.id).vm.$emit('bid-select');
+        await wrapper.vm.$nextTick();
+        expect(bank.props('draftCargo')).toEqual([]);
+        bank.vm.$emit('cancel-draft');
+        await wrapper.vm.$nextTick();
+        expect(submitted).toEqual([]);
+        expect(bank.props('draftCargo')).toBe(null);
+        wrapper.destroy();
+    });
+
     it('requires explicit confirmation for multiple cargo pieces and supports cancel', async () => {
         const { wrapper, submitted, factory, warehouse } = gameFixture();
         wrapper.findComponent(OffshoreBank).vm.$emit('choose-offer', { type: 'cash', lot: 1 });
@@ -211,8 +294,14 @@ describe('Offshore bank viewer', () => {
         }
         await wrapper.vm.$nextTick();
         expect(submitted.length).toBe(0);
-        const buttons = wrapper.find('.bank-draft').findAllComponents({ name: 'Button' });
-        buttons.at(0).vm.$emit('click');
+        expect(wrapper.find('.bank-draft').exists()).toBe(false);
+        expect(
+            wrapper
+                .findComponent(OffshoreBank)
+                .props('draftCargo')
+                .map((p) => p.id)
+        ).toEqual([factory.id, warehouse.id]);
+        wrapper.findComponent(OffshoreBank).vm.$emit('confirm-draft');
         await wrapper.vm.$nextTick();
         expect(submitted[0].slice(-1)[0]).toEqual({
             name: MoveName.CallBank,
@@ -227,7 +316,7 @@ describe('Offshore bank viewer', () => {
         const before = wrapper.findAllComponents(Container).wrappers.map((p) => !!p.props('canDrag'));
         wrapper.findComponent(OffshoreBank).vm.$emit('choose-offer', { type: 'cash', lot: 0 });
         await wrapper.vm.$nextTick();
-        wrapper.find('.bank-draft').findAllComponents({ name: 'Button' }).at(1).vm.$emit('click');
+        wrapper.findComponent(OffshoreBank).vm.$emit('cancel-draft');
         await wrapper.vm.$nextTick();
         expect(wrapper.find('.bank-draft').exists()).toBe(false);
         expect(submitted.length).toBe(0);

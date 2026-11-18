@@ -1,6 +1,24 @@
 <template>
     <g v-if="state.options.offshoreIsland && bank" class="offshore-bank">
         <g transform="translate(20 680)" class="bank-board">
+            <g v-if="editingCargo" class="bank-draft-focus">
+                <rect
+                    :x="selectedOffer.lot * 104 - 4"
+                    y="-4"
+                    width="108"
+                    height="112"
+                    fill="none"
+                    pointer-events="none"
+                />
+                <Button
+                    class="bank-draft-action"
+                    transform="translate(212 -54)"
+                    :width="100"
+                    :text="draftCargo.length ? 'Bid' : 'Cancel'"
+                    :enabled="!draftCargo.length || validDraft"
+                    @click="draftCargo.length ? $emit('confirm-draft') : $emit('cancel-draft')"
+                />
+            </g>
             <text x="0" y="-24" font-size="10" fill="#45585b">OFFSHORE BANK</text>
             <g v-for="(label, i) in ['I', 'II', 'III']" :key="label" class="bank-lot-guide">
                 <title>Lot order: payments start at I, then cycle through II and III, skipping active auctions.</title>
@@ -66,7 +84,7 @@
                     <path class="bank-bid-zone" d="M1 66 H99 V103 H1 Z" fill="#d2d5cb" pointer-events="none" />
                     <path d="M1 66 H99" stroke="#899997" pointer-events="none" />
                     <text
-                        v-if="!auction(type, i - 1)"
+                        v-if="!auction(type, i - 1) && offer(type, i - 1) && !isDraft(type, i - 1)"
                         x="50"
                         y="89"
                         text-anchor="middle"
@@ -92,7 +110,17 @@
                         :columns="3"
                         :rows="2"
                     />
-                    <g v-if="auction(type, i - 1)">
+                    <g v-if="isDraft(type, i - 1)" class="bank-lot-draft">
+                        <PlayerToken
+                            class="bank-draft-bidder"
+                            transform="translate(16 86)"
+                            :owner="player"
+                            :name="owner(player)"
+                            :color="playerColors[player]"
+                        />
+                        <OffshoreCargo :pieces="draftCargo" transform="translate(32 69)" :columns="2" :rows="1" />
+                    </g>
+                    <g v-else-if="auction(type, i - 1)">
                         <PlayerToken
                             class="bank-bidder"
                             transform="translate(16 86)"
@@ -259,7 +287,7 @@
 </template>
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import { BankAuction, BankAuctionType, GameState, ShipPosition } from 'container-engine/src/gamestate';
+import { BankAuction, BankAuctionType, ContainerPiece, GameState, ShipPosition } from 'container-engine/src/gamestate';
 import { AvailableMoves } from 'container-engine/src/available-moves';
 import { playerColors } from 'container-engine/src/engine';
 import { Move, MoveName, Moves } from 'container-engine/src/move';
@@ -275,6 +303,18 @@ export default class OffshoreBank extends Vue {
     @Prop() selectedOffer?: { type: BankAuctionType; lot: number };
     @Prop({ default: () => ({}) }) availableMoves!: AvailableMoves;
     @Prop({ default: () => playerColors }) playerColors!: string[];
+    @Prop({ default: null }) draftCargo!: ContainerPiece[] | null;
+    @Prop({ default: false }) validDraft!: boolean;
+    get editingCargo() {
+        return (
+            this.draftCargo !== null &&
+            this.selectedOffer?.type === 'cash' &&
+            this.offer(this.selectedOffer.type, this.selectedOffer.lot)
+        );
+    }
+    isDraft(type: BankAuctionType, lot: number) {
+        return this.editingCargo && this.selectedOffer?.type === type && this.selectedOffer?.lot === lot;
+    }
     names = MoveName;
     decisionPage = 0;
     get decisionPages() {

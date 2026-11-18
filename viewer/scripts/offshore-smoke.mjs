@@ -87,7 +87,7 @@ try {
             assert.equal(await selected.getAttribute('aria-pressed'), 'true');
             assert.equal(await selected.evaluate((el) => getComputedStyle(el).stroke), 'rgb(0, 0, 255)');
             assert.equal(await page.locator('.bank-bid-guidance').count(), 0);
-            const draft = page.locator('.bank-draft');
+            const draft = page.locator(type === 'cash' ? '.bank-draft-focus' : '.bank-draft');
             await draft.scrollIntoViewIfNeeded();
             const bounds = await draft.boundingBox();
             const svg = await draft.evaluate((el) => {
@@ -164,14 +164,17 @@ try {
         await push();
         await page.locator('.offshore-lot[data-type="cash"][data-lot="1"]').click();
         await page.locator(`.piece.bid-eligible[data-piece-id="${offered.id}"]`).click();
+        await checkDraft('cash', 1);
+        assert.equal(await page.locator('.bank-lot-draft [data-piece-id]').count(), 1);
+        await page.screenshot({ path: `/tmp/container-offshore-cargo-one-${width}.png`, fullPage: true });
         await page.locator(`.piece.bid-eligible[data-piece-id="${second.id}"]`).click();
         assert.equal(await page.evaluate(() => moves.length), 0, 'selection never auto-submits');
         assert.equal(await page.locator('.piece.canDrag, .loan.canDrag, .offshore-lot.legal').count(), 0);
         assert.equal(await page.locator('.piece.bid-selected').count(), 2);
         assert.equal(
             await page.locator('rect[stroke="blue"]').count(),
-            1,
-            'only draft frame remains, no ordinary action outlines'
+            0,
+            'no sidebar frame or ordinary action outlines'
         );
         const selectedPiece = page.locator(`.piece[data-piece-id="${second.id}"]`);
         await selectedPiece.focus();
@@ -182,6 +185,9 @@ try {
         if (width < 600) await page.locator('.player-board-tab').nth(player).click();
         await page.screenshot({ path: `/tmp/container-offshore-cargo-focus-${width}.png`, fullPage: true });
 
+        await page.locator(`.piece.bid-eligible[data-piece-id="${offered.id}"]`).click();
+        await page.locator(`.piece.bid-eligible[data-piece-id="${second.id}"]`).click();
+        assert.equal(await page.locator('.bank-lot-draft [data-piece-id]').count(), 0);
         await page.getByRole('button', { name: 'Cancel', exact: true }).click();
         assert.equal(await page.locator('.bid-eligible, .bid-selected, .bank-draft').count(), 0);
         assert.ok((await page.locator('.piece.canDrag').count()) > 0, 'cancel restores ordinary actions');
@@ -195,10 +201,14 @@ try {
         }
         await checkDraft('cash', 1);
         await page.screenshot({ path: `/tmp/container-offshore-cargo-draft-${width}.png`, fullPage: true });
-        const confirmBounds = await page.getByRole('button', { name: 'Confirm offer', exact: true }).boundingBox();
-        const cancelBounds = await page.getByRole('button', { name: 'Cancel', exact: true }).boundingBox();
-        assert.equal(confirmBounds.y, cancelBounds.y, 'cargo actions share one row');
-        await page.getByRole('button', { name: 'Confirm offer', exact: true }).click();
+        assert.equal(await page.locator('.bank-draft-action').count(), 1);
+        assert.deepEqual(
+            await page
+                .locator('.bank-lot-draft [data-piece-id]')
+                .evaluateAll((els) => els.map((el) => el.dataset.pieceId)),
+            [offered.id, second.id]
+        );
+        await page.locator('.bank-draft-action').click();
         const cargoBid = await page.evaluate(() => moves.at(-1));
         assert.equal(cargoBid.at(-1).name, 'callBank');
         assert.equal(cargoBid.at(-1).data.lot, 1);
