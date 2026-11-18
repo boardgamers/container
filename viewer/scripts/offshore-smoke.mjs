@@ -73,7 +73,16 @@ try {
         await page.waitForSelector('.offshore-bank .offshore-lot', { state: 'attached' });
         assert.equal(await page.locator('.offshore-bank .offshore-lot').count(), 6);
         assert.equal(await page.locator('text=OPTIONAL EXPANSION').count(), 0);
+        const lotBounds = await page.locator('.offshore-lot[data-type="containers"][data-lot="2"]').boundingBox();
+        const pierBounds = await page.locator('.bank-piers').boundingBox();
+        assert.ok(pierBounds.x >= lotBounds.x + lotBounds.width, 'harbor is beside the bank lots');
+        assert.ok(pierBounds.x - lotBounds.x - lotBounds.width < 12, 'harbor joins the bank, not a distant area');
+        assert.equal(await page.getByText('BANK HARBOR', { exact: true }).count(), 0);
         await page.locator('.offshore-lot[data-type="containers"][data-lot="2"]').click();
+        assert.equal(
+            (await page.locator('.bank-bid-guidance').textContent()).trim(),
+            'Bid cash to win these containers.'
+        );
         const calculator = page.locator('[data-tutorial="bank-bid"]');
         await calculator.focus();
         await calculator.press('9');
@@ -89,10 +98,9 @@ try {
         assert.equal(bid.at(-1).data.lot, 2);
         for (const action of bid) state = engine.move(state, action, player);
         await push();
-        assert.match(
-            await page.locator('.offshore-lot[data-type="containers"][data-lot="2"]').locator('..').textContent(),
-            /\$2/
-        );
+        assert.match(await page.locator('.bank-bid-amount').textContent(), /^2/);
+        assert.equal(await page.locator('.bank-bid-amount').getAttribute('font-size'), '16');
+        assert.ok(!(await page.locator('.bank-bid-amount').textContent()).includes('$'));
 
         // A fresh turn fixture: calling the bank twice in one turn is illegal.
         state = engine.setup(3, { offshoreIsland: true }, 'offshore-browser');

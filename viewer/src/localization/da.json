@@ -721,5 +721,8 @@
     "orange container: ${p0}": "orange container: ${p0}",
     "tan container: ${p0}": "tan container: ${p0}",
     "white container: ${p0}": "white container: ${p0}",
-    "dark green container: ${p0}": "dark green container: ${p0}"
+    "dark green container: ${p0}": "dark green container: ${p0}",
+    "Bid containers to win this cash.": "Bid containers to win this cash.",
+    "Bid cash to win these containers.": "Bid cash to win these containers.",
+    "Lot order: payments start at I, then cycle through II and III, skipping active auctions.": "Lot order: payments start at I, then cycle through II and III, skipping active auctions."
 }

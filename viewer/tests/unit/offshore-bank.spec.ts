@@ -61,6 +61,20 @@ describe('Offshore bank viewer', () => {
         wrapper.destroy();
     });
 
+    it('distinguishes lot order from cash using a single guide and sale-price typography', () => {
+        const { render } = fixture();
+        const wrapper = render();
+        expect(wrapper.findAll('.bank-lot-guide text').wrappers.map((node) => node.text())).toEqual(['I', 'II', 'III']);
+        const money = wrapper.findAll('.bank-money');
+        expect(money.wrappers.map((node) => node.text())).toEqual(['1', '2', '3']);
+        expect(money.wrappers.every((node) => node.attributes('font-size') === '16')).toBe(true);
+        expect(wrapper.find('.bank-piers').exists()).toBe(true);
+        expect(wrapper.text()).not.toContain('BANK HARBOR');
+        expect(wrapper.findAll('.offshore-lot title').at(0).text()).toBe('Bid containers to win this cash.');
+        expect(wrapper.findAll('.offshore-lot title').at(3).text()).toBe('Bid cash to win these containers.');
+        wrapper.destroy();
+    });
+
     it('selects the exact type and lot through all six SVG lots', async () => {
         const { render } = fixture();
         const wrapper = render();
@@ -217,7 +231,7 @@ describe('Offshore bank viewer', () => {
         };
         refresh();
         wrapper = render();
-        expect(wrapper.text()).toContain('Lot 1');
+        expect(wrapper.text()).toContain('Lot I');
         await wrapper.find('.bank-choice [role="button"]').trigger('click');
         expect(wrapper.emitted('move')![0][0].name).toBe(MoveName.DistributeBankContainer);
         wrapper.destroy();
@@ -249,6 +263,32 @@ describe('Offshore bank viewer', () => {
         const action = wrapper.emitted('move')![0][0];
         expect(legalBankAction(state, player, action)).toBe(true);
         wrapper.destroy();
+    });
+
+    it('places five bank ships in separate berths beside the lots', () => {
+        const state = setup(5, { offshoreIsland: true }, 'bank-berths');
+        state.players.forEach((p) => {
+            p.ship.shipPosition = ShipPosition.OffshoreBank;
+        });
+        const game = shallowMount(Game, {
+            propsData: {
+                state,
+                player: state.currentPlayers[0],
+                emitter: new EventEmitter(),
+                preferences: { sound: false },
+            },
+        });
+        const ships = (game.vm as any).ships;
+        expect(ships).toHaveLength(5);
+        ships.forEach((ship, i) => {
+            expect(ship.rotate).toBe(90);
+            // A 30×80 ship rotated around (15,40) spans x-25..x+55 and y+25..y+55.
+            expect(ship.x - 25).toBeGreaterThanOrEqual(342);
+            expect(ship.x + 55).toBeLessThanOrEqual(444);
+            expect(ship.y + 25).toBe(690 + i * 44);
+            expect(ship.y + 55).toBeLessThan(724 + i * 44);
+        });
+        game.destroy();
     });
 
     it('renders bank ships at finite coordinates and permits arrival loading only', async () => {

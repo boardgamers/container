@@ -1,21 +1,28 @@
 <template>
     <g v-if="state.options.offshoreIsland && bank" class="offshore-bank">
         <g transform="translate(20 680)" class="bank-board">
-            <text x="0" y="-12" font-size="10" fill="#45585b">OFFSHORE BANK</text>
+            <text x="0" y="-24" font-size="10" fill="#45585b">OFFSHORE BANK</text>
+            <g v-for="(label, i) in ['I', 'II', 'III']" :key="label" class="bank-lot-guide">
+                <title>Lot order: payments start at I, then cycle through II and III, skipping active auctions.</title>
+                <rect :x="i * 104" y="-18" width="100" height="16" fill="transparent" />
+                <text :x="50 + i * 104" y="-9" text-anchor="middle" font-size="10" fill="#45585b" translate="no">{{
+                    label
+                }}</text>
+            </g>
             <template v-for="(type, row) in ['cash', 'containers']">
                 <g
                     v-for="i in 3"
                     :key="type + i"
                     @click.stop="chooseOffer(type, i - 1)"
-                    :transform="`translate(${(i - 1) * 88} ${row * 88})`"
+                    :transform="`translate(${(i - 1) * 104} ${row * 110})`"
                 >
                     <rect
                         class="offshore-lot"
                         :class="{ legal: offer(type, i - 1) }"
                         :data-type="type"
                         :data-lot="i - 1"
-                        width="84"
-                        height="82"
+                        width="100"
+                        height="104"
                         fill="#e2e0d3"
                         stroke="#899997"
                         :role="offer(type, i - 1) ? 'button' : undefined"
@@ -32,12 +39,17 @@
                         @keydown.enter.prevent.stop="chooseOffer(type, i - 1)"
                         @keydown.space.prevent.stop="chooseOffer(type, i - 1)"
                     >
-                        <title>{{ type === 'cash' ? 'Cash' : 'Container' }} lot {{ i }}</title>
+                        <title>
+                            {{
+                                type === 'cash'
+                                    ? 'Bid containers to win this cash.'
+                                    : 'Bid cash to win these containers.'
+                            }}
+                        </title>
                     </rect>
-                    <text x="77" y="12" text-anchor="end" font-size="8" pointer-events="none">{{ i }}</text>
-                    <text v-if="type === 'cash'" x="6" y="18" font-size="14" pointer-events="none"
-                        >${{ bank.cashLots[i - 1] }}</text
-                    >
+                    <text v-if="type === 'cash'" class="bank-money" x="6" y="18" font-size="16" pointer-events="none">{{
+                        bank.cashLots[i - 1]
+                    }}</text>
                     <OffshoreCargo
                         v-else
                         :pieces="bank.containerLots[i - 1]"
@@ -48,25 +60,25 @@
                     <g v-if="auction(type, i - 1)">
                         <rect
                             x="1"
-                            :y="type === 'cash' ? 25 : 70"
+                            :y="type === 'cash' ? 29 : 87"
                             width="3"
                             height="11"
                             :fill="playerColors[auction(type, i - 1).bidder]"
                         />
                         <title translate="no">{{ owner(auction(type, i - 1).bidder) }}</title>
-                        <text x="6" :y="type === 'cash' ? 31 : 76" font-size="8" fill="#203a45" translate="no"
-                            >{{ playerLabel(auction(type, i - 1).bidder)
+                        <text x="6" :y="type === 'cash' ? 36 : 94" font-size="12" fill="#203a45" translate="no"
+                            >{{ playerLabel(auction(type, i - 1).bidder, 6)
                             }}<title translate="no">{{ owner(auction(type, i - 1).bidder) }}</title></text
                         >
                         <OffshoreCargo
                             v-if="type === 'cash'"
                             :pieces="escrow(auction(type, i - 1))"
-                            transform="translate(6 36)"
+                            transform="translate(6 44)"
                             :columns="3"
                             :rows="2"
                         />
-                        <text v-else x="78" y="76" font-size="10" text-anchor="end"
-                            >${{ auction(type, i - 1).cash }}</text
+                        <text v-else class="bank-money bank-bid-amount" x="94" y="94" font-size="16" text-anchor="end"
+                            >{{ auction(type, i - 1).cash }}<title>Cash bid</title></text
                         >
                     </g>
                 </g>
@@ -79,16 +91,19 @@
                 @click="emitMove({ name: names.Sail, data: 'offshoreBank' })"
             />
         </g>
-        <text x="1100" y="665" font-size="9" fill="#45585b">BANK HARBOR</text>
+        <g class="bank-piers" pointer-events="none" transform="translate(332 680)">
+            <rect width="10" height="230" fill="#c6c6b8" />
+            <rect v-for="i in 6" :key="i" x="10" :y="(i - 1) * 44" width="102" height="10" fill="#c6c6b8" />
+        </g>
         <g
             v-for="({ p, i }, index) in holdings"
             :key="'holding' + i"
-            :transform="`translate(${600 + Math.floor(index / 3) * 240} ${680 + (index % 3) * 85})`"
+            :transform="`translate(${750 + Math.floor(index / 3) * 240} ${680 + (index % 3) * 85})`"
             class="bank-holding"
             :data-owner="i"
         >
             <rect x="0" y="-8" width="3" height="12" :fill="playerColors[i]" />
-            <text x="7" y="0" font-size="10" fill="#203a45" translate="no"
+            <text x="7" y="0" font-size="12" fill="#203a45" translate="no"
                 >{{ playerLabel(i) }}<title translate="no">{{ owner(i) }}: bank holding</title></text
             >
             <OffshoreCargo
@@ -104,7 +119,7 @@
                 @select="loadContainer"
             />
         </g>
-        <g v-if="bank.decision" class="bank-decision" transform="translate(310 680)">
+        <g v-if="bank.decision" class="bank-decision" transform="translate(470 680)">
             <text x="0" y="0" font-size="14">{{ decisionTitle }}</text>
             <template v-if="!decisionMoves.length">
                 <text x="0" y="20" font-size="12" fill="#203a45" translate="no"
@@ -115,7 +130,7 @@
             </template>
             <template v-else>
                 <text v-if="bank.decision.kind === 'distribute'" x="0" y="20" font-size="11"
-                    >Lot {{ distributionLot + 1 }}</text
+                    >Lot {{ ['I', 'II', 'III'][distributionLot] }}</text
                 >
                 <g
                     v-for="(choice, index) in visibleDecisions"
@@ -143,9 +158,9 @@
                                 fill="#c6c6b8"
                                 stroke="#899997"
                             />
-                            <text :x="42 + (price - 1) * 30" y="12" text-anchor="middle" font-size="11"
-                                >${{ price }}</text
-                            >
+                            <text :x="42 + (price - 1) * 30" y="12" text-anchor="middle" font-size="16">{{
+                                price
+                            }}</text>
                         </g>
                     </template>
                     <g
@@ -270,9 +285,9 @@ export default class OffshoreBank extends Vue {
     owner(index: number) {
         return this.state.players[index]?.name || String(index + 1);
     }
-    playerLabel(index: number) {
+    playerLabel(index: number, limit = 18) {
         const name = this.owner(index);
-        return name.length > 10 ? name.slice(0, 9) + '…' : name;
+        return name.length > limit ? name.slice(0, limit - 1) + '…' : name;
     }
     auction(type: BankAuctionType, lot: number) {
         return this.bank?.auctions.find((a) => a.type === type && a.lot === lot);

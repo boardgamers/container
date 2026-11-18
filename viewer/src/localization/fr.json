@@ -721,5 +721,8 @@
     "orange container: ${p0}": "Conteneur orange : {p0} $",
     "tan container: ${p0}": "Conteneur beige : {p0} $",
     "white container: ${p0}": "Conteneur blanc : {p0} $",
-    "dark green container: ${p0}": "Conteneur vert foncé : {p0} $"
+    "dark green container: ${p0}": "Conteneur vert foncé : {p0} $",
+    "Bid containers to win this cash.": "Misez des conteneurs pour cet argent.",
+    "Bid cash to win these containers.": "Misez de l’argent pour ces conteneurs.",
+    "Lot order: payments start at I, then cycle through II and III, skipping active auctions.": "Les paiements commencent au lot I, puis passent à II et III en boucle, en sautant les enchères en cours."
 }

@@ -205,9 +205,10 @@
                     </g>
                     <DropZone
                         v-if="G && G.options.offshoreIsland"
-                        transform="translate(1100 665)"
-                        :width="140"
-                        :height="240"
+                        class="bank-harbor"
+                        transform="translate(342 690)"
+                        :width="102"
+                        :height="210"
                         :enabled="true"
                         :accepts="'ship'"
                         :data="{ type: 'offshoreBank' }"
@@ -372,9 +373,17 @@
                         </template>
                     </template>
 
-                    <g v-if="bankDraft && canMove" class="bank-draft" transform="translate(310 680)">
-                        <text x="0" y="-8" font-size="12">
-                            {{ bankDraft.type === 'cash' ? 'Offer cargo' : 'Offer cash' }} · Lot {{ bankDraft.lot + 1 }}
+                    <g v-if="bankDraft && canMove" class="bank-draft" transform="translate(470 700)">
+                        <text x="0" y="-26" font-size="12">
+                            {{ bankDraft.type === 'cash' ? 'Offer cargo' : 'Offer cash' }} · Lot
+                            {{ ['I', 'II', 'III'][bankDraft.lot] }}
+                        </text>
+                        <text class="bank-bid-guidance" x="0" y="-9" font-size="12" fill="#45585b">
+                            {{
+                                bankDraft.type === 'cash'
+                                    ? 'Bid containers to win this cash.'
+                                    : 'Bid cash to win these containers.'
+                            }}
                         </text>
                         <Calculator
                             v-if="bankDraft.type === 'containers'"
@@ -1180,8 +1189,8 @@ export default class Game extends Vue {
                 case ShipPosition.OffshoreBank:
                     this.ships.push({
                         id: player.ship.piece.id,
-                        x: 1125,
-                        y: 670 + pi * 45,
+                        x: 373,
+                        y: 665 + pi * 44,
                         rotate: 90,
                         color,
                         containers: player.ship.containers,
