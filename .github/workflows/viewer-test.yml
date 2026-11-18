@@ -4,12 +4,18 @@ on:
         paths:
             - '.github/workflows/viewer-test.yml'
             - 'viewer/**'
+            - 'engine/**'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
         branches:
             - master
     pull_request:
         paths:
             - '.github/workflows/viewer-test.yml'
             - 'viewer/**'
+            - 'engine/**'
+            - 'pnpm-lock.yaml'
+            - 'pnpm-workspace.yaml'
 
 defaults:
     run:
@@ -18,8 +24,6 @@ defaults:
 jobs:
     test_and_build:
         runs-on: ubuntu-latest
-        env:
-            NODE_OPTIONS: --openssl-legacy-provider
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-node@v4
@@ -28,12 +32,14 @@ jobs:
             - uses: pnpm/action-setup@v4
               with:
                   version: 11
-            - run: pnpm install
+            - run: pnpm install --frozen-lockfile
             - run: pnpm --dir .. test:locales
-            # - run: pnpm lint
-            # - run: pnpm test
+            - run: pnpm check
+            - run: pnpm test:unit
+            - run: pnpm test:tutorial
             - run: pnpm build
             - run: pnpm --dir ../engine build
             - run: pnpm package
             - run: pnpm exec playwright install --with-deps chromium
             - run: pnpm test:browser
+            - run: pnpm test:offshore:browser

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+        <title>Container</title>
+    </head>
+    <body>
+        <noscript>
+            <strong>Container needs JavaScript enabled to run. Please enable it to continue.</strong>
+        </noscript>
+        <div id="app"></div>
+        <script type="module">
+            import process from 'process/browser';
+            globalThis.process = process;
+            import('/src/main.ts');
+        </script>
+    </body>
+</html>

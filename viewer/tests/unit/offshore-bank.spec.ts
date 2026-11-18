@@ -1,12 +1,14 @@
+import Calculator from '@/components/Calculator.vue';
 import Game from '@/components/Game.vue';
 import OffshoreBank from '@/components/OffshoreBank.vue';
+import OffshoreCargo from '@/components/OffshoreCargo.vue';
 import { legalBankAction } from '@/offshore-actions';
 import { escapeJournal, offshoreJournal } from '@/offshore-journal';
 import { mount, shallowMount } from '@vue/test-utils';
-import { expect } from 'chai';
 import { availableMoves, MoveName, setup } from 'container-engine';
 import { Phase, ShipPosition } from 'container-engine/src/gamestate';
 import { EventEmitter } from 'events';
+import { describe, expect, it } from 'vitest';
 
 function fixture() {
     const state = setup(3, { offshoreIsland: true }, 'offshore-viewer');
@@ -21,7 +23,10 @@ function fixture() {
     const refresh = () => (own.availableMoves = availableMoves(state, own));
     refresh();
     const render = () =>
-        mount(OffshoreBank, { propsData: { state, player, availableMoves: own.availableMoves, colorBlind: true } });
+        mount(OffshoreBank, {
+            provide: { __reactiveInject__: { preferences: { colorBlind: true } } },
+            propsData: { state, player, availableMoves: own.availableMoves, colorBlind: true },
+        });
     return { state, player, own, factory, warehouse, refresh, render };
 }
 
@@ -39,8 +44,8 @@ describe('Offshore bank viewer', () => {
             },
             state
         )!;
-        expect(text).to.equal('<Ada> calls bank for container lot 3: $4 in escrow.');
-        expect(escapeJournal(text)).to.contain('&lt;Ada&gt;');
+        expect(text).toBe('<Ada> calls bank for container lot 3: $4 in escrow.');
+        expect(escapeJournal(text)).toContain('&lt;Ada&gt;');
     });
     it('keeps classic games free of the expansion panel', () => {
         const state = setup(3, {}, 'classic-viewer');
@@ -52,51 +57,109 @@ describe('Offshore bank viewer', () => {
                 preferences: { sound: false },
             },
         });
-        expect(wrapper.findComponent(OffshoreBank).exists()).to.equal(false);
+        expect(wrapper.findComponent(OffshoreBank).exists()).toBe(false);
         wrapper.destroy();
     });
 
-    it('shows three lots of each kind and submits a real engine-legal cash bid', async () => {
-        const { render, state, player } = fixture();
+    it('selects the exact type and lot through all six SVG lots', async () => {
+        const { render } = fixture();
         const wrapper = render();
-        expect(wrapper.findAll('.offshore-lot').length).to.equal(6);
-        await wrapper.findAll('.offshore-lot').at(3).find('button').trigger('click');
-        await wrapper.find('input').setValue('2');
-        const before = JSON.stringify(state);
-        await wrapper.find('form').trigger('submit');
-        const action = wrapper.emitted('move')![0][0];
-        expect(action).to.deep.equal({
+        expect(wrapper.findAll('.offshore-lot').length).toBe(6);
+        for (const type of ['cash', 'containers'])
+            for (let lot = 0; lot < 3; lot++) {
+                await wrapper.find(`[data-type="${type}"][data-lot="${lot}"]`).trigger('click');
+                expect(wrapper.emitted('choose-offer')!.slice(-1)[0][0]).toEqual({ type, lot });
+            }
+        wrapper.destroy();
+    });
+
+    function gameFixture() {
+        const f = fixture();
+        const emitter = new EventEmitter();
+        const submitted: any[] = [];
+        emitter.on('move', (moves) => submitted.push(moves));
+        const wrapper = shallowMount(Game, {
+            propsData: { state: f.state, player: f.player, emitter, preferences: { sound: false } },
+        });
+        return { ...f, wrapper, submitted };
+    }
+
+    it('uses the selected cash-price lot, rejects invalid bids and clears stale drafts', async () => {
+        const { wrapper, own, submitted, state } = gameFixture();
+        wrapper.findComponent(OffshoreBank).vm.$emit('choose-offer', { type: 'containers', lot: 2 });
+        await wrapper.vm.$nextTick();
+        wrapper.findComponent(Calculator).vm.$emit('bid', own.money + 1);
+        await wrapper.vm.$nextTick();
+        expect(submitted.length).toBe(0);
+        expect(wrapper.find('.bank-draft').text()).toContain('Invalid offer');
+        wrapper.findComponent(Calculator).vm.$emit('bid', 2);
+        await wrapper.vm.$nextTick();
+        expect(submitted[0].slice(-1)[0]).toEqual({
             name: MoveName.CallBank,
-            data: { type: 'containers', lot: 0 },
+            data: { type: 'containers', lot: 2 },
             extraData: { cash: 2 },
         });
-        expect(legalBankAction(state, player, action)).to.equal(true);
-        expect(JSON.stringify(state)).to.equal(before);
+        expect(wrapper.find('.bank-draft').exists()).toBe(false);
+        await wrapper.setProps({ state: JSON.parse(JSON.stringify(state)) });
+        wrapper.findComponent(OffshoreBank).vm.$emit('choose-offer', { type: 'cash', lot: 1 });
+        await wrapper.vm.$nextTick();
+        await wrapper.setProps({ player: undefined });
+        expect(wrapper.find('.bank-draft').exists()).toBe(false);
         wrapper.destroy();
     });
 
-    it('selects specific factory and warehouse pieces for a cargo bid and rejects empty bids', async () => {
-        const { render, factory, warehouse } = fixture();
-        const wrapper = render();
-        await wrapper.find('.offshore-lot button').trigger('click');
-        expect(wrapper.find('button[type="submit"]').attributes('disabled')).to.equal('disabled');
-        await wrapper.find(`form [data-piece-id="${factory.id}"]`).trigger('click');
-        await wrapper.find(`form [data-piece-id="${warehouse.id}"]`).trigger('click');
-        await wrapper.find('form').trigger('submit');
-        expect(wrapper.emitted('move')![0][0].extraData.containers).to.deep.equal([factory.id, warehouse.id]);
+    it('requires explicit confirmation for multiple cargo pieces and supports cancel', async () => {
+        const { wrapper, submitted, factory, warehouse } = gameFixture();
+        wrapper.findComponent(OffshoreBank).vm.$emit('choose-offer', { type: 'cash', lot: 1 });
+        await wrapper.vm.$nextTick();
+        const cargo = wrapper.find('.bank-draft').findComponent(OffshoreCargo);
+        cargo.vm.$emit('select', factory.id);
+        cargo.vm.$emit('select', warehouse.id);
+        await wrapper.vm.$nextTick();
+        expect(submitted.length).toBe(0);
+        const buttons = wrapper.find('.bank-draft').findAllComponents({ name: 'Button' });
+        buttons.at(0).vm.$emit('click');
+        await wrapper.vm.$nextTick();
+        expect(submitted[0].slice(-1)[0]).toEqual({
+            name: MoveName.CallBank,
+            data: { type: 'cash', lot: 1 },
+            extraData: { containers: [factory.id, warehouse.id] },
+        });
         wrapper.destroy();
     });
 
-    it('does not enable invalid cash bids or stale/spectator controls', async () => {
-        const { render, own } = fixture();
+    it('cancels a draft without submitting and paginates large cargo without losing access', async () => {
+        const { wrapper, submitted } = gameFixture();
+        wrapper.findComponent(OffshoreBank).vm.$emit('choose-offer', { type: 'cash', lot: 0 });
+        await wrapper.vm.$nextTick();
+        wrapper.find('.bank-draft').findAllComponents({ name: 'Button' }).at(1).vm.$emit('click');
+        await wrapper.vm.$nextTick();
+        expect(wrapper.find('.bank-draft').exists()).toBe(false);
+        expect(submitted.length).toBe(0);
+        wrapper.destroy();
+        const pieces = Array.from({ length: 103 }, (_, i) => ({ id: `large-${i}`, color: 'orange' }));
+        const cargo = mount(OffshoreCargo, {
+            provide: { __reactiveInject__: { preferences: { colorBlind: true } } },
+            propsData: { pieces, columns: 3, rows: 2 },
+        });
+        const seen = new Set<string>();
+        for (let page = 0; page < 18; page++) {
+            const visible = cargo.findAll('[data-piece-id]');
+            expect(visible.length).toBeLessThanOrEqual(6);
+            visible.wrappers.forEach((piece) => seen.add(String(piece.attributes('data-piece-id'))));
+            await cargo.find('[aria-label="Next cargo page"]').trigger('keydown.enter');
+        }
+        expect(seen.size).toBe(103);
+        cargo.destroy();
+    });
+
+    it('spectators can inspect lots without mutation controls', async () => {
+        const { render } = fixture();
         const wrapper = render();
-        await wrapper.findAll('.offshore-lot').at(3).find('button').trigger('click');
-        await wrapper.find('input').setValue(String(own.money + 1));
-        await wrapper.find('form').trigger('submit');
-        expect(wrapper.emitted('move')).to.equal(undefined);
-        await wrapper.setProps({ availableMoves: {}, player: undefined });
-        expect(wrapper.findAll('.offshore-lot button').length).to.equal(0);
-        expect(wrapper.find('form').exists()).to.equal(false);
+        await wrapper.setProps({ player: undefined });
+        expect(wrapper.findAll('.offshore-lot[role="button"]').length).toBe(0);
+        await wrapper.find('.offshore-lot').trigger('click');
+        expect(wrapper.emitted('choose-offer')).toBe(undefined);
         wrapper.destroy();
     });
 
@@ -118,10 +181,10 @@ describe('Offshore bank viewer', () => {
         refresh();
         const wrapper = render();
         const vm = wrapper.vm as any;
-        expect(vm.returnPrices({ name: MoveName.ReturnBankContainer, data: factory })).to.deep.equal([1, 2, 3, 4]);
-        expect(vm.returnPrices({ name: MoveName.ReturnBankContainer, data: warehouse })).to.deep.equal([2, 3, 4, 5, 6]);
-        expect(wrapper.findAll('.bank-choice').length).to.equal(2);
-        expect(wrapper.find('.offshore-holding.own .offshore-cargo-piece').exists()).to.equal(true);
+        expect(vm.returnPrices({ name: MoveName.ReturnBankContainer, data: factory })).toEqual([1, 2, 3, 4]);
+        expect(vm.returnPrices({ name: MoveName.ReturnBankContainer, data: warehouse })).toEqual([2, 3, 4, 5, 6]);
+        expect(wrapper.findAll('.bank-choice').length).toBe(2);
+        expect(wrapper.find('.bank-holding [data-piece-id]').exists()).toBe(true);
         wrapper.destroy();
     });
 
@@ -140,9 +203,9 @@ describe('Offshore bank viewer', () => {
         };
         refresh();
         let wrapper = render();
-        expect(wrapper.text()).to.contain('Loan default');
-        await wrapper.find('.bank-choice button').trigger('click');
-        expect(wrapper.emitted('move')![0][0].name).to.equal(MoveName.SeizeBankContainer);
+        expect(wrapper.text()).toContain('Loan default');
+        await wrapper.find('.bank-choice [role="button"]').trigger('click');
+        expect(wrapper.emitted('move')![0][0].name).toBe(MoveName.SeizeBankContainer);
         wrapper.destroy();
         state.offshoreBank!.decision = {
             kind: 'distribute',
@@ -154,9 +217,37 @@ describe('Offshore bank viewer', () => {
         };
         refresh();
         wrapper = render();
-        expect(wrapper.text()).to.contain('Next container goes to lot');
-        await wrapper.find('.bank-choice button').trigger('click');
-        expect(wrapper.emitted('move')![0][0].name).to.equal(MoveName.DistributeBankContainer);
+        expect(wrapper.text()).toContain('Lot 1');
+        await wrapper.find('.bank-choice [role="button"]').trigger('click');
+        expect(wrapper.emitted('move')![0][0].name).toBe(MoveName.DistributeBankContainer);
+        wrapper.destroy();
+    });
+
+    it('paginates many bank decisions and retains legal choices on later pages', async () => {
+        const { state, player, refresh, render } = fixture();
+        state.phase = Phase.BankDecision;
+        const containers = Array.from({ length: 11 }, () => ({
+            container: { piece: state.containersLeft.pop()!, price: 2, moved: false },
+            district: 'factory' as const,
+        }));
+        state.offshoreBank!.decision = {
+            kind: 'return',
+            player,
+            resumePlayer: player,
+            containers,
+            payment: [],
+            cursor: 0,
+        };
+        refresh();
+        const wrapper = render();
+        expect(wrapper.findAll('.bank-choice').length).toBe(4);
+        await wrapper.find('[aria-label="More 1/3"]').trigger('click');
+        expect(wrapper.findAll('.bank-choice').length).toBe(4);
+        await wrapper.find('[aria-label="More 2/3"]').trigger('click');
+        expect(wrapper.findAll('.bank-choice').length).toBe(3);
+        await wrapper.find('.bank-choice [role="button"]').trigger('click');
+        const action = wrapper.emitted('move')![0][0];
+        expect(legalBankAction(state, player, action)).toBe(true);
         wrapper.destroy();
     });
 
@@ -167,19 +258,19 @@ describe('Offshore bank viewer', () => {
         own.bankHolding!.push(state.containersLeft.pop()!);
         refresh();
         const wrapper = render();
-        expect(wrapper.find('.offshore-holding.own button').text()).to.contain('Load onto ship');
-        await wrapper.find('.offshore-holding.own button').trigger('click');
-        expect(wrapper.emitted('move')![0][0].name).to.equal(MoveName.LoadBankContainer);
+        expect(wrapper.find('.bank-holding [role="button"]').exists()).toBe(true);
+        await wrapper.find('.bank-holding [role="button"]').trigger('click');
+        expect(wrapper.emitted('move')![0][0].name).toBe(MoveName.LoadBankContainer);
         own.lastMove = null;
         refresh();
         await wrapper.setProps({ availableMoves: own.availableMoves });
-        expect(wrapper.find('.offshore-holding.own button').exists()).to.equal(false);
+        expect(wrapper.find('.bank-holding [role="button"]').exists()).toBe(false);
         wrapper.destroy();
         const game = shallowMount(Game, {
             propsData: { state, player, emitter: new EventEmitter(), preferences: { sound: false } },
         });
         const ship = (game.vm as any).ships.find((s) => s.owner === player);
-        expect(Number.isFinite(ship.x) && Number.isFinite(ship.y)).to.equal(true);
+        expect(Number.isFinite(ship.x) && Number.isFinite(ship.y)).toBe(true);
         game.destroy();
     });
 });

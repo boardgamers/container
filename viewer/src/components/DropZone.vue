@@ -14,6 +14,7 @@
         <title v-else-if="data && data.type == 'supply'">Supply</title>
         <title v-else-if="data && data.type == 'openSea'">Open Sea</title>
         <title v-else-if="data && data.type == 'islandHarbor'">Island Harbor</title>
+        <title v-else-if="data && data.type == 'offshoreBank'">Offshore Bank</title>
     </g>
 </template>
 <script lang="ts">
@@ -137,6 +138,11 @@ export default class DropZone extends Vue {
             }
         } else if (this.activePiece.pieceType == PieceType.Ship) {
             const ship = this.activePiece as Ship;
+            if (
+                this.data.type === DropZoneType.OffshoreBank &&
+                !this.availableMoves?.[MoveName.Sail]?.includes(ShipPosition.OffshoreBank)
+            )
+                return false;
             if (ship.position == ShipPosition.OpenSea) {
                 if (this.data.type == DropZoneType.OpenSea) return false;
 

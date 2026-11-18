@@ -68,6 +68,7 @@ export enum DropZoneType {
     WarehouseStore = 'warehouseStore',
     OpenSea = 'openSea',
     IslandHarbor = 'islandHarbor',
+    OffshoreBank = 'offshoreBank',
     GetLoan = 'getLoan',
     PayLoan = 'payLoan',
     Supply = 'supply',

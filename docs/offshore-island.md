@@ -66,6 +66,18 @@ The old 10th Anniversary Investment Bank differs from the requested newer
 Off-Shore Bank (for example its single auction and subsidy wording). It is not
 used to override the newer bank rules.
 
+## Viewer
+
+The bank is part of the SVG board, using the same cargo pieces, outlined spaces,
+player colors, buttons and bid calculator as the base game. The Offshore board
+adds a lower bank area without shifting the classic board coordinates. On mobile,
+the **Bank** navigation button brings that area into view.
+
+Click a lot to offer cash or select stored cargo, then confirm the offer. Required
+repricing, default and payment choices appear beside the lots; holdings can be
+clicked to load on arrival. Large cargo lots and decision lists are paginated.
+There is no separate expansion banner or collapsible card panel.
+
 ## Developer testing
 
 Run the existing local viewer with `pnpm --dir viewer serve`, then add

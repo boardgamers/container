@@ -44,6 +44,7 @@
                 }}</span
                 ><span class="player-board-name" :data-bgs-player="i">{{ i === player ? 'You' : p.name }}</span>
             </button>
+            <button v-if="G.options.offshoreIsland" @click="viewBank()">Bank</button>
         </div>
         <div v-if="!ui.selected && mobileOffers.length" class="mobile-trade" aria-label="Containers for sale">
             <span>Buy from {{ G.players[mobilePlayer].name }}</span>
@@ -59,14 +60,6 @@
                 </button>
             </div>
         </div>
-        <OffshoreBank
-            v-if="G && G.options.offshoreIsland"
-            :state="G"
-            :player="player"
-            :color-blind="preferences.colorBlind"
-            :available-moves="canMove ? G.players[player].availableMoves : {}"
-            @move="sendMove"
-        />
         <div key="board-and-journal" class="board-and-journal">
             <div ref="boardScroll" class="board-scroll" tabindex="0" aria-label="Game board">
                 <svg
@@ -74,8 +67,9 @@
                     @keydown.esc="ui.selected = null"
                     id="scene"
                     data-tutorial="game-board"
-                    viewBox="0 0 1250 650"
-                    height="650"
+                    :viewBox="`0 0 1250 ${G && G.options.offshoreIsland ? 950 : 650}`"
+                    :height="G && G.options.offshoreIsland ? 950 : 650"
+                    :style="{ aspectRatio: G && G.options.offshoreIsland ? '1250 / 950' : '1250 / 650' }"
                 >
                     <defs>
                         <linearGradient id="container-sea" x2="0" y2="1">
@@ -199,12 +193,26 @@
                         :data="{ type: 'islandHarbor' }"
                     />
 
-                    <g v-if="G && G.options.offshoreIsland" pointer-events="none">
-                        <rect x="675" y="430" width="90" height="220" rx="12" fill="#f6f4e9" stroke="#8ca9aa" />
-                        <text x="720" y="425" text-anchor="middle" fill="#315f66" font-size="9">
-                            Offshore bank harbor
-                        </text>
+                    <g v-if="G && G.options.offshoreIsland">
+                        <OffshoreBank
+                            :state="G"
+                            :player="player"
+                            :player-colors="playerColors"
+                            :available-moves="canMove ? G.players[player].availableMoves : {}"
+                            @move="sendBankMove"
+                            @choose-offer="chooseBankOffer"
+                        />
                     </g>
+                    <DropZone
+                        v-if="G && G.options.offshoreIsland"
+                        transform="translate(1100 665)"
+                        :width="140"
+                        :height="240"
+                        :enabled="true"
+                        :accepts="'ship'"
+                        :data="{ type: 'offshoreBank' }"
+                        :available-moves="getCurrentPlayerMoves()"
+                    />
                     <Ship
                         v-for="ship in ships"
                         :key="ship.id"
@@ -281,7 +289,7 @@
                         <text x="0" y="0">Your island: ${{ ownIslandValue }}</text>
                     </g>
 
-                    <template v-if="G && player != undefined">
+                    <template v-if="G && player != undefined && G.players[player].pointCard">
                         <text x="20" y="440">Money: ${{ G.players[player].money }}</text>
                         <PointCard :pointCard="G.players[player].pointCard" transform="translate(20, 460)" />
                     </template>
@@ -334,7 +342,7 @@
                                 @click="decline()"
                             />
                         </template>
-                        <template v-else-if="G.phase == 'bid' && (G.currentPlayers.includes(player) || changingBid)">
+                        <template v-if="G.phase == 'bid' && (G.currentPlayers.includes(player) || changingBid)">
                             <rect
                                 v-if="!preferences.disableHelp"
                                 x="135"
@@ -364,6 +372,42 @@
                         </template>
                     </template>
 
+                    <g v-if="bankDraft && canMove" class="bank-draft" transform="translate(310 680)">
+                        <text x="0" y="-8" font-size="12">
+                            {{ bankDraft.type === 'cash' ? 'Offer cargo' : 'Offer cash' }} · Lot {{ bankDraft.lot + 1 }}
+                        </text>
+                        <Calculator
+                            v-if="bankDraft.type === 'containers'"
+                            :key="bankDraft.lot + ':' + draftsVersion"
+                            ref="bankCalculator"
+                            tabindex="0"
+                            role="group"
+                            aria-label="Cash offer: type digits, Backspace to delete, Enter to bid"
+                            @keydown.native="bankCalculatorKey"
+                            data-tutorial="bank-bid"
+                            @bid="bankBid"
+                        />
+                        <template v-else>
+                            <OffshoreCargo
+                                :pieces="bankBidCargo"
+                                :columns="8"
+                                :rows="8"
+                                :selectable="bankContainerHighlights"
+                                :selected="Array.from(offshoreContainers)"
+                                @select="toggleBankContainer"
+                            />
+                            <Button
+                                transform="translate(0 155)"
+                                :width="130"
+                                text="Confirm offer"
+                                :enabled="validContainerBid"
+                                @click="confirmBankContainers"
+                            />
+                        </template>
+                        <text v-if="bankBidError" x="0" y="215" font-size="11" fill="#9b2424">Invalid offer</text>
+                        <Button transform="translate(0 220)" :width="130" text="Cancel" @click="resetBankDraft" />
+                    </g>
+
                     <Button
                         v-if="revisableBid && !changingBid"
                         transform="translate(140, 430)"
@@ -381,6 +425,21 @@
                         />
                     </template>
 
+                    <template v-if="!preferences.disableHelp && canMove">
+                        <g v-for="pieceId in bankContainerHighlights" :key="'bank-cargo-' + pieceId">
+                            <rect
+                                v-for="piece in containers.filter((p) => p.id === pieceId)"
+                                :key="piece.id"
+                                :x="piece.x - 2"
+                                :y="piece.y - 2"
+                                width="24"
+                                height="14"
+                                fill="none"
+                                stroke="blue"
+                                stroke-width="2"
+                            />
+                        </g>
+                    </template>
                     <template v-if="!preferences.disableHelp">
                         <template v-if="ui.dragged == null && ui.selected == null">
                             <rect
@@ -750,6 +809,8 @@
 <script lang="ts">
 import InlineLog from './InlineLog.vue';
 import OffshoreBank from './OffshoreBank.vue';
+import OffshoreCargo from './OffshoreCargo.vue';
+import { legalBankAction } from '../offshore-actions';
 import { islandValue } from '../island-value';
 import ColorBlindButton from './buttons/ColorBlindButton.vue';
 import { colorBadgeHtml } from '../color-blind';
@@ -780,6 +841,7 @@ import { GameEventName, LogMove } from 'container-engine/src/log';
     components: {
         InlineLog,
         OffshoreBank,
+        OffshoreCargo,
         PlayerBoard,
         Container,
         Factory,
@@ -937,6 +999,17 @@ export default class Game extends Vue {
         this.G = JSON.parse(JSON.stringify(state));
 
         this.createPieces();
+        if (this.G?.offshoreBank?.decision?.player === this.player) {
+            this.$nextTick(() =>
+                this.$el.querySelector('.bank-decision')?.scrollIntoView?.({ block: 'nearest', inline: 'start' })
+            );
+        } else if (this.canMove && this.getCurrentPlayerMoves()[MoveName.LoadBankContainer]?.length) {
+            this.$nextTick(() =>
+                this.$el
+                    .querySelector(`.bank-holding[data-owner="${this.player}"]`)
+                    ?.scrollIntoView?.({ block: 'nearest', inline: 'start' })
+            );
+        }
     }
 
     createPieces() {
@@ -1107,8 +1180,8 @@ export default class Game extends Vue {
                 case ShipPosition.OffshoreBank:
                     this.ships.push({
                         id: player.ship.piece.id,
-                        x: 700,
-                        y: 410 + pi * 44,
+                        x: 1125,
+                        y: 670 + pi * 45,
                         rotate: 90,
                         color,
                         containers: player.ship.containers,
@@ -1286,7 +1359,9 @@ export default class Game extends Vue {
 
             case PieceType.Container:
                 const container = e as Container;
-                if (container.state == ContainerState.OnBoard) {
+                if (d.type === 'offshoreBid') {
+                    this.sendBankContainerBid(container.pieceId);
+                } else if (container.state == ContainerState.OnBoard) {
                     if (d.type == DropZoneType.FactoryStore) {
                         this.sendMove({
                             name: MoveName.Produce,
@@ -1356,6 +1431,8 @@ export default class Game extends Vue {
                 if (d.type.startsWith('playerHarbor')) {
                     if (!player.ship.shipPosition.startsWith('playerHarbor'))
                         this.sendMove({ name: MoveName.Sail, data: d.type });
+                } else if (d.type === DropZoneType.OffshoreBank) {
+                    this.sendMove({ name: MoveName.Sail, data: ShipPosition.OffshoreBank });
                 } else if (d.type === DropZoneType.OpenSea) {
                     if (player.ship.shipPosition !== ShipPosition.OpenSea)
                         this.sendMove({ name: MoveName.Sail, data: ShipPosition.OpenSea });
@@ -1443,6 +1520,7 @@ export default class Game extends Vue {
 
     /** Discard unsent choices: selection, bid drafts and pending confirmations. */
     resetDrafts() {
+        this.resetBankDraft();
         this.ui.selected = null;
         this.editingBid = null;
         this.confirmBidVisible = false;
@@ -1502,6 +1580,98 @@ export default class Game extends Vue {
         this.confirmBidRevision = null;
     }
 
+    @Watch('G')
+    @Watch('player')
+    @Watch('interactionDisabled')
+    resetBankDraft() {
+        this.bankDraft = null;
+        this.offshoreContainers = new Set();
+        this.bankBidError = false;
+    }
+    bankDraft: { type: 'cash' | 'containers'; lot: number } | null = null;
+    bankBidError = false;
+    offshoreContainers = new Set<string>();
+    viewBank(action = false) {
+        this.$nextTick(() => {
+            const target = this.$el.querySelector(
+                action ? '.bank-draft' : this.G?.offshoreBank?.decision ? '.bank-decision' : '.bank-board'
+            );
+            target?.scrollIntoView?.({ block: 'nearest', inline: 'start', behavior: 'auto' });
+        });
+    }
+    chooseBankOffer(offer: { type: 'cash' | 'containers'; lot: number }) {
+        if (
+            !this.canMove ||
+            !this.getCurrentPlayerMoves()[MoveName.CallBank]?.some((o) => o.type === offer.type && o.lot === offer.lot)
+        )
+            return;
+        this.resetBankDraft();
+        this.bankDraft = { ...offer };
+        this.draftsVersion++;
+        this.viewBank(true);
+    }
+    sendBankMove(action: Move) {
+        if (this.canMove && this.G && legalBankAction(this.G, this.player, action)) {
+            this.resetBankDraft();
+            this.sendMove(action);
+        } else this.bankBidError = true;
+    }
+    bankCalculatorKey(event: KeyboardEvent) {
+        const calculator = this.$refs.bankCalculator as Calculator;
+        if (/^[0-9]$/.test(event.key)) {
+            event.preventDefault();
+            calculator.add(Number(event.key));
+        } else if (event.key === 'Backspace') {
+            event.preventDefault();
+            calculator.del();
+        } else if (event.key === 'Enter' && event.target === calculator.$el) {
+            event.preventDefault();
+            calculator.bid();
+        }
+    }
+    bankBid(cash: number) {
+        if (this.bankDraft?.type !== 'containers') return;
+        this.sendBankMove({ name: MoveName.CallBank, data: { ...this.bankDraft }, extraData: { cash } });
+    }
+    get bankBidCargo() {
+        if (!this.canMove) return [];
+        const p = this.G!.players[this.player!];
+        return [...p.containersOnFactoryStore, ...p.containersOnWarehouseStore]
+            .filter((c) => !c.moved)
+            .map((c) => ({ ...c.piece, price: c.price }));
+    }
+    get bankContainerHighlights() {
+        return this.bankCashOffer ? this.bankBidCargo.map((c) => c.id) : [];
+    }
+    get bankCashOffer() {
+        return !!this.canMove && this.bankDraft?.type === 'cash';
+    }
+    bankContainerBid(): Move | undefined {
+        if (!this.bankCashOffer) return;
+        return {
+            name: MoveName.CallBank,
+            data: { ...this.bankDraft! },
+            extraData: { containers: Array.from(this.offshoreContainers) },
+        };
+    }
+    get validContainerBid() {
+        const action = this.bankContainerBid();
+        return !!action && !!this.G && legalBankAction(this.G, this.player, action);
+    }
+    confirmBankContainers() {
+        const action = this.bankContainerBid();
+        if (action) this.sendBankMove(action);
+    }
+    sendBankContainerBid(pieceId: string) {
+        this.toggleBankContainer(pieceId);
+    }
+    toggleBankContainer(id: string) {
+        if (!this.bankContainerHighlights.includes(id)) return;
+        const selected = new Set(this.offshoreContainers);
+        if (selected.has(id)) selected.delete(id);
+        else selected.add(id);
+        this.offshoreContainers = selected;
+    }
     confirmSail() {
         this.confirmSailVisible = false;
         this.sendMove({ name: MoveName.Sail, data: ShipPosition.Island });
@@ -1516,6 +1686,18 @@ export default class Game extends Vue {
     }
 
     sendMove(move: Move) {
+        if (
+            [
+                MoveName.CallBank,
+                MoveName.LoadBankContainer,
+                MoveName.ReturnBankContainer,
+                MoveName.DistributeBankContainer,
+                MoveName.SeizeBankContainer,
+            ].includes(move.name) ||
+            (move.name === MoveName.Sail && move.data === ShipPosition.OffshoreBank)
+        ) {
+            if (!this.canMove || !this.G || !legalBankAction(this.G, this.player, move)) return;
+        }
         if (this.tutorialMove) {
             if (!this.interactionDisabled) this.tutorialMove(move);
             return;
@@ -1710,7 +1892,7 @@ export default class Game extends Vue {
         if (!this.G || ended(this.G)) {
             return 'Game ended!';
         } else if (this.player !== undefined && this.G?.currentPlayers.includes(this.player)) {
-            if (this.G.offshoreBank?.decision) return 'Choose your bank decision in the Offshore Island panel.';
+            if (this.G.offshoreBank?.decision) return 'Choose a bank action.';
             if (this.G.players[this.player].availableMoves![MoveName.Bid]) {
                 if (this.G.highestBidders.length != 0) {
                     return "It's a tie, choose your ADDITIONAL bid!";

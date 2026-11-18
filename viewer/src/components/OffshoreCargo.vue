@@ -1,81 +1,114 @@
 <template>
-    <div class="offshore-cargo">
-        <template v-for="piece in pieces">
-            <button
-                v-if="selectable.includes(piece.id)"
-                :key="piece.id"
-                type="button"
-                class="offshore-cargo-piece"
-                :class="{ selected: selected.includes(piece.id) }"
-                :aria-pressed="selected.includes(piece.id) ? 'true' : 'false'"
-                :data-piece-id="piece.id"
-                :title="colourName(piece.color)"
-                @click="$emit('select', piece.id)"
+    <g class="offshore-cargo">
+        <g
+            v-for="(piece, i) in visiblePieces"
+            :key="piece.id"
+            :transform="`translate(${(i % columns) * 23},${Math.floor(i / columns) * 13})`"
+            :class="{ selectable: selectable.includes(piece.id), selected: selected.includes(piece.id) }"
+            :role="selectable.includes(piece.id) ? 'button' : undefined"
+            :tabindex="selectable.includes(piece.id) ? 0 : undefined"
+            :aria-pressed="selectable.includes(piece.id) ? (selected.includes(piece.id) ? 'true' : 'false') : undefined"
+            :aria-label="cargoLabel(piece)"
+            :data-piece-id="piece.id"
+            @click="selectPiece($event, piece.id)"
+            @keydown.enter.prevent.stop="selectable.includes(piece.id) && $emit('select', piece.id)"
+            @keydown.space.prevent.stop="selectable.includes(piece.id) && $emit('select', piece.id)"
+        >
+            <rect
+                x="-1"
+                y="-1"
+                width="22"
+                height="12"
+                rx="1"
+                fill="none"
+                :stroke="selected.includes(piece.id) ? 'blue' : 'transparent'"
+                stroke-width="2"
+            />
+            <rect width="20" height="10" rx=".8" :fill="piece.color" stroke="#21343b" />
+            <path d="M4 2V8 M8 2V8 M12 2V8 M16 2V8" stroke="#10252b" stroke-opacity=".3" stroke-width=".7" />
+            <path d="M1 1H19" stroke="white" stroke-opacity=".5" />
+            <ColorMark :color="piece.color" transform="translate(10 5) scale(.8)" />
+            <title>{{ cargoLabel(piece) }}</title>
+        </g>
+        <g v-if="pages > 1" :transform="`translate(0 ${rows * 13 + 3})`">
+            <g
+                role="button"
+                tabindex="0"
+                aria-label="Previous cargo page"
+                @click.stop="page = (currentPage + pages - 1) % pages"
+                @keydown.enter.prevent.stop="page = (currentPage + pages - 1) % pages"
+                @keydown.space.prevent.stop="page = (currentPage + pages - 1) % pages"
             >
-                <span v-html="badge(piece.color)"></span>
-                <span>{{ colourName(piece.color) }}</span>
-                <small v-if="piece.price != null">${{ piece.price }}</small>
-            </button>
-            <span v-else :key="piece.id" class="offshore-cargo-piece" :title="colourName(piece.color)">
-                <span v-html="badge(piece.color)"></span>
-                <span>{{ colourName(piece.color) }}</span>
-                <small v-if="piece.price != null">${{ piece.price }}</small>
-            </span>
-        </template>
-    </div>
+                <rect width="20" height="16" fill="#c6c6b8" /><text x="10" y="12" text-anchor="middle" font-size="12"
+                    >‹</text
+                >
+            </g>
+            <text x="23" y="12" font-size="8">{{ currentPage + 1 }}/{{ pages }}</text>
+            <g
+                role="button"
+                tabindex="0"
+                aria-label="Next cargo page"
+                :transform="`translate(${columns * 23 - 22} 0)`"
+                @click.stop="page = (currentPage + 1) % pages"
+                @keydown.enter.prevent.stop="page = (currentPage + 1) % pages"
+                @keydown.space.prevent.stop="page = (currentPage + 1) % pages"
+            >
+                <rect width="20" height="16" fill="#c6c6b8" /><text x="10" y="12" text-anchor="middle" font-size="12"
+                    >›</text
+                >
+            </g>
+        </g>
+    </g>
 </template>
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { ContainerPiece } from 'container-engine/src/gamestate';
-import { colorBadgeHtml } from '../color-blind';
+import ColorMark from './ColorMark.vue';
 
-/** Cargo outside the classic board: real piece IDs are preserved for escrow and loading choices. */
-@Component
+@Component({ components: { ColorMark } })
 export default class OffshoreCargo extends Vue {
     @Prop({ default: () => [] }) pieces!: Array<ContainerPiece & { price?: number }>;
     @Prop({ default: () => [] }) selectable!: string[];
     @Prop({ default: () => [] }) selected!: string[];
-    @Prop({ default: false }) colorBlind!: boolean;
+    @Prop({ default: 3 }) columns!: number;
 
-    badge(color: string) {
-        return colorBadgeHtml(color, this.colorBlind);
+    @Prop({ default: 2 }) rows!: number;
+    page = 0;
+    get pages() {
+        return Math.max(1, Math.ceil(this.pieces.length / (this.columns * this.rows)));
+    }
+    get currentPage() {
+        return Math.min(this.page, this.pages - 1);
+    }
+    get visiblePieces() {
+        return this.pieces.slice(
+            this.currentPage * this.columns * this.rows,
+            (this.currentPage + 1) * this.columns * this.rows
+        );
     }
 
-    colourName(color: string) {
-        return color === 'darkslategray' ? 'dark green' : color;
+    selectPiece(event: Event, id: string) {
+        if (!this.selectable.includes(id)) return;
+        event.stopPropagation();
+        this.$emit('select', id);
+    }
+    cargoLabel(piece: ContainerPiece & { price?: number }) {
+        return `${piece.color === 'darkslategray' ? 'dark green' : piece.color} container${
+            piece.price == null ? '' : ': $' + piece.price
+        }`;
     }
 }
 </script>
 <style scoped>
-.offshore-cargo {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    min-width: 0;
-}
-.offshore-cargo-piece {
-    display: inline-flex;
-    gap: 5px;
-    align-items: center;
-    padding: 5px 7px;
-    border: 1px solid #b7c9ca;
-    border-radius: 5px;
-    background: #fffdf5;
-    color: #203a45;
-    font: inherit;
-    font-size: 12px;
-}
-button.offshore-cargo-piece {
+.selectable {
     cursor: pointer;
-    min-height: 36px;
 }
-button.offshore-cargo-piece:hover,
-button.offshore-cargo-piece.selected {
-    background: #dfeddf;
-    border-color: #37655a;
-}
-button.offshore-cargo-piece:focus-visible {
-    outline: 3px solid #af742c;
+.selectable:focus-visible {
+    outline: 2px solid blue;
     outline-offset: 2px;
+}
+.selectable:hover > rect:first-child,
+.selected > rect:first-child {
+    stroke: blue;
 }
 </style>

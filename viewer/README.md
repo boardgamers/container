@@ -1,6 +1,8 @@
 # Container viewer
 
-From the repository root, install with `pnpm install`.
+Use Node.js 24 and pnpm 11. From the repository root, install with
+`pnpm install --frozen-lockfile`. The workspace explicitly permits esbuild's
+required platform-binary installation script.
 
 ## Local development
 
@@ -18,7 +20,9 @@ Add `?chapter=supply-chain` to open a tutorial. The other chapter IDs are
 ```sh
 pnpm --dir viewer check
 pnpm --dir viewer test:tutorial
-NODE_OPTIONS=--openssl-legacy-provider pnpm --dir viewer package
+pnpm --dir viewer test:unit
+pnpm --dir viewer build
+pnpm --dir viewer package
 pnpm --dir viewer test:browser
 pnpm --dir viewer test:offshore:browser
 pnpm --dir viewer test:tutorial:browser
@@ -31,9 +35,26 @@ viewer on port 5197.
 The Vue 2 type checker needs `zod` available directly in this workspace to resolve
 the protocol's schema types through pnpm's symlinks. It is a development dependency.
 
+## Package compatibility
+
+The Vue 2 viewer uses Vite for development and builds; no OpenSSL legacy
+provider or Vue CLI setup is needed. `build` produces the standalone demo,
+while `package` produces the classic-script UMD viewer for BGS.
+
+Load Vue 2 before `dist/container-viewer.umd.min.js` and include
+`dist/container-viewer.css` separately; the bundle does not inject CSS. The
+existing `container.launch` and `container.launchTutorial` globals are retained.
+Deploy the matching `container-viewer.umd.min.locale-*.js` sidecars beside the
+minified entry, keeping their filenames: non-English translations are loaded
+lazily as native ES modules relative to that script URL. Serve them with a
+JavaScript MIME type and allow CORS when hosting assets on another origin.
+English is bundled. The readable `container-viewer.umd.js` build uses its own
+`container-viewer.umd.locale-*.js` sidecars. Publish/deploy JS, CSS and matching
+sidecars together (do not upload only the entry bundle).
+
 ## Tutorials on BGS
 
-Upload the same JS and CSS as the ordinary viewer. The `container` global exposes
+Upload the same JS, CSS and locale sidecars as the ordinary viewer. The `container` global exposes
 both `launch` and `launchTutorial`. Chapter metadata is exported as `chapterCards`
 from `src/tutorial/lessons.ts`; enter these IDs, versions, titles and descriptions
 in the BGS version's Tutorial settings.
