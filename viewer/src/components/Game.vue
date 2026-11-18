@@ -67,9 +67,9 @@
                     @keydown.esc="ui.selected = null"
                     id="scene"
                     data-tutorial="game-board"
-                    :viewBox="`0 0 1250 ${G && G.options.offshoreIsland ? 950 : 650}`"
-                    :height="G && G.options.offshoreIsland ? 950 : 650"
-                    :style="{ aspectRatio: G && G.options.offshoreIsland ? '1250 / 950' : '1250 / 650' }"
+                    :viewBox="`0 0 1250 ${G && G.options.offshoreIsland ? 1050 : 650}`"
+                    :height="G && G.options.offshoreIsland ? 1050 : 650"
+                    :style="{ aspectRatio: G && G.options.offshoreIsland ? '1250 / 1050' : '1250 / 650' }"
                 >
                     <defs>
                         <linearGradient id="container-sea" x2="0" y2="1">
@@ -381,7 +381,7 @@
                     <g
                         v-if="bankDraft && canMove"
                         class="bank-draft"
-                        transform="translate(470 680)"
+                        transform="translate(630 680)"
                         role="group"
                         :aria-label="bankDraft.type === 'cash' ? 'Offer cargo' : 'Offer cash'"
                     >
@@ -1037,13 +1037,17 @@ export default class Game extends Vue {
 
         this.createPieces();
         if (this.G?.offshoreBank?.decision?.player === this.player) {
-            this.$nextTick(() =>
-                this.$el.querySelector('.bank-decision')?.scrollIntoView?.({ block: 'nearest', inline: 'start' })
-            );
+            this.$nextTick(() => {
+                this.$el.querySelector('.bank-decision')?.scrollIntoView?.({ block: 'nearest', inline: 'start' });
+                // Payment choices and their fixed destination share the left bank edge.
+                if (this.G?.offshoreBank?.decision?.kind === 'distribute') {
+                    (this.$refs.boardScroll as HTMLElement).scrollLeft = 0;
+                }
+            });
         } else if (this.canMove && this.getCurrentPlayerMoves()[MoveName.LoadBankContainer]?.length) {
             this.$nextTick(() =>
                 this.$el
-                    .querySelector(`.bank-holding[data-owner="${this.player}"]`)
+                    .querySelector(`.bank-berth[data-owner="${this.player}"]`)
                     ?.scrollIntoView?.({ block: 'nearest', inline: 'start' })
             );
         }

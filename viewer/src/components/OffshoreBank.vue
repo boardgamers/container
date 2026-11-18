@@ -20,7 +20,11 @@
                         class="offshore-lot"
                         :class="{
                             legal: offer(type, i - 1),
-                            selected: selectedOffer?.type === type && selectedOffer?.lot === i - 1,
+                            selected: !bank.decision && selectedOffer?.type === type && selectedOffer?.lot === i - 1,
+                            destination:
+                                bank.decision?.kind === 'distribute' &&
+                                type === 'containers' &&
+                                distributionLot === i - 1,
                         }"
                         :aria-pressed="
                             offer(type, i - 1)
@@ -49,13 +53,36 @@
                     >
                         <title>
                             {{
-                                type === 'cash'
+                                bank.decision?.kind === 'distribute' &&
+                                type === 'containers' &&
+                                distributionLot === i - 1
+                                    ? 'Next payment destination. Choose a payment container below.'
+                                    : type === 'cash'
                                     ? 'Bid containers to win this cash.'
                                     : 'Bid cash to win these containers.'
                             }}
                         </title>
                     </rect>
-                    <text v-if="type === 'cash'" class="bank-money" x="6" y="18" font-size="16" pointer-events="none"
+                    <path class="bank-bid-zone" d="M1 66 H99 V103 H1 Z" fill="#d2d5cb" pointer-events="none" />
+                    <path d="M1 66 H99" stroke="#899997" pointer-events="none" />
+                    <text
+                        v-if="!auction(type, i - 1)"
+                        x="50"
+                        y="89"
+                        text-anchor="middle"
+                        font-size="10"
+                        fill="#63716e"
+                        pointer-events="none"
+                        >Bid</text
+                    >
+                    <text
+                        v-if="type === 'cash'"
+                        class="bank-money"
+                        x="50"
+                        y="36"
+                        text-anchor="middle"
+                        font-size="16"
+                        pointer-events="none"
                         >${{ bank.cashLots[i - 1] }}</text
                     >
                     <OffshoreCargo
@@ -68,7 +95,7 @@
                     <g v-if="auction(type, i - 1)">
                         <PlayerToken
                             class="bank-bidder"
-                            :transform="`translate(16 ${type === 'cash' ? 52 : 86})`"
+                            transform="translate(16 86)"
                             :owner="auction(type, i - 1).bidder"
                             :name="owner(auction(type, i - 1).bidder)"
                             :color="playerColors[auction(type, i - 1).bidder]"
@@ -76,9 +103,9 @@
                         <OffshoreCargo
                             v-if="type === 'cash'"
                             :pieces="escrow(auction(type, i - 1))"
-                            transform="translate(32 47)"
+                            transform="translate(32 69)"
                             :columns="2"
-                            :rows="2"
+                            :rows="1"
                         />
                         <text v-else class="bank-money bank-bid-amount" x="32" y="86" font-size="16" text-anchor="start"
                             >${{ auction(type, i - 1).cash }}<title>Cash bid</title></text
@@ -87,33 +114,76 @@
                 </g>
             </template>
         </g>
-        <g class="bank-piers" pointer-events="none" transform="translate(332 680)">
+        <g class="bank-piers" transform="translate(332 680)">
             <rect width="4" height="214" fill="#c6c6b8" />
-            <rect v-for="i in 6" :key="i" x="4" :y="(i - 1) * 42" width="108" height="4" fill="#c6c6b8" />
+            <g
+                v-for="(p, i) in state.players"
+                :key="i"
+                :transform="`translate(4 ${i * 42 + 4})`"
+                class="bank-berth"
+                :data-owner="i"
+            >
+                <rect
+                    width="268"
+                    height="38"
+                    :fill="playerColors[i]"
+                    fill-opacity=".16"
+                    :stroke="playerColors[i]"
+                    stroke-width="1"
+                    pointer-events="none"
+                />
+                <path d="M112 1 V37" :stroke="playerColors[i]" stroke-opacity=".5" pointer-events="none" />
+                <g class="bank-holding" :data-owner="i" transform="translate(112 0)">
+                    <title>{{ owner(i) }}: waiting cargo</title>
+                    <PlayerToken transform="translate(12 19)" :owner="i" :name="owner(i)" :color="playerColors[i]" />
+                    <rect
+                        v-if="!p.bankHolding?.length"
+                        x="28"
+                        y="3"
+                        width="20"
+                        height="10"
+                        rx="1"
+                        fill="none"
+                        :stroke="playerColors[i]"
+                        stroke-opacity=".4"
+                        stroke-dasharray="2 2"
+                        pointer-events="none"
+                    />
+                    <OffshoreCargo
+                        :pieces="p.bankHolding || []"
+                        transform="translate(28 3)"
+                        :columns="5"
+                        :rows="1"
+                        :selectable="
+                            canAct && i === player
+                                ? (availableMoves[names.LoadBankContainer] || []).map((piece) => piece.id)
+                                : []
+                        "
+                        action-label="Load from bank harbor"
+                        @select="loadContainer"
+                    />
+                </g>
+            </g>
         </g>
         <g
-            v-for="({ p, i }, index) in holdings"
-            :key="'holding' + i"
-            :transform="`translate(${750 + Math.floor(index / 3) * 240} ${680 + (index % 3) * 85})`"
-            class="bank-holding"
-            :data-owner="i"
+            v-if="bank.decision"
+            class="bank-decision"
+            :transform="bank.decision.kind === 'distribute' ? 'translate(20 950)' : 'translate(630 680)'"
         >
-            <PlayerToken transform="translate(9 0)" :owner="i" :name="owner(i)" :color="playerColors[i]" />
-            <OffshoreCargo
-                :pieces="p.bankHolding || []"
-                transform="translate(0 12)"
-                :columns="9"
-                :rows="3"
-                :selectable="
-                    canAct && i === player
-                        ? (availableMoves[names.LoadBankContainer] || []).map((piece) => piece.id)
-                        : []
-                "
-                @select="loadContainer"
-            />
-        </g>
-        <g v-if="bank.decision" class="bank-decision" transform="translate(470 680)">
-            <text x="0" y="0" font-size="14">{{ decisionTitle }}</text>
+            <text v-if="decisionTitle" x="0" y="0" font-size="14">{{ decisionTitle }}</text>
+            <g
+                v-if="bank.decision.kind === 'distribute'"
+                class="bank-payment-route"
+                pointer-events="none"
+                aria-hidden="true"
+            >
+                <path
+                    :d="`M30 -25 H${Math.max(30 + (visibleDecisions.length - 1) * 70, 50 + distributionLot * 104)} M${
+                        50 + distributionLot * 104
+                    } -25 V-54`"
+                />
+                <path :d="`M${44 + distributionLot * 104} -48 l6 -8 l6 8`" />
+            </g>
             <template v-if="!decisionMoves.length">
                 <PlayerToken
                     transform="translate(9 20)"
@@ -121,19 +191,42 @@
                     :name="owner(bank.decision.player)"
                     :color="playerColors[bank.decision.player]"
                 />
-                <OffshoreCargo :pieces="pendingCargo" transform="translate(0 35)" :columns="10" :rows="8" />
+                <OffshoreCargo
+                    :pieces="pendingCargo"
+                    transform="translate(0 35)"
+                    :columns="10"
+                    :rows="bank.decision.kind === 'distribute' ? 2 : 8"
+                />
             </template>
             <template v-else>
-                <text v-if="bank.decision.kind === 'distribute'" x="0" y="20" font-size="11"
-                    >Lot {{ ['I', 'II', 'III'][distributionLot] }}</text
-                >
                 <g
                     v-for="(choice, index) in visibleDecisions"
                     :key="choice.data.id"
                     class="bank-choice"
-                    :transform="`translate(0 ${40 + index * 35})`"
+                    :transform="
+                        bank.decision.kind === 'distribute'
+                            ? `translate(${index * 70} 0)`
+                            : `translate(0 ${40 + index * 35})`
+                    "
                 >
-                    <OffshoreCargo :pieces="[choice.data]" />
+                    <path
+                        v-if="choice.name === names.DistributeBankContainer"
+                        class="bank-payment-route"
+                        d="M30 0 V-25"
+                        pointer-events="none"
+                        aria-hidden="true"
+                    />
+                    <OffshoreCargo
+                        :pieces="[choice.data]"
+                        :transform="choice.name === names.ReturnBankContainer ? undefined : 'translate(10 0) scale(2)'"
+                        :selectable="choice.name === names.ReturnBankContainer ? [] : [choice.data.id]"
+                        :action-label="
+                            choice.name === names.SeizeBankContainer
+                                ? 'Select for loan default'
+                                : 'Pay into container lot ' + (distributionLot + 1)
+                        "
+                        @select="emitMove(choice)"
+                    />
                     <template v-if="choice.name === names.ReturnBankContainer">
                         <g
                             v-for="price in returnPrices(choice)"
@@ -158,29 +251,10 @@
                             }}</text>
                         </g>
                     </template>
-                    <g
-                        v-else
-                        role="button"
-                        tabindex="0"
-                        :aria-label="
-                            choice.name === names.SeizeBankContainer ? 'Select for default' : 'Distribute next'
-                        "
-                        @click.stop="emitMove(choice)"
-                        @keydown.enter.prevent.stop="emitMove(choice)"
-                        @keydown.space.prevent.stop="emitMove(choice)"
-                    >
-                        <rect x="29" y="-3" width="34" height="24" fill="orange" /><text
-                            x="46"
-                            y="12"
-                            text-anchor="middle"
-                            fill="white"
-                            >→</text
-                        >
-                    </g>
                 </g>
                 <Button
                     v-if="decisionPages > 1"
-                    transform="translate(0 190)"
+                    :transform="bank.decision.kind === 'distribute' ? 'translate(0 40)' : 'translate(0 190)'"
                     :width="100"
                     :text="'More ' + (decisionPage + 1) + '/' + decisionPages"
                     @click="decisionPage = (decisionPage + 1) % decisionPages"
@@ -221,21 +295,15 @@ export default class OffshoreBank extends Vue {
     get canAct() {
         return this.player != null && this.state.currentPlayers.includes(this.player);
     }
-    get holdings() {
-        return this.state.players
-            .map((p, i) => ({ p, i }))
-            .filter(
-                ({ p, i }) =>
-                    (p.bankHolding || []).length ||
-                    (i === this.player && !!this.availableMoves[MoveName.LoadBankContainer])
-            );
-    }
-
     get bank() {
         return this.state.offshoreBank;
     }
     offer(type: BankAuctionType, lot: number) {
-        return this.canAct && this.availableMoves[MoveName.CallBank]?.some((o) => o.type === type && o.lot === lot);
+        return (
+            !this.bank?.decision &&
+            this.canAct &&
+            this.availableMoves[MoveName.CallBank]?.some((o) => o.type === type && o.lot === lot)
+        );
     }
     chooseOffer(type: BankAuctionType, lot: number) {
         if (this.offer(type, lot)) this.$emit('choose-offer', { type, lot });
@@ -261,7 +329,7 @@ export default class OffshoreBank extends Vue {
             ? 'Outbid'
             : this.bank?.decision?.kind === 'seize'
             ? 'Loan default'
-            : 'Pay bank';
+            : '';
     }
     returnPrices(choice: Moves.MoveBankContainer) {
         return [1, 2, 3, 4, 5, 6].filter((price) =>
@@ -293,6 +361,14 @@ export default class OffshoreBank extends Vue {
     stroke-width: 2;
     cursor: pointer;
 }
+.bank-payment-route {
+    fill: none;
+    stroke: blue;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.offshore-lot.destination,
 .offshore-lot.selected {
     fill: #d6e4ff;
     stroke: blue;

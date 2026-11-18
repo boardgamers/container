@@ -73,10 +73,15 @@ player colors, buttons and bid calculator as the base game. The Offshore board
 adds a lower bank area without shifting the classic board coordinates. On mobile,
 the **Bank** navigation button brings that area into view.
 
-Click a lot to offer cash or select stored cargo, then confirm the offer. Required
-repricing, default and payment choices appear beside the lots; holdings can be
-clicked to load on arrival. Large cargo lots and decision lists are paginated.
-There is no separate expansion banner or collapsible card panel.
+Each lot separates its reward from the current bidder's token and bid. Click a
+lot to offer cash or select stored cargo, then confirm the offer. During payment,
+click a container below the lots; a connecting line and highlighted lot show its
+fixed destination. Repricing and default choices appear beside the bank.
+
+Each player's colored bank harbor row contains separate ship and waiting-cargo
+spaces. Won containers remain in that row until clicked to load on arrival.
+Empty harbor rows stay visible, and large cargo lists are paginated. There is no
+separate expansion banner or collapsible card panel.
 
 ## Developer testing
 

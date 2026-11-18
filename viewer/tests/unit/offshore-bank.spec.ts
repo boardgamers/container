@@ -105,7 +105,7 @@ describe('Offshore bank viewer', () => {
             const tokens = wrapper.findAll('.bank-bidder');
             expect(tokens.length).toBe(2);
             expect(tokens.wrappers.map((t) => t.attributes('transform'))).toEqual([
-                'translate(16 52)',
+                'translate(16 86)',
                 'translate(16 86)',
             ]);
             tokens.wrappers.forEach((t) => expect(t.find('circle').attributes('r')).toBe('9'));
@@ -115,9 +115,9 @@ describe('Offshore bank viewer', () => {
             expect(amount.attributes('text-anchor')).toBe('start');
             const escrow = wrapper
                 .findAllComponents(OffshoreCargo)
-                .wrappers.find((c) => c.attributes('transform') === 'translate(32 47)')!;
+                .wrappers.find((c) => c.attributes('transform') === 'translate(32 69)')!;
             expect(escrow.props('columns')).toBe(2);
-            expect(escrow.props('rows')).toBe(2);
+            expect(escrow.props('rows')).toBe(1);
             tokens.wrappers.forEach((token) => {
                 expect(token.attributes('aria-label')).toBe(name);
                 expect(token.attributes('translate')).toBe('no');
@@ -128,7 +128,7 @@ describe('Offshore bank viewer', () => {
                 );
             });
             expect(wrapper.findAll('.bank-board text').wrappers.some((text) => text.text().includes(name))).toBe(false);
-            expect(wrapper.findAllComponents(PlayerToken).length).toBe(2);
+            expect(wrapper.findAllComponents(PlayerToken).length).toBe(2 + state.players.length);
             wrapper.destroy();
         }
     });
@@ -280,7 +280,7 @@ describe('Offshore bank viewer', () => {
         refresh();
         let wrapper = render();
         expect(wrapper.text()).toContain('Loan default');
-        await wrapper.find('.bank-choice [role="button"]').trigger('click');
+        await wrapper.find('.bank-choice [data-piece-id][role="button"]').trigger('keydown.enter');
         expect(wrapper.emitted('move')![0][0].name).toBe(MoveName.SeizeBankContainer);
         wrapper.destroy();
         state.offshoreBank!.decision = {
@@ -293,8 +293,14 @@ describe('Offshore bank viewer', () => {
         };
         refresh();
         wrapper = render();
-        expect(wrapper.text()).toContain('Lot I');
-        await wrapper.find('.bank-choice [role="button"]').trigger('click');
+        expect(wrapper.find('.offshore-lot.destination').attributes('data-lot')).toBe('0');
+        expect(wrapper.find('.offshore-lot.destination').attributes('role')).toBeUndefined();
+        expect(wrapper.find('.bank-decision > text').exists()).toBe(false);
+        expect(wrapper.emitted('move')).toBeUndefined();
+        expect(wrapper.find('.bank-choice [data-piece-id][role="button"]').attributes('aria-label')).toContain(
+            'Pay into container lot 1'
+        );
+        await wrapper.find('.bank-choice [data-piece-id][role="button"]').trigger('keydown.enter');
         expect(wrapper.emitted('move')![0][0].name).toBe(MoveName.DistributeBankContainer);
         wrapper.destroy();
     });
@@ -359,6 +365,39 @@ describe('Offshore bank viewer', () => {
             expect(ship.y + 55).toBeLessThan(722 + i * 42);
         });
         game.destroy();
+    });
+
+    it('reserves colored ship and cargo bays for all five players, even when empty', async () => {
+        const state = setup(5, { offshoreIsland: true }, 'bank-holding-berths');
+        const player = state.currentPlayers[0];
+        const colors = ['#123456', '#234567', '#345678', '#456789', '#56789a'];
+        state.players.forEach((p) => {
+            p.ship.shipPosition = ShipPosition.OffshoreBank;
+        });
+        const other = (player + 1) % 5;
+        state.players[other].bankHolding = state.containersLeft.splice(-8);
+        const wrapper = mount(OffshoreBank, {
+            provide: { __reactiveInject__: { preferences: { colorBlind: true } } },
+            propsData: { state, player, playerColors: colors },
+        });
+        expect(wrapper.findAll('.bank-bid-zone')).toHaveLength(6);
+        expect(wrapper.findAll('.bank-berth')).toHaveLength(5);
+        wrapper.findAll('.bank-berth').wrappers.forEach((berth, i) => {
+            expect(berth.attributes('transform')).toBe(`translate(4 ${i * 42 + 4})`);
+            expect(berth.find('rect').attributes('fill')).toBe(colors[i]);
+            expect(berth.find('.player-token text').text()).toBe(String(i + 1));
+            expect(berth.find('.bank-holding').attributes('transform')).toBe('translate(112 0)');
+        });
+        expect(wrapper.find(`.bank-berth[data-owner="${player}"] [data-piece-id]`).exists()).toBe(false);
+        const holding = wrapper.find(`.bank-holding[data-owner="${other}"]`);
+        expect(holding.findAll('[data-piece-id]')).toHaveLength(5);
+        await holding.find('[aria-label="Next cargo page"]').trigger('click');
+        expect(holding.findAll('[data-piece-id]')).toHaveLength(3);
+        await wrapper.setProps({ player: undefined });
+        expect(wrapper.findAll('.bank-berth')).toHaveLength(5);
+        expect(wrapper.find('.bank-holding [data-piece-id][role="button"]').exists()).toBe(false);
+        expect(wrapper.emitted('move')).toBeUndefined();
+        wrapper.destroy();
     });
 
     it('renders bank ships at finite coordinates and permits arrival loading only', async () => {

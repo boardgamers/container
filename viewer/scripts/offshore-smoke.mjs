@@ -163,6 +163,11 @@ try {
         for (const action of cargoBid) state = engine.move(state, action, player);
         await push();
 
+        await page.locator('.board-scroll').evaluate((el) => {
+            el.scrollLeft = 0;
+        });
+        await page.waitForTimeout(1200);
+        await page.screenshot({ path: `/tmp/container-offshore-bid-zones-${width}.png`, fullPage: true });
         // The decision is on-board too: no HTML cards, forms, expansion eyebrow or toggle.
         assert.equal(await page.locator('.bank-toggle, #offshore-title, .bank-decision form').count(), 0);
         const own = state.players[player];
@@ -229,7 +234,8 @@ try {
         state.players[player].lastMove = null;
         state.players[player].actions = 2;
         const pickup = state.containersLeft.pop();
-        state.players[player].bankHolding.push(pickup);
+        state.players[player].bankHolding.push(pickup, ...state.containersLeft.splice(-7));
+        state.players[(player + 1) % 3].bankHolding.push(state.containersLeft.pop());
         state.newTurn = true;
         await push();
         await page
@@ -245,6 +251,22 @@ try {
         for (const action of sailing) state = engine.move(state, action, player);
         assert.equal(state.players[player].ship.shipPosition, 'offshoreBank');
         await push();
+        // Ship and waiting cargo share a player-colored berth, never the same space.
+        await page.waitForTimeout(1200);
+        const ownBerth = page.locator(`.bank-berth[data-owner="${player}"]`);
+        await ownBerth.scrollIntoViewIfNeeded();
+        const holdingBounds = await ownBerth.locator('.bank-holding').boundingBox();
+        const shipBounds = await page
+            .locator('.piece')
+            .filter({ hasText: `${state.players[player].name}'s Ship` })
+            .boundingBox();
+        assert.ok(shipBounds.x + shipBounds.width < holdingBounds.x, 'ship never overlaps waiting cargo');
+        assert.equal(await page.locator('.bank-berth').count(), 3);
+        assert.equal(await ownBerth.locator('[data-piece-id]').count(), 5);
+        await ownBerth.getByRole('button', { name: 'Next cargo page' }).click();
+        assert.equal(await ownBerth.locator('[data-piece-id]').count(), 3);
+        await ownBerth.getByRole('button', { name: 'Previous cargo page' }).click();
+        await page.screenshot({ path: `/tmp/container-offshore-harbor-${width}.png`, fullPage: true });
         // Arrival-only pickup still uses the displayed holding cargo.
         await page.locator(`.bank-holding [data-piece-id="${pickup.id}"]`).click();
         const loading = await page.evaluate(() => moves.at(-1));
@@ -253,6 +275,62 @@ try {
         state = engine.move(state, loading.at(-1), player);
         assert.ok(state.players[player].ship.containers.some((piece) => piece.id === pickup.id));
         await push();
+
+        // Pick the payment color, not the destination: lot II is frozen by an auction.
+        const payments = ['orange', 'white', 'orange'].map((color) => {
+            const index = state.containersLeft.findIndex((piece) => piece.color === color);
+            assert.ok(index >= 0);
+            return state.containersLeft.splice(index, 1)[0];
+        });
+        state.offshoreBank.auctions = [
+            { type: 'containers', lot: 1, bidder: (player + 1) % 3, cash: 2, containers: [] },
+        ];
+        state.offshoreBank.decision = {
+            kind: 'distribute',
+            player,
+            resumePlayer: player,
+            containers: [],
+            payment: payments.slice(),
+            cursor: 0,
+        };
+        state.phase = 'bankDecision';
+        state.newTurn = true;
+        state.currentPlayers = [player];
+        await push();
+        const checkPayment = async (lot, stage) => {
+            assert.equal(await page.locator('.offshore-lot.destination').getAttribute('data-lot'), String(lot));
+            assert.equal(await page.locator('.offshore-lot[role="button"]').count(), 0);
+            assert.equal(await page.locator('.bank-decision > text').count(), 0);
+            assert.equal(await page.evaluate(() => moves.length), 0, 'never auto-pay');
+            await page.waitForTimeout(1200);
+            await page.screenshot({ path: `/tmp/container-offshore-payment-${stage}-${width}.png`, fullPage: true });
+        };
+        await checkPayment(0, 'choice');
+        // Spectators see destination and pending cargo, but cannot choose or bid.
+        await page.evaluate((state) => {
+            host.emit('player', { index: undefined });
+            host.emit('state', state);
+        }, engine.stripSecret(copy(state)));
+        assert.equal(await page.locator('.bank-decision [role="button"]').count(), 0);
+        assert.equal(await page.locator('.offshore-lot.destination').getAttribute('data-lot'), '0');
+        await page.evaluate((player) => host.emit('player', { index: player }), player);
+        await push();
+        for (const [index, lot] of [
+            [1, 0],
+            [0, 2],
+            [2, 0],
+        ]) {
+            await page.locator(`.bank-choice [data-piece-id="${payments[index].id}"]`).click();
+            const actions = await page.evaluate(() => moves.at(-1));
+            assert.equal(actions.length, 1);
+            assert.equal(actions[0].name, 'distributeBankContainer');
+            state = engine.move(state, actions[0], player);
+            assert.ok(state.offshoreBank.containerLots[lot].some((piece) => piece.id === payments[index].id));
+            await push();
+            if (index === 1) await checkPayment(2, 'skip');
+            if (index === 0) await checkPayment(0, 'last');
+        }
+        assert.equal(await page.locator('.bank-decision, .offshore-lot.destination').count(), 0);
 
         // Final cash settlement must remain clickable with opponents' point cards stripped.
         const payment = state.players[player].containersOnFactoryStore.pop();
@@ -278,13 +356,47 @@ try {
         state.newTurn = true;
         state.currentPlayers = [player];
         await push();
-        await page.getByRole('button', { name: 'Distribute next', exact: true }).click();
+        assert.equal(await page.evaluate(() => moves.length), 0, 'single payment requires explicit click');
+        await page.locator('.bank-choice [data-piece-id][role="button"]').click();
         const distribution = await page.evaluate(() => moves.at(-1));
         assert.equal(distribution.length, 1);
         state = engine.move(state, distribution[0], player);
         assert.equal(state.phase, 'gameEnd');
         await push();
         await page.waitForFunction(() => document.querySelector('.statusBar')?.textContent.includes('Game ended'));
+        // Five fixed assignments, all docked; waiting cargo belongs to the same colored row.
+        state = engine.setup(5, { offshoreIsland: true }, 'offshore-five-harbors');
+        state.currentPlayers = [player];
+        state.players.forEach((p, i) => {
+            p.name = `Trader ${i + 1}`;
+            p.ship.shipPosition = engine.ShipPosition.OffshoreBank;
+            p.bankHolding = state.containersLeft.splice(-7);
+        });
+        await push();
+        await page.waitForTimeout(1200);
+        assert.equal(await page.locator('.bank-berth').count(), 5);
+        for (let i = 0; i < 5; i++) {
+            const berth = page.locator(`.bank-berth[data-owner="${i}"]`);
+            const cargo = await berth.locator('.bank-holding').boundingBox();
+            const ship = await page
+                .locator('.piece')
+                .filter({ hasText: `Trader ${i + 1}'s Ship` })
+                .boundingBox();
+            const bounds = await berth.boundingBox();
+            assert.ok(ship.x + ship.width < cargo.x);
+            assert.ok(
+                ship.y >= bounds.y - 2 && ship.y + ship.height <= bounds.y + bounds.height + 2,
+                JSON.stringify({ i, ship, bounds })
+            );
+        }
+        await page.locator(`.bank-berth[data-owner="${player}"]`).scrollIntoViewIfNeeded();
+        await page.screenshot({ path: `/tmp/container-offshore-five-harbors-${width}.png`, fullPage: true });
+        await page.evaluate((state) => {
+            host.emit('player', { index: undefined });
+            host.emit('state', state);
+        }, engine.stripSecret(copy(state)));
+        assert.equal(await page.locator('.bank-holding [data-piece-id][role="button"]').count(), 0);
+        assert.equal(await page.locator('.bank-harbor.canClick').count(), 0);
         assert.deepEqual(errors, []);
         await page.close();
         console.log(

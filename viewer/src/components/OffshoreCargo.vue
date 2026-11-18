@@ -70,6 +70,7 @@ export default class OffshoreCargo extends Vue {
     @Prop({ default: () => [] }) pieces!: Array<ContainerPiece & { price?: number }>;
     @Prop({ default: () => [] }) selectable!: string[];
     @Prop({ default: () => [] }) selected!: string[];
+    @Prop({ default: '' }) actionLabel!: string;
     @Prop({ default: 3 }) columns!: number;
 
     @Prop({ default: 2 }) rows!: number;
@@ -93,9 +94,9 @@ export default class OffshoreCargo extends Vue {
         this.$emit('select', id);
     }
     cargoLabel(piece: ContainerPiece & { price?: number }) {
-        return `${piece.color === 'darkslategray' ? 'dark green' : piece.color} container${
-            piece.price == null ? '' : ': $' + piece.price
-        }`;
+        return `${this.actionLabel && this.selectable.includes(piece.id) ? this.actionLabel + ': ' : ''}${
+            piece.color === 'darkslategray' ? 'dark green' : piece.color
+        } container${piece.price == null ? '' : ': $' + piece.price}`;
     }
 }
 </script>
