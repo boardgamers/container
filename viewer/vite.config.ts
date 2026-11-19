@@ -37,6 +37,11 @@ export default defineConfig(({ mode }) => {
             {
                 name: 'container-locale-sidecars',
                 apply: 'build',
+                renderDynamicImport({ targetModuleId }) {
+                    if (!library || !targetModuleId || !localeForId(targetModuleId)) return;
+                    // Classic scripts loaded across origins cannot resolve relative import().
+                    return { left: 'import(new URL(', right: ', __containerViewerUrl).href)' };
+                },
                 generateBundle() {
                     if (!library) return;
                     for (const locale of locales) {
@@ -94,6 +99,7 @@ export default defineConfig(({ mode }) => {
                 output: library
                     ? {
                           exports: 'named',
+                          intro: 'const __containerViewerUrl = typeof document !== "undefined" ? (document.currentScript?.src || document.baseURI) : "";',
                           globals: { vue: 'Vue' },
                           paths: (id) => {
                               const locale = localeForId(id);

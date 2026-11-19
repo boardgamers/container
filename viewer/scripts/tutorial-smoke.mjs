@@ -28,6 +28,7 @@ for (const locale of locales.filter((locale) => locale !== 'en')) {
 const html =
     '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/bundle.css"><div id="app"></div><script src="/vue.js"></script><script src="/bundle.js"></script><script>container.launchTutorial("#app",{chapter:new URLSearchParams(location.search).get("chapter")||"supply-chain",locale:new URLSearchParams(location.search).get("locale")||"en"});</script>';
 const server = createServer(async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
     const request = new URL(req.url, 'http://localhost');
     const path = request.pathname;
     if (request.searchParams.has('embedded')) {
@@ -58,6 +59,18 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
+// Model BGS's cross-origin CDN classic script, without a crossorigin attribute.
+const crossOriginHost = createServer((req, res) => {
+    if (req.url === '/favicon.ico') {
+        res.writeHead(204);
+        res.end();
+        return;
+    }
+    res.setHeader('Content-Type', 'text/html');
+    res.end(html.replace(/(src|href)="\//g, `$1="${origin}/`));
+});
+await new Promise((resolve) => crossOriginHost.listen(0, '127.0.0.1', resolve));
+const tutorialHost = `http://127.0.0.1:${crossOriginHost.address().port}`;
 async function playOnBoard(page, move) {
     if (move.name === 'callBank') {
         await page.locator(`.offshore-lot[data-type="${move.data.type}"][data-lot="${move.data.lot}"]`).click();
@@ -188,7 +201,7 @@ async function localizedOffshoreSmoke(browser) {
                 errors.push(`${response.status()}: ${response.url()}`);
         });
         try {
-            await page.goto(`${origin}/?chapter=${lesson.id}&locale=${encodeURIComponent(locale)}`);
+            await page.goto(`${tutorialHost}/?chapter=${lesson.id}&locale=${encodeURIComponent(locale)}`);
             await page.waitForFunction(
                 ({ title, instruction, locale }) =>
                     document.querySelector('.container-tutorial')?.lang === locale &&
@@ -410,5 +423,6 @@ try {
     }
 } finally {
     await browser.close();
+    await new Promise((resolve) => crossOriginHost.close(resolve));
     await new Promise((resolve) => server.close(resolve));
 }

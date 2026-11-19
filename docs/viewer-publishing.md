@@ -9,3 +9,5 @@ BGS compresses JS, CSS, JSON and WASM automatically during upload. Send the orig
 The BGS admin's **Upload folder** control handles multi-file builds. For scripted releases, use BGS's `scripts/publish-viewer.mjs` with `--dir`, `--entry` and `--style`; it verifies every uploaded file, records the previous viewer, and activates only with `--apply --activate`. The full command and API contract are in the [BGS viewer documentation](https://docs.boardgamers.space/guide/viewer-api#publishing-a-viewer-with-multiple-files).
 
 English needs no language download; other languages load when selected. Test a cold load and a language change after publishing. Also check the browser Network panel for missing relative assets.
+
+The UMD build captures its script URL during evaluation and resolves locale imports to absolute URLs. This is required for cross-origin classic scripts: browsers can otherwise give `import()` an `about:blank` base. The tutorial browser suite exercises all 17 languages with HTML and viewer assets on different origins, without requiring the host to set a `crossorigin` attribute.
