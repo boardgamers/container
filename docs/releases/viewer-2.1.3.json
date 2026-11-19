@@ -1,0 +1,174 @@
+{
+    "game": "container",
+    "gameVersion": 3,
+    "viewerVersion": "2.1.3",
+    "sourceCommit": "13bbb63b65bb976f19e520888a5e47a354b55a3b",
+    "activated": true,
+    "bundle": "split-fe17891069e8f5c5f8a7",
+    "previousViewer": {
+        "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-167518d4e44d1bca8783/container-viewer.umd.min.js",
+        "topLevelVariable": "container",
+        "fullScreen": true,
+        "replayable": false,
+        "dependencies": {
+            "scripts": ["https://cdn.jsdelivr.net/npm/vue@^2/dist/vue.min.js"],
+            "stylesheets": [
+                "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-167518d4e44d1bca8783/container-viewer.css"
+            ]
+        },
+        "chat": true,
+        "thumbnail": true,
+        "scriptBytes": 515389
+    },
+    "viewer": {
+        "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.js",
+        "topLevelVariable": "container",
+        "fullScreen": true,
+        "replayable": false,
+        "dependencies": {
+            "scripts": ["https://cdn.jsdelivr.net/npm/vue@^2/dist/vue.min.js"],
+            "stylesheets": [
+                "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.css"
+            ]
+        },
+        "chat": true,
+        "thumbnail": true,
+        "scriptBytes": 515446
+    },
+    "files": [
+        {
+            "name": "container-viewer.css",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.css",
+            "bytes": 16007,
+            "storedBytes": 4172,
+            "sha256": "c63e8f19879ec61ccf04950a3022dd37b3c6c5ac37fa33f1a69f073e193b672d"
+        },
+        {
+            "name": "container-viewer.umd.min.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.js",
+            "bytes": 515446,
+            "storedBytes": 152611,
+            "sha256": "8a2828f67bdde16af9282733ca6c8a11b087cf20afffd0f3392fc9249cd9580a"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-da.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-da.js",
+            "bytes": 62259,
+            "storedBytes": 19265,
+            "sha256": "5a32e842ca40fe6f0491282d85d66a9812ac5143955701f92e03af31adf08091"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-de.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-de.js",
+            "bytes": 65663,
+            "storedBytes": 20310,
+            "sha256": "53945a725bdad65f87565334147ec7fe639f94d0e5eebe486d304bf581878ff3"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-el.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-el.js",
+            "bytes": 93670,
+            "storedBytes": 23517,
+            "sha256": "a927c7b09a0c3bc2cb33a768383c141a005397ea831f24bc982d8e7b82413a46"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-fa.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-fa.js",
+            "bytes": 83241,
+            "storedBytes": 21291,
+            "sha256": "1ea561ba38c41ac9ad474bfc267ab5837d51ee12ae979985916acf5fcf97f897"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-fr.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-fr.js",
+            "bytes": 66750,
+            "storedBytes": 19868,
+            "sha256": "900b84f10ea312888168b750c69596abcbecb91c77e1d8b6c138df5cf95487f1"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-hi.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-hi.js",
+            "bytes": 102168,
+            "storedBytes": 22575,
+            "sha256": "39f4b3bbd3b865f7ba350e4d56ee54d59f9ab2555ac401639706e2670fb582ae"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-it.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-it.js",
+            "bytes": 65880,
+            "storedBytes": 19608,
+            "sha256": "3e9878212833edbc4c7a424a7772b67ba7711d013e6771a12d43d5462ee4124c"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-ko.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-ko.js",
+            "bytes": 69099,
+            "storedBytes": 20551,
+            "sha256": "6905b51c4e4b9d4f9b13508f943fff2001de55e15734d4a7c011152afe802ad3"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-nl.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-nl.js",
+            "bytes": 63937,
+            "storedBytes": 19499,
+            "sha256": "66822778f3bb9c9fe497503d11aab70650b77826cd2bb2035dc1f68f173fa2fe"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-pl.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-pl.js",
+            "bytes": 64995,
+            "storedBytes": 20546,
+            "sha256": "0807321c80808f5677ea75bcec9f15365df8d240b985882a55fdbb57687fd209"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-pt-BR.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-pt-BR.js",
+            "bytes": 64919,
+            "storedBytes": 19402,
+            "sha256": "5e75329a509d022574cb8a63c9ed85ef6736d262b4ec7d48fbf88e89be924437"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-ro.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-ro.js",
+            "bytes": 66591,
+            "storedBytes": 20026,
+            "sha256": "011465c93b31d6a46423de1ec6cefb7378de1c62435b7113a13356fe93013a85"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-ru.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-ru.js",
+            "bytes": 85833,
+            "storedBytes": 23151,
+            "sha256": "9b340bc35aac030020fd07eae45a008b910aac30fe9d37c17998299bf8b3ed46"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-vi.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-vi.js",
+            "bytes": 71025,
+            "storedBytes": 20083,
+            "sha256": "fd8165c58b4136fafb52e1f53ed834d89a22eb820e7eb9fadde984e15e295650"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-zh-CN.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-zh-CN.js",
+            "bytes": 59905,
+            "storedBytes": 19763,
+            "sha256": "19c1c8af7f9be91fe4647790de044b66285b40739461290133ca1b9ab78da1ed"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-zh-TW.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.locale-zh-TW.js",
+            "bytes": 60615,
+            "storedBytes": 20138,
+            "sha256": "f9fa2add34a3bdcc16ca38ea0a541c3ec71903288398c332cee3b115c4087ed7"
+        }
+    ],
+    "verification": {
+        "viewerUnitTests": 77,
+        "tutorialTests": 18,
+        "typeCheck": true,
+        "libraryBuild": true,
+        "offshoreBrowserWidths": [390, 1400],
+        "liveBankLotToHoldingAnimations": 2
+    }
+}
