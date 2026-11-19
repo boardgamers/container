@@ -2,10 +2,10 @@ import Game from '@/components/Game.vue';
 import { journalContainerIcon, journalPieces } from '@/journal-pieces';
 import fr from '@/localization/fr.json';
 import { mountLocalization } from '@/localization/runtime.js';
-import { offshoreJournal } from '@/offshore-journal';
+import { offshoreJournal, offshoreWinJournal } from '@/offshore-journal';
 import { setup, stripSecret } from 'container-engine/src/engine';
 import { ContainerColor, ShipPosition } from 'container-engine/src/gamestate';
-import { LogMove } from 'container-engine/src/log';
+import { GameEventName, LogMove } from 'container-engine/src/log';
 import { Move, MoveName } from 'container-engine/src/move';
 import { describe, expect, it } from 'vitest';
 
@@ -24,6 +24,51 @@ function render(log: LogMove, state = fixture(), blind = true) {
 }
 
 describe('Offshore rich journal', () => {
+    it.each(['containers', 'cash'])(
+        'badges %s winners in the rich journal without changing engine or plain logs',
+        (type) => {
+            const state = fixture();
+            state.players[0].name = 'You';
+            const message = `You wins bank ${type} lot 1`;
+            state.log = [{ type: 'event', event: { name: GameEventName.Upkeep, interest: message } }];
+            const context = { G: state, preferences: { colorBlind: true }, playerColors: ['#123456'] };
+            const root = document.createElement('div');
+            root.innerHTML = (Game as any).options.computed.logReversed.get.call(context)[0];
+            const badge = root.querySelector('[data-localized-journal] > span') as HTMLElement;
+            expect(badge.textContent).toBe('You');
+            expect(badge.style.backgroundColor).toBe('rgb(18, 52, 86)');
+            expect(badge.style.fontWeight).toBe('bold');
+            expect(root.textContent).toBe(`New event: ${message}`);
+            expect((Game as any).options.computed.logReversedSimple.get.call(context)).toEqual([
+                `New event: ${message}`,
+            ]);
+            expect((state.log[0] as any).event.interest).toBe(message);
+            const localization = mountLocalization(root, { fr }, 'fr');
+            expect(root.textContent).toContain('remporte');
+            expect(badge.textContent).toBe('You');
+            localization.setLocale('en');
+            expect(root.textContent).toContain(message);
+            localization.destroy();
+        }
+    );
+
+    it('escapes winner names, matches whole names and leaves unrelated upkeep alone', () => {
+        const state = fixture();
+        const name = state.players[0].name;
+        state.players[1].name = 'Draw';
+        const root = document.createElement('div');
+        root.innerHTML = offshoreWinJournal(`${name} wins bank cash lot 3`, state)!;
+        expect(root.querySelector('span')!.textContent).toBe(name);
+        expect(root.querySelector('img')).toBeNull();
+        expect(offshoreWinJournal('Draw pays $1 interest', state)).toBeUndefined();
+        expect(offshoreWinJournal('Unknown wins bank cash lot 1', state)).toBe('Unknown wins bank cash lot 1');
+        state.players[1].name = name;
+        root.innerHTML = offshoreWinJournal(`${name} wins bank cash lot 3`, state)!;
+        expect(root.querySelector('span')).toBeNull();
+        expect(root.querySelector('img')).toBeNull();
+        expect(root.textContent).toBe(`${name} wins bank cash lot 3`);
+    });
+
     it('matches ordinary badges, applies custom colors, escapes names exactly once and lists escrow pictograms', () => {
         const state = fixture();
         const root = render(cashCall(), state);

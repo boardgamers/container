@@ -832,7 +832,7 @@ import { colorBadgeHtml } from '../color-blind';
 import { playerColors, playerTextColor, playerSymbol } from '../player-colors';
 import { journalPieces } from '../journal-pieces';
 import { journalOrder } from '../journal-order';
-import { offshoreJournal } from '../offshore-journal';
+import { offshoreJournal, offshoreWinJournal } from '../offshore-journal';
 import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
 import { bidRevision, MoveName, ended, isLoanReversal, move as engineMove } from 'container-engine';
 import type { GameState, Move } from 'container-engine';
@@ -2143,7 +2143,11 @@ export default class Game extends Vue {
                     if (log.event.name == GameEventName.Upkeep) {
                         logReversed.push(
                             'New event: ' +
-                                journalPieces(log.event.interest, this.preferences.colorBlind, this.playerColors)
+                                journalPieces(
+                                    offshoreWinJournal(log.event.interest, this.G!) ?? log.event.interest,
+                                    this.preferences.colorBlind,
+                                    this.playerColors
+                                )
                         );
                     } else {
                         logReversed.push('New event: ' + log.event.name);

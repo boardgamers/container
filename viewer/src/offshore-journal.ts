@@ -13,15 +13,7 @@ export function offshoreJournal(
 ): string | undefined {
     const text = (value: unknown) => (rich ? escapeJournal(String(value)) : String(value));
     const name = state.players?.[entry.player]?.name || String(entry.player + 1);
-    // Match the ordinary engine badge; journalPieces applies the user's seat colors.
-    const badge = rich ? document.createElement('span') : undefined;
-    if (badge) {
-        badge.style.backgroundColor = playerColors[entry.player] || '';
-        badge.style.fontWeight = 'bold';
-        badge.style.padding = '0 3px';
-        badge.textContent = name;
-    }
-    const player = badge?.outerHTML || name;
+    const player = rich ? playerBadge(name, entry.player) : name;
     const container = (color: unknown) =>
         rich && containerColors.includes(color as ContainerColor)
             ? journalContainerIcon(color as ContainerColor, colorBlind)
@@ -56,6 +48,28 @@ export function offshoreJournal(
             return `${player} seizes a ${color} container for unpaid interest.`;
         return `${player} loads a ${color} container from the holding area.`;
     }
+}
+
+/** Bank settlements are legacy Upkeep strings, not moves with a player ID.
+ * Match the complete public name and suffix rather than replacing name substrings.
+ * Ambiguous or unknown names keep their original prose without guessing a seat.
+ */
+export function offshoreWinJournal(message: string, state: GameState): string | undefined {
+    const match = /^(.*)( wins bank (?:containers|cash) lot [1-3])$/.exec(message);
+    if (!match) return undefined;
+    const players = state.players.filter((player) => player.name === match[1]);
+    if (players.length !== 1) return escapeJournal(message);
+    return playerBadge(match[1], players[0].id) + match[2];
+}
+
+function playerBadge(name: string, seat: number): string {
+    // Match the ordinary engine badge; journalPieces applies the user's seat colors.
+    const badge = document.createElement('span');
+    badge.style.backgroundColor = playerColors[seat] || '';
+    badge.style.fontWeight = 'bold';
+    badge.style.padding = '0 3px';
+    badge.textContent = name;
+    return badge.outerHTML;
 }
 
 export function escapeJournal(text: string): string {
