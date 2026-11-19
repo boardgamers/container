@@ -1,0 +1,291 @@
+{
+    "game": "container",
+    "gameVersion": 3,
+    "sourceCommit": "e224cf7c784d8910a74725f97a0849a025761999",
+    "engineVersion": "2.2.0",
+    "viewerVersion": "2.1.1",
+    "engine": {
+        "engine": {
+            "package": {
+                "name": "container-engine",
+                "version": "2.2.0",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/engine/d91a59b7ef3ef416/container-engine-2.2.0.tgz"
+            },
+            "entryPoint": "dist/wrapper.js"
+        },
+        "sha256": "d91a59b7ef3ef416a955e841f8053be11558490f7377d5fedf06193e19f229ec"
+    },
+    "activeEngine": {
+        "engine": {
+            "package": {
+                "name": "container-engine",
+                "version": "2.2.0",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/engine/d91a59b7ef3ef416/container-engine-2.2.0.tgz"
+            },
+            "entryPoint": "dist/wrapper.js"
+        },
+        "key": "container_3_container-engine_2.2.0_9b9e20ab8243dc3c",
+        "revision": 4,
+        "achievementCount": 19
+    },
+    "viewer": {
+        "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.js",
+        "scriptBytes": 510949,
+        "files": [
+            {
+                "name": "container-viewer.css",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.css",
+                "sha256": "a10b80b2537ef892f3e555fc52e32055dd3c6716ca3cec80f2a7c81810de3a24"
+            },
+            {
+                "name": "container-viewer.umd.min.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.js",
+                "sha256": "7b2c30e1c7b734c4c60897e0fffa9ae42960d37d7692f5545514c48b6e18faef"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-da.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-da.js",
+                "sha256": "b0da04cd067d1f58940b3cd8633c41bef7c379e9017a57b8b0a31c2ad8c049f8"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-de.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-de.js",
+                "sha256": "12474684e57409b9eb832c606c2854d71ad633dc74f92681ff3262c8ebbacb87"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-el.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-el.js",
+                "sha256": "c4a1f83fbbdfc9a70392391260101bafcf7b33b359f5f92c50acd24a27cbc6bb"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-fa.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-fa.js",
+                "sha256": "3d8a81f83ecb106af47ff83eec878716e983b16055a5eb7e1da39df61430a061"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-fr.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-fr.js",
+                "sha256": "f5a011db4b6404ba9ad0615f41758e6e0d20157c3be5da60b6e58fbaa86691d5"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-hi.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-hi.js",
+                "sha256": "2c2badf7211974cd91d0b6510995202a390491c9352080729ced9a0112aade87"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-it.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-it.js",
+                "sha256": "b8297a6fe8b4bd352d7b72ec9b0847430f84714ebe65934ccde0b86cd9451a5f"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-ko.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-ko.js",
+                "sha256": "26730b7b5d2b6fbe53c038e310a74c6b96199a7a0005052623097ea4ae075398"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-nl.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-nl.js",
+                "sha256": "78193cae6443adc1d9b5b541c5e5cf60a7a4097812da6ce7a0e92917feca8a36"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-pl.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-pl.js",
+                "sha256": "c4a8bd275efaa4011317a5b541c64164d1f70fbb09b064b4d17e18d62ff0c424"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-pt-BR.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-pt-BR.js",
+                "sha256": "ae5c7018d997eb6d5486e7c51804005cc8546b872806ff22d2296553d3b72c4f"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-ro.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-ro.js",
+                "sha256": "c309cc9669135dd3b1c08de1b3746c94c6ac3d3caa9daca19dcc0e9a6f9f9d42"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-ru.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-ru.js",
+                "sha256": "103be3cf90662254bb179a61b7e4c5c84777de9d920f8fa3365f2e93c7b6397a"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-vi.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-vi.js",
+                "sha256": "f811925e78460be0e687ecf1c209bb319447cbb20d1cbeaa2df3637af5e9695e"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-zh-CN.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-zh-CN.js",
+                "sha256": "13078220dea6d72244acb19abb9b49dab787ad39fdf6fea979208e75e565d476"
+            },
+            {
+                "name": "container-viewer.umd.min.locale-zh-TW.js",
+                "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-24af9650be1f04927492/container-viewer.umd.min.locale-zh-TW.js",
+                "sha256": "cd202e360d6fae03aae679efc4422a255b893338fbb36d2dde7c05a330507308"
+            }
+        ]
+    },
+    "expansions": [
+        {
+            "name": "offshore-island",
+            "label": "Offshore Island"
+        }
+    ],
+    "tutorialChapters": [
+        {
+            "id": "supply-chain",
+            "title": "From factory to ship",
+            "description": "Produce, set prices, trade with another player and load a ship.",
+            "version": 1
+        },
+        {
+            "id": "buildings",
+            "title": "Factories and warehouses",
+            "description": "Distinguish buildings from sale spaces, then expand production and storage.",
+            "version": 1
+        },
+        {
+            "id": "selling",
+            "title": "Sail and sell your cargo",
+            "description": "Start an auction, reveal the sealed bids and collect the bank subsidy.",
+            "version": 1
+        },
+        {
+            "id": "bidding",
+            "title": "Bid, raise and break a tie",
+            "description": "Make a sealed offer, add a tie-break bid and see who pays.",
+            "version": 1
+        },
+        {
+            "id": "keep-cargo",
+            "title": "Keep the cargo yourself",
+            "description": "Decline the bids, pay the bank and compare the cost with selling.",
+            "version": 3
+        },
+        {
+            "id": "scoring",
+            "title": "What actually scores?",
+            "description": "Discard your most numerous colour, value a full set and count the final money.",
+            "version": 1
+        },
+        {
+            "id": "offshore-cargo",
+            "title": "Bank cargo and your ship",
+            "description": "Bid cash publicly, wait for settlement, then sail and load your safe holding.",
+            "version": 1
+        },
+        {
+            "id": "offshore-cash",
+            "title": "Stored cargo for bank cash",
+            "description": "Select real stored cargo, review one offer, then choose payment colour order.",
+            "version": 1
+        },
+        {
+            "id": "offshore-outbid",
+            "title": "Outbid and recover cargo",
+            "description": "See a public leader change, reprice returned stock, and wait for the new leader.",
+            "version": 1
+        }
+    ],
+    "verification": {
+        "engineTests": 84,
+        "viewerUnitTests": 65,
+        "tutorialTests": 16,
+        "locales": 17,
+        "messagesPerLocale": 788,
+        "allNineTutorialsDesktopAndMobile": true,
+        "crossOriginTutorialRegression": true,
+        "publicCdn": [
+            {
+                "locale": "da",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "de",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "el",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "en",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "fa",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "fr",
+                "publicAssets": true,
+                "bankBid": true,
+                "languageChange": "fr→de"
+            },
+            {
+                "locale": "hi",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "it",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "ko",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "nl",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "pl",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "pt-BR",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "ro",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "ru",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "vi",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "zh-CN",
+                "publicAssets": true,
+                "bankBid": true
+            },
+            {
+                "locale": "zh-TW",
+                "publicAssets": true,
+                "bankBid": true
+            }
+        ],
+        "installedProductionEngineSmoke": "Classic and Offshore initialization plus public cash bidding for 3/4/5 players; no persisted games created",
+        "unrelatedSettingsPreserved": true,
+        "allUploadedBytesHashVerified": true,
+        "releaseBranch": "master",
+        "additionalMirrorRequired": false
+    }
+}
