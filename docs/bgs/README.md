@@ -2,7 +2,10 @@
 
 `container-rules.en.md` is the English source of the public
 [Container rules page](https://boardgamers.space/page/container/rules).
-It documents the classic game and the optional Offshore Island expansion.
+It explains the classic game and the optional Offshore Island expansion for
+**online players**, not offline setup or rules administration. Keep additions
+short and focused on player decisions, board controls and important outcomes;
+omit procedures the server handles automatically.
 
 The CMS page key is `container:rules`. Before publishing, fetch
 `GET /api/admin/page/container%3Arules/en` and compare against the source being

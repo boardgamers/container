@@ -108,58 +108,27 @@ The player with the **most money** (cash plus this net worth) wins.
 
 ## Offshore Island expansion
 
-**Offshore Island is optional:** enable it when creating a new game. It adds the **Off-Shore Bank**, public auctions and a bank harbor. Without it, use the classic rules above. This online expansion supplements the existing Container rules; it does not replace them with all the rules of another edition.
+Enable **Offshore Island** when creating a game. On mobile, tap **Bank** to reach it. Each lot shows its **reward above** and the **current bid below**.
 
-### Bank setup
+### Bid and collect
 
-The bank has three cash lots (I, II and III), starting with **$1, $2 and $3**, and three container lots, starting with **2, 1 and 0 containers**. Those three containers have different colors and come out of the normal supply. Each player has a personal holding area at the bank.
+-   **Click a highlighted lot:** bid cash to win containers, or select containers from your factory/warehouse stores to win cash. Confirm with **Bid**. Calling the bank uses one action, once per turn.
+-   Bids are **public**. Other players can raise on their turns. Your offer is reserved immediately; offered containers still occupy storage capacity. If outbid, your cash returns automatically, or you reprice your returned containers.
+-   Still leading at the **start of your next turn**? You collect automatically, **after loan interest**. You cannot call the bank on a turn when you collect a bank auction.
+-   Cash winnings are immediately available. Won containers wait in **your bank holding**—they are not yet on your ship or scoring island.
 
-### Call Bank: bid or raise
+### Pick up your cargo
 
-**Call Bank costs one action, at most once per turn.** You do not need a ship at the bank to bid.
+Sail from the open sea to your colored bank berth, then **click the containers to load**. Loading is free on arrival, up to five aboard; it is not automatic. If already docked when you win more cargo, sail out and return to collect it.
 
--   **Win containers:** offer cash for an entire container lot.
--   **Win cash:** offer containers from your factory and/or warehouse store for an entire cash lot. Only the **number** of offered containers matters, not their colors or sale prices. Ship cargo, island containers and bank holdings cannot be offered.
--   Bank bids are **public**, unlike the ordinary sealed island auctions. Open with at least **$1 or one container**. A raise must exceed the current bid by at least **$1 or one container**, and must be for the **same lot**. You bid or raise only on your own turn; the current leader cannot raise their own bid.
--   With **3 or 4 players**, only **one bank auction** may be active. With **5 players**, up to **two** may be active, but at most **one cash-reward auction and one container-reward auction**.
--   You cannot start or raise an auction for an **empty container lot or a $0 cash lot**. A replenished lot becomes available again.
+Containers left in your holding score **$3 each**. Pending bank auctions settle automatically before final scoring.
 
-Cash bids are reserved immediately and cannot be spent elsewhere. Offered containers are set aside but still count against the capacity of their original factory or warehouse store. If outbid, your cash is refunded, or your containers return to their original store and you choose their new sale prices.
+### When the game asks you to choose
 
-### Winning and paying
-
-If you are still the highest bidder at the **start of your next turn**, you win the lot. First pay loan interest and resolve any default; **auction winnings cannot fund that interest**. The winning bid is paid to the bank and you receive the whole reward. Cash goes directly to you; containers go into your personal **bank holding**, not onto your ship or scoring island.
-
-You **cannot Call Bank during a turn in which you win a bank auction**. You also cannot Call Bank on the turn that triggers the end of the game: after calling the bank, production that would exhaust the second supply color is unavailable.
-
-### Replenishing bank lots
-
-Cash paid for bank container auctions, loan interest, and payments to keep your own cargo in an ordinary island auction replenish the bank's **cash lots**. Container bids paid for bank cash auctions and containers seized for unpaid interest replenish its **container lots**. Building purchases and loan repayments do not replenish these lots. Ordinary island auctions otherwise keep their sealed bidding and matching-bank-payment rules.
-
-For each payment, distribute **$1 or one container at a time**, starting at lot **I**, then **II**, then **III**, and repeat. **Skip any lot of that type currently under auction**: its reward is frozen. When paying containers, choose their color order; the destination is fixed by this cycle. The game places containers automatically when only one color remains, and asks only when different colors can be chosen.
-
-### Sail to the bank and collect cargo
-
-As one sailing action, move from the **open sea to your colored bank berth**. Immediately on arrival, click the containers you want to load from your holding. Loading costs no extra action, but your ship still holds at most **5 containers**. Cargo is **not loaded automatically**; you may leave some or all of it waiting at the bank.
-
-To collect newly won cargo when your ship is already at the bank, **sail back to the open sea and return**. There is no stationary loading action at the bank. To take collected cargo to the scoring island, sail via the open sea and use the ordinary island auction.
+**Bank payment:** click which container to pay next. The highlighted lot shows its destination; the game handles distribution and skips lots under auction.
 
 ### Loan default with Offshore Island
 
-The expansion replaces the classic random-seizure rules above. If needed and a second loan is available, the game first takes that loan automatically to cover interest. Any available cash pays interest; for each **$1 still unpaid**, one container is seized, if available.
+Unlike classic play, the **player on your right chooses from the eligible containers** when unpaid interest causes a seizure. Follow the highlighted choices; seized cargo replenishes the bank. Interest and any automatic extra loan are handled before your auction winnings arrive.
 
-The **player on your right** chooses the container, using the first nonempty location in this order: **your island → your ship → your bank holding → your warehouse store → your factory store**. Seized containers go into the bank's container lots, not out of the game. This procedure does not seize buildings or cancel the outstanding loan when no eligible containers remain.
-
-### End of the game with Offshore Island
-
-The normal second-exhausted-color trigger still applies. **All pending bank auctions settle before scoring**, even if the leader has not reached their next turn. If two remain, the online game resolves them in their recorded auction order, completing each payment and collection before the next.
-
-Score as usual, then add **$3 for every container left in your bank holding**, regardless of color. These containers do not count as island containers for your value card, full-color set or most-numerous-color discard. Containers still in the bank's unclaimed lots belong to no player and score nothing.
-
-### Playing the expansion on BGS
-
-On mobile, use **Bank** to reach the lower board area. A lot shows the **reward above** and the **bid below**. Click a lot to offer cash, or select your stored containers and confirm **Bid**. On the bank cash calculator, submitting **0 cancels the draft**; it does not place a bid. Ordinary sealed island auctions still allow $0 bids.
-
-The Container tutorial list includes **Bank cargo and your ship**, **Stored cargo for bank cash**, and **Outbid and recover cargo**. These walk through actual board controls, settlement, payment order and pickup.
-
-**Online conventions:** the minimum opening bid, arrival-only bank loading and recorded-order final settlement above describe this implementation where the reference rules leave room for interpretation. Empty-reward auctions are deliberately unavailable. Classic games are unchanged.
+For a guided walkthrough, try the three **Offshore Island tutorials** in Container's tutorial list.
