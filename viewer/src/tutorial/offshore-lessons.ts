@@ -39,6 +39,7 @@ type Stage = {
     text: string;
     move?: (g: GameState) => Move;
     script?: (g: GameState, apply: (m: Move, seat: number) => void) => void;
+    complete?: (g: GameState) => boolean;
 };
 const endRound = (_g: GameState, apply: (m: Move, seat: number) => void) => {
     apply(pass, 1);
@@ -60,7 +61,7 @@ function make(id: string, title: string, description: string, stages: Stage[], c
     return {
         game: 'container',
         id,
-        version: 1,
+        version: id === 'offshore-cargo' ? 2 : 1,
         title,
         description,
         initialState: fixture,
@@ -81,11 +82,14 @@ function make(id: string, title: string, description: string, stages: Stage[], c
                 // Container IDs identify physical pieces; display metadata and object key order are irrelevant.
                 const data = expected.data as any;
                 const got = actual.data as any;
-                const matches = data?.id
-                    ? got?.id === data.id
-                    : data?.type
-                    ? got?.type === data.type && got?.lot === data.lot
-                    : equal(got, data);
+                const matches =
+                    expected.name === MoveName.LoadBankContainer
+                        ? state.game.players[0].bankHolding?.some((piece) => piece.id === got?.id)
+                        : data?.id
+                        ? got?.id === data.id
+                        : data?.type
+                        ? got?.type === data.type && got?.lot === data.lot
+                        : equal(got, data);
                 const extra = (expected as any).extraData as any;
                 const supplied = (actual as any).extraData as any;
                 const extras =
@@ -107,7 +111,8 @@ function make(id: string, title: string, description: string, stages: Stage[], c
             };
             if (action.kind === 'move') apply(action.move, 0);
             else if (action.kind === 'watch') stages[index].script!(game, apply);
-            return { game, answer: String(index + 1) };
+            const complete = stages[index].complete?.(game) ?? true;
+            return { game, answer: String(index + (complete ? 1 : 0)) };
         },
         choices(state, step) {
             const stage = stages.find((s) => s.id === step);
@@ -143,8 +148,9 @@ export const offshoreLessons: Lesson[] = [
             {
                 id: 'load-bank',
                 title: 'Choose a container to load',
-                text: 'Click the first container in your holding to load it. Loading is free only just after arrival (or another pickup), up to five aboard. The remaining holding is safe; it scores $3 per container at game end.',
+                text: 'Click a container in your holding to load it, then load the other one. Both pickups are free after sailing to the bank.',
                 move: (g) => ({ name: MoveName.LoadBankContainer, data: g.players[0].bankHolding![0] }),
+                complete: (g) => g.players[0].bankHolding!.length === 0,
             },
         ],
         'Public bank auctions do not replace sealed ship auctions. Your cargo is now aboard; containers left in your holding remain yours.'

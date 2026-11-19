@@ -372,10 +372,17 @@ try {
                             fullPage: true,
                         });
                 }
-                await page.waitForFunction(
-                    (previous) => document.querySelector('.bgs-tutorial-heading strong')?.textContent !== previous,
-                    heading
-                );
+                if (chapter === 'offshore-cargo' && state.game.players[0].ship.containers.length === 1) {
+                    // The pickup step remains open until both real board pieces are loaded.
+                    await page.waitForFunction(
+                        () => document.querySelectorAll('.bank-holding[data-owner="0"] [data-piece-id]').length === 1
+                    );
+                } else {
+                    await page.waitForFunction(
+                        (previous) => document.querySelector('.bgs-tutorial-heading strong')?.textContent !== previous,
+                        heading
+                    );
+                }
                 if (chapter === 'bidding' && heading.includes('Submit a sealed')) {
                     assert.match(await page.locator('.tutorial-auction').innerText(), /Leo: Sealed/);
                     await page.reload();

@@ -175,8 +175,16 @@ for (const lesson of lessons.filter((l) => l.id.startsWith('offshore-'))) {
                 false
             );
             assert.deepEqual(controller.snapshot.state, checkpoint, 'invalid actions never mutate bank state');
-            await controller.restartStep();
-            assert.deepEqual(controller.snapshot.state, checkpoint, 'replay restores escrow, decisions and holding');
+            // A loading step now has two actions; restarting it intentionally undoes
+            // the first pickup. Mid-step persistence is covered by the dedicated test.
+            if (!(lesson.steps[step].id === 'load-bank' && checkpoint.game.players[0].bankHolding.length === 1)) {
+                await controller.restartStep();
+                assert.deepEqual(
+                    controller.snapshot.state,
+                    checkpoint,
+                    'replay restores escrow, decisions and holding'
+                );
+            }
             controller.destroy();
             controller = await createTutorial({ ...lesson, storage });
             assert.equal(controller.snapshot.step, step);
@@ -213,6 +221,37 @@ for (const lesson of lessons.filter((l) => l.id.startsWith('offshore-'))) {
         controller.destroy();
     });
 }
+
+test('Offshore cargo loads both pieces in either order, resumes and retries the whole pickup step', async () => {
+    const lesson = lessons.find((l) => l.id === 'offshore-cargo');
+    assert.equal(lesson.version, 2);
+    for (const first of [0, 1]) {
+        const storage = memory();
+        let controller = await createTutorial({ ...lesson, storage });
+        while (lesson.steps[controller.snapshot.step].id !== 'load-bank')
+            assert.equal(await controller.play(actionFor(lesson, controller.snapshot)), true);
+        const arrival = structuredClone(controller.snapshot.state);
+        const load = (piece) => ({ kind: 'move', move: { name: 'loadBankContainer', data: piece } });
+        assert.equal(await controller.play(load(arrival.game.players[0].bankHolding[first])), true);
+        assert.equal(controller.snapshot.completed, false);
+        assert.equal(controller.snapshot.canContinue, false);
+        assert.equal(controller.snapshot.state.game.players[0].ship.containers.length, 1);
+        controller.destroy();
+        controller = await createTutorial({ ...lesson, storage });
+        assert.equal(controller.snapshot.state.game.players[0].bankHolding.length, 1);
+        await controller.restartStep();
+        assert.deepEqual(controller.snapshot.state, arrival);
+        assert.equal(await controller.play(load(arrival.game.players[0].bankHolding[first])), true);
+        assert.equal(await controller.play(actionFor(lesson, controller.snapshot)), true);
+        assert.equal(controller.snapshot.completed, true);
+        const player = controller.snapshot.state.game.players[0];
+        assert.equal(player.ship.containers.length, 2);
+        assert.equal(player.bankHolding.length, 0);
+        assert.equal(player.actions, arrival.game.players[0].actions);
+        assert.equal(player.money, arrival.game.players[0].money);
+        controller.destroy();
+    }
+});
 
 test('Offshore lesson prose is translated in every supported catalogue', () => {
     const fs = require('node:fs');
