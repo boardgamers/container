@@ -372,6 +372,8 @@ describe('Offshore bank viewer', () => {
         const wrapper = render();
         await wrapper.setProps({ player: undefined });
         expect(wrapper.findAll('.offshore-lot[role="button"]').length).toBe(0);
+        expect(wrapper.findAll('.offshore-lot.legal').length).toBe(0);
+        expect(wrapper.findAll('.bank-board text').wrappers.filter((text) => text.text() === 'Bid').length).toBe(6);
         await wrapper.find('.offshore-lot').trigger('click');
         expect(wrapper.emitted('choose-offer')).toBe(undefined);
         wrapper.destroy();

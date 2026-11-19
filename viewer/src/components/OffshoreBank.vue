@@ -84,7 +84,7 @@
                     <path class="bank-bid-zone" d="M1 66 H99 V103 H1 Z" fill="#d2d5cb" pointer-events="none" />
                     <path d="M1 66 H99" stroke="#899997" pointer-events="none" />
                     <text
-                        v-if="!auction(type, i - 1) && offer(type, i - 1) && !isDraft(type, i - 1)"
+                        v-if="!auction(type, i - 1) && !isDraft(type, i - 1)"
                         x="50"
                         y="89"
                         text-anchor="middle"
