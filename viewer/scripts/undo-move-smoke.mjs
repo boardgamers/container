@@ -11,6 +11,8 @@ export async function checkUndoMove(page, engine) {
     assert.ok(later.log.length > earlier.log.length);
     await page.evaluate(
         ({ later, seat }) => {
+            // Remove the thumbnail overlay left by the preceding presentation test.
+            document.querySelector('.bgs-board-thumbnail')?.remove();
             window.undoRequests = 0;
             host.on('undo', () => undoRequests++);
             host.emit('preferences', { sound: false, analysis: false });
@@ -23,11 +25,20 @@ export async function checkUndoMove(page, engine) {
     const turnUndo = page.locator('[data-board-control="undo"]');
     const status = page.locator('.statusBar span');
     await turnUndo.waitFor();
+    assert.equal(await turnUndo.getAttribute('aria-disabled'), 'true');
+    assert.equal(await turnUndo.locator('image').count(), 0, 'undo does not depend on an external image');
+    assert.equal(await turnUndo.locator('.undo-icon path').getAttribute('fill'), 'silver');
     assert.equal(await control.count(), 0, 'hidden until BGS offers it');
 
     await page.evaluate(() => host.emit('undo:available', true));
     await control.waitFor();
     assert.equal(await control.getAttribute('aria-label'), 'Undo my move');
+    assert.equal(await control.locator('.undo-icon path').getAttribute('fill'), 'black');
+    await control.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(200);
+    const iconBounds = await control.locator('.undo-icon path').boundingBox();
+    assert.ok(iconBounds.width > 10 && iconBounds.height > 10, 'undo arrow renders within the button');
+    await page.screenshot({ path: '/tmp/container-undo-icon.png', fullPage: true });
     assert.equal(await control.locator('title').textContent(), 'Undo my move');
     assert.equal(await turnUndo.count(), 0, 'it stands in for the in-turn undo');
     assert.doesNotMatch(await status.textContent(), /your turn/);
