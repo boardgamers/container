@@ -745,7 +745,7 @@
     "Sail to your coloured berth": "Sejl til kajpladsen i din farve",
     "You won! Your containers wait safely in your coloured bank holding. You cannot Call Bank on this winning turn. Select your ship, then sail to the bank. Arrival does not load anything automatically.": "Du vandt! Dine containere venter sikkert i din bankbeholdning i din farve. Du kan ikke bruge Kontakt banken i denne tur, hvor du vandt. Vælg dit skib, og sejl til banken. Der lastes ikke noget automatisk ved ankomsten.",
     "Choose a container to load": "Vælg en container at laste",
-    "Click the first container in your holding to load it. Loading is free only just after arrival (or another pickup), up to five aboard. The remaining holding is safe; it scores $3 per container at game end.": "Klik på den første container i din bankbeholdning for at laste den. Lastning er kun gratis lige efter ankomst (eller lastning af en anden container), op til fem om bord. Resten af beholdningen er sikkert opbevaret og giver 3 $ pr. container ved spillets afslutning.",
+    "Click a container in your holding to load it, then load the other one. Both pickups are free after sailing to the bank.": "Klik på en container i din bankbeholdning for at laste den, og last derefter den anden. Begge lastninger er gratis, efter at du er sejlet til banken.",
     "Bank lesson complete": "Banklektion gennemført",
     "Public bank auctions do not replace sealed ship auctions. Your cargo is now aboard; containers left in your holding remain yours.": "Offentlige bankauktioner erstatter ikke skibsauktionerne med hemmelige bud. Din last er nu om bord; containere, der bliver i din bankbeholdning, er stadig dine.",
     "Stored cargo for bank cash": "Opbevaret last for penge fra banken",

@@ -745,7 +745,7 @@
     "Sail to your coloured berth": "Đi tàu đến bến mang màu của bạn",
     "You won! Your containers wait safely in your coloured bank holding. You cannot Call Bank on this winning turn. Select your ship, then sail to the bank. Arrival does not load anything automatically.": "Bạn đã thắng! Các container của bạn nằm an toàn trong kho ngân hàng mang màu của bạn. Bạn không thể Gọi ngân hàng trong lượt thắng này. Chọn tàu của bạn rồi đi đến ngân hàng. Tàu đến nơi không tự động lấy hàng.",
     "Choose a container to load": "Chọn một container để đưa lên tàu",
-    "Click the first container in your holding to load it. Loading is free only just after arrival (or another pickup), up to five aboard. The remaining holding is safe; it scores $3 per container at game end.": "Nhấp vào container đầu tiên trong kho của bạn để đưa lên tàu. Việc lấy hàng chỉ miễn phí ngay sau khi đến nơi (hoặc sau một lần lấy hàng khác), tối đa năm container trên tàu. Hàng còn lại trong kho vẫn an toàn; mỗi container được tính $3 khi kết thúc ván chơi.",
+    "Click a container in your holding to load it, then load the other one. Both pickups are free after sailing to the bank.": "Nhấp vào một container trong kho của bạn để đưa lên tàu, rồi lấy container còn lại. Cả hai lần lấy hàng đều miễn phí sau khi đi tàu đến ngân hàng.",
     "Bank lesson complete": "Hoàn thành bài học về ngân hàng",
     "Public bank auctions do not replace sealed ship auctions. Your cargo is now aboard; containers left in your holding remain yours.": "Đấu giá công khai của ngân hàng không thay thế đấu giá kín của tàu. Hàng của bạn đã lên tàu; các container còn lại trong kho vẫn thuộc về bạn.",
     "Stored cargo for bank cash": "Đổi hàng lưu kho lấy tiền ngân hàng",

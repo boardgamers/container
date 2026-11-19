@@ -745,7 +745,7 @@
     "Sail to your coloured berth": "अपने रंग के घाट तक जहाज़ ले जाएँ",
     "You won! Your containers wait safely in your coloured bank holding. You cannot Call Bank on this winning turn. Select your ship, then sail to the bank. Arrival does not load anything automatically.": "आप जीत गए! आपके कंटेनर बैंक में आपके रंग के भंडार में सुरक्षित हैं। जीत वाली इस बारी में आप बैंक को बुलाएँ कार्रवाई नहीं कर सकते। अपना जहाज़ चुनें और बैंक तक जाएँ। पहुँचने पर कोई माल अपने आप नहीं लदता।",
     "Choose a container to load": "लादने के लिए कंटेनर चुनें",
-    "Click the first container in your holding to load it. Loading is free only just after arrival (or another pickup), up to five aboard. The remaining holding is safe; it scores $3 per container at game end.": "अपने भंडार के पहले कंटेनर पर क्लिक करके उसे लादें। माल लादना केवल पहुँचने के तुरंत बाद (या एक और कंटेनर उठाने के बाद) मुफ़्त है; जहाज़ पर अधिकतम पाँच कंटेनर रख सकते हैं। बचा हुआ भंडार सुरक्षित है; खेल के अंत में हर कंटेनर का मूल्य $3 गिना जाता है।",
+    "Click a container in your holding to load it, then load the other one. Both pickups are free after sailing to the bank.": "अपने भंडार के किसी कंटेनर पर क्लिक करके उसे लादें, फिर दूसरे को लादें। जहाज़ से बैंक पहुँचने के बाद दोनों कंटेनर लादना मुफ़्त है।",
     "Bank lesson complete": "बैंक का पाठ पूरा हुआ",
     "Public bank auctions do not replace sealed ship auctions. Your cargo is now aboard; containers left in your holding remain yours.": "बैंक की सार्वजनिक नीलामियाँ जहाज़ों की गुप्त नीलामियों की जगह नहीं लेतीं। आपका माल अब जहाज़ पर है; भंडार में छोड़े गए कंटेनर आपके ही रहते हैं।",
     "Stored cargo for bank cash": "संग्रहित माल के बदले बैंक की नकदी",

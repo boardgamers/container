@@ -745,7 +745,7 @@
     "Sail to your coloured berth": "Sail to your coloured berth",
     "You won! Your containers wait safely in your coloured bank holding. You cannot Call Bank on this winning turn. Select your ship, then sail to the bank. Arrival does not load anything automatically.": "You won! Your containers wait safely in your coloured bank holding. You cannot Call Bank on this winning turn. Select your ship, then sail to the bank. Arrival does not load anything automatically.",
     "Choose a container to load": "Choose a container to load",
-    "Click the first container in your holding to load it. Loading is free only just after arrival (or another pickup), up to five aboard. The remaining holding is safe; it scores $3 per container at game end.": "Click the first container in your holding to load it. Loading is free only just after arrival (or another pickup), up to five aboard. The remaining holding is safe; it scores $3 per container at game end.",
+    "Click a container in your holding to load it, then load the other one. Both pickups are free after sailing to the bank.": "Click a container in your holding to load it, then load the other one. Both pickups are free after sailing to the bank.",
     "Bank lesson complete": "Bank lesson complete",
     "Public bank auctions do not replace sealed ship auctions. Your cargo is now aboard; containers left in your holding remain yours.": "Public bank auctions do not replace sealed ship auctions. Your cargo is now aboard; containers left in your holding remain yours.",
     "Stored cargo for bank cash": "Stored cargo for bank cash",

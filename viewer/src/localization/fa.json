@@ -745,7 +745,7 @@
     "Sail to your coloured berth": "به اسکلهٔ هم‌رنگ خود بروید",
     "You won! Your containers wait safely in your coloured bank holding. You cannot Call Bank on this winning turn. Select your ship, then sail to the bank. Arrival does not load anything automatically.": "برنده شدید! کانتینرهای شما در ذخیرهٔ بانکی هم‌رنگتان در امنیت منتظرند. در این نوبت که برنده شده‌اید نمی‌توانید اقدام «فراخواندن بانک» را انجام دهید. کشتی خود را انتخاب کنید و به بانک بروید. با رسیدن، چیزی خودکار بارگیری نمی‌شود.",
     "Choose a container to load": "یک کانتینر برای بارگیری انتخاب کنید",
-    "Click the first container in your holding to load it. Loading is free only just after arrival (or another pickup), up to five aboard. The remaining holding is safe; it scores $3 per container at game end.": "برای بارگیری، روی اولین کانتینر ذخیرهٔ خود کلیک کنید. بارگیری فقط بلافاصله پس از رسیدن (یا برداشتن یک کانتینر دیگر) رایگان است و حداکثر پنج کانتینر می‌توانند روی کشتی باشند. ذخیرهٔ باقی‌مانده امن است؛ در پایان بازی هر کانتینر آن $3 ارزش دارد.",
+    "Click a container in your holding to load it, then load the other one. Both pickups are free after sailing to the bank.": "روی یک کانتینر در ذخیرهٔ خود کلیک کنید تا آن را بارگیری کنید، سپس کانتینر دیگر را بارگیری کنید. پس از رسیدن با کشتی به بانک، هر دو بارگیری رایگان هستند.",
     "Bank lesson complete": "آموزش بانک کامل شد",
     "Public bank auctions do not replace sealed ship auctions. Your cargo is now aboard; containers left in your holding remain yours.": "مزایده‌های عمومی بانک جایگزین مزایده‌های مخفی کشتی‌ها نیستند. محمولهٔ شما اکنون روی کشتی است؛ کانتینرهای باقی‌مانده در ذخیره همچنان مال شما هستند.",
     "Stored cargo for bank cash": "محمولهٔ ذخیره‌شده در برابر پول نقد بانک",

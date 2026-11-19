@@ -745,7 +745,7 @@
     "Sail to your coloured berth": "내 색상의 정박지로 항해하기",
     "You won! Your containers wait safely in your coloured bank holding. You cannot Call Bank on this winning turn. Select your ship, then sail to the bank. Arrival does not load anything automatically.": "낙찰받았습니다! 컨테이너는 내 색상의 은행 선적 대기 구역에 안전하게 보관됩니다. 낙찰받은 이번 턴에는 은행 호출을 할 수 없습니다. 선박을 선택한 뒤 은행으로 항해하세요. 도착해도 자동으로 적재되지는 않습니다.",
     "Choose a container to load": "적재할 컨테이너 선택하기",
-    "Click the first container in your holding to load it. Loading is free only just after arrival (or another pickup), up to five aboard. The remaining holding is safe; it scores $3 per container at game end.": "선적 대기 구역의 첫 번째 컨테이너를 클릭해 적재하세요. 도착 직후나 다른 컨테이너를 적재한 직후에만 무료로 적재할 수 있으며, 선박에는 최대 5개까지 실을 수 있습니다. 남은 화물도 안전하게 보관되며, 게임 종료 시 컨테이너당 $3의 가치를 얻습니다.",
+    "Click a container in your holding to load it, then load the other one. Both pickups are free after sailing to the bank.": "선적 대기 구역의 컨테이너 하나를 클릭해 적재한 뒤, 나머지 하나도 적재하세요. 은행으로 항해한 후에는 두 컨테이너 모두 무료로 적재할 수 있습니다.",
     "Bank lesson complete": "은행 학습 완료",
     "Public bank auctions do not replace sealed ship auctions. Your cargo is now aboard; containers left in your holding remain yours.": "은행 공개 경매는 선박의 비공개 입찰 경매를 대체하지 않습니다. 화물이 선박에 실렸습니다. 선적 대기 구역에 남겨 둔 컨테이너도 여전히 내 소유입니다.",
     "Stored cargo for bank cash": "재고 화물을 은행 현금으로 교환하기",

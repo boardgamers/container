@@ -745,7 +745,7 @@
     "Sail to your coloured berth": "驶向你的颜色对应的泊位",
     "You won! Your containers wait safely in your coloured bank holding. You cannot Call Bank on this winning turn. Select your ship, then sail to the bank. Arrival does not load anything automatically.": "你竞拍成功了！集装箱会安全存放在银行中与你颜色对应的待装货区。在竞拍成功的这一回合，你不能“呼叫银行”。选择你的船，然后驶向银行。抵达时不会自动装货。",
     "Choose a container to load": "选择要装载的集装箱",
-    "Click the first container in your holding to load it. Loading is free only just after arrival (or another pickup), up to five aboard. The remaining holding is safe; it scores $3 per container at game end.": "点击待装货区中的第一个集装箱将其装船。只有刚抵达或刚装载完另一个集装箱时才能免费装货，船上最多装五个。余下的货物仍会安全存放，游戏结束时每个集装箱计 $3。",
+    "Click a container in your holding to load it, then load the other one. Both pickups are free after sailing to the bank.": "点击待装货区中的一个集装箱将其装船，然后装载另一个。驶抵银行后，这两次装货都是免费的。",
     "Bank lesson complete": "银行教程完成",
     "Public bank auctions do not replace sealed ship auctions. Your cargo is now aboard; containers left in your holding remain yours.": "银行的公开拍卖不会取代船只的密封竞价拍卖。你的货物现已装船，留在待装货区的集装箱仍归你所有。",
     "Stored cargo for bank cash": "用库存货物换取银行现金",
