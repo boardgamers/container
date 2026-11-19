@@ -210,6 +210,7 @@
             <rect
                 v-if="bank.decision.kind === 'return'"
                 class="bank-return-tray"
+                :class="{ active: decisionMoves.length > 0 && !selectedReturn }"
                 x="-8"
                 y="-30"
                 width="136"
@@ -424,6 +425,12 @@ export default class OffshoreBank extends Vue {
     stroke: blue;
     stroke-width: 2;
     cursor: pointer;
+}
+.bank-return-tray.active {
+    fill: #d6e4ff;
+    fill-opacity: 0.65;
+    stroke: blue;
+    stroke-width: 2;
 }
 .bank-payment-route {
     fill: none;

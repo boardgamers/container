@@ -484,6 +484,15 @@ describe('Offshore bank viewer', () => {
         refresh();
         const wrapper = render();
         expect(wrapper.findAll('.bank-choice').length).toBe(2);
+        expect(wrapper.find('.bank-return-tray').classes()).toContain('active');
+        await wrapper.setProps({ selectedReturn: factory.id });
+        expect(wrapper.find('.bank-return-tray').classes()).not.toContain('active');
+        await wrapper.setProps({ selectedReturn: undefined, player: undefined });
+        expect(wrapper.find('.bank-return-tray').classes()).not.toContain('active');
+        await wrapper.setProps({ player: (player + 1) % 3 });
+        expect(wrapper.find('.bank-return-tray').classes()).not.toContain('active');
+        await wrapper.setProps({ player });
+        expect(wrapper.find('.bank-return-tray').classes()).toContain('active');
         expect(wrapper.find('.bank-holding [data-piece-id]').exists()).toBe(true);
         expect(wrapper.find('[aria-label="Return at $3"]').exists()).toBe(false);
         await wrapper.find(`.bank-choice [data-piece-id="${warehouse.id}"]`).trigger('keydown.enter');
