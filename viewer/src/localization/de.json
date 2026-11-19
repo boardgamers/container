@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "Rückgabeziel wählen",
+    "Return to factory store at ${p0}": "Für ${p0} in den Fabrikbestand zurücklegen",
+    "Return to warehouse store at ${p0}": "Für ${p0} in den Lagerhausbestand zurücklegen",
     "$10 with all five colours; otherwise $5": "$10 mit allen fünf Farben; sonst $5",
     "$30 in containers minus the $6 payment.": "30 $ in Containern abzüglich der Zahlung von 6 $.",
     "$5 or $10": "5 $ oder 10 $",

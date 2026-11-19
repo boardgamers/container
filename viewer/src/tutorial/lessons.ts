@@ -657,4 +657,20 @@ const scoring: Lesson = {
     },
 };
 export const lessons: Lesson[] = [supply, buildings, selling, bidding, keeping, scoring, ...offshoreLessons];
-export const chapterCards = lessons.map(({ id, version, title, description }) => ({ id, version, title, description }));
+export const chapterSections = [
+    { id: 'base-game', title: 'Base game', description: 'Learn production, trading, shipping and scoring.' },
+    {
+        id: 'offshore-island',
+        title: 'Offshore Island',
+        description: 'Learn the public bank auctions and cargo handling.',
+    },
+];
+export const chapterCards = lessons.map(({ id, version, title, description }) => ({
+    id,
+    version,
+    title,
+    description,
+    section: id.startsWith('offshore-') ? 'offshore-island' : 'base-game',
+}));
+/** Complete BGS Tutorial settings payload; keep section metadata alongside chapters. */
+export const tutorialCatalog = { sections: chapterSections, chapters: chapterCards };

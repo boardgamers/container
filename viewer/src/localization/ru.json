@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "Выберите место возврата",
+    "Return to factory store at ${p0}": "Вернуть на склад фабрики по цене ${p0}",
+    "Return to warehouse store at ${p0}": "Вернуть на склад гавани по цене ${p0}",
     "$10 with all five colours; otherwise $5": "$10 при наличии всех пяти цветов; иначе $5",
     "$30 in containers minus the $6 payment.": "$30 в контейнерах минус выплата $6.",
     "$5 or $10": "$5 или $10",

@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "Vælg destination for returnering",
+    "Return to factory store at ${p0}": "Returnér til fabrikslageret til ${p0}",
+    "Return to warehouse store at ${p0}": "Returnér til lagerbeholdningen til ${p0}",
     "$10 with all five colours; otherwise $5": "$10 med alle fem farver; ellers $5",
     "$30 in containers minus the $6 payment.": "$30 i containere minus betalingen på $6.",
     "$5 or $10": "$5 eller $10",

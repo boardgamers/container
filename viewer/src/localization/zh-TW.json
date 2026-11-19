@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "選擇退回位置",
+    "Return to factory store at ${p0}": "以 ${p0} 的價格退回工廠庫存",
+    "Return to warehouse store at ${p0}": "以 ${p0} 的價格退回倉庫庫存",
     "$10 with all five colours; otherwise $5": "五種顏色齊全時每個$10；否則每個$5",
     "$30 in containers minus the $6 payment.": "貨櫃價值$30減去$6付款。",
     "$5 or $10": "$5或$10",

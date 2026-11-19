@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "반환 위치 선택",
+    "Return to factory store at ${p0}": "공장 재고에 ${p0} 가격으로 반환",
+    "Return to warehouse store at ${p0}": "창고 재고에 ${p0} 가격으로 반환",
     "$10 with all five colours; otherwise $5": "다섯 색상이 모두 있으면 $10, 아니면 $5",
     "$30 in containers minus the $6 payment.": "컨테이너 $30에서 $6 지불을 뺀 금액.",
     "$5 or $10": "$5 또는 $10",

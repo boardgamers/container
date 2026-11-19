@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "选择退回位置",
+    "Return to factory store at ${p0}": "以 ${p0} 的价格退回工厂销售区",
+    "Return to warehouse store at ${p0}": "以 ${p0} 的价格退回仓库销售区",
     "$10 with all five colours; otherwise $5": "集齐五色时每个 $10，否则 $5",
     "$30 in containers minus the $6 payment.": "集装箱价值 $30，减去支付的 $6。",
     "$5 or $10": "$5 或 $10",

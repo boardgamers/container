@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "Alege destinația returnării",
+    "Return to factory store at ${p0}": "Returnează în stocul fabricii la prețul de ${p0}",
+    "Return to warehouse store at ${p0}": "Returnează în stocul depozitului la prețul de ${p0}",
     "$10 with all five colours; otherwise $5": "$10 cu toate cele cinci culori; altfel $5",
     "$30 in containers minus the $6 payment.": "30 $ în containere minus plata de 6 $.",
     "$5 or $10": "5 $ sau 10 $",

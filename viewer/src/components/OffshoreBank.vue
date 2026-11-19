@@ -190,9 +190,9 @@
         <g
             v-if="bank.decision"
             class="bank-decision"
-            :transform="bank.decision.kind === 'distribute' ? 'translate(20 950)' : 'translate(520 680)'"
+            :transform="bank.decision.kind !== 'seize' ? 'translate(20 950)' : 'translate(520 680)'"
         >
-            <text v-if="decisionTitle" x="0" y="0" font-size="14">{{ decisionTitle }}</text>
+            <text v-if="decisionTitle" x="0" y="-12" font-size="14">{{ decisionTitle }}</text>
             <g
                 v-if="bank.decision.kind === 'distribute'"
                 class="bank-payment-route"
@@ -226,7 +226,7 @@
                     :key="choice.data.id"
                     class="bank-choice"
                     :transform="
-                        bank.decision.kind === 'distribute'
+                        bank.decision.kind !== 'seize'
                             ? `translate(${index * 70} 0)`
                             : `translate(0 ${40 + index * 35})`
                     "
@@ -240,43 +240,30 @@
                     />
                     <OffshoreCargo
                         :pieces="[choice.data]"
-                        :transform="choice.name === names.ReturnBankContainer ? undefined : 'translate(10 0) scale(2)'"
-                        :selectable="choice.name === names.ReturnBankContainer ? [] : [choice.data.id]"
+                        transform="translate(10 0) scale(2)"
+                        :selectable="[choice.data.id]"
+                        :selected="
+                            choice.name === names.ReturnBankContainer && selectedReturn === choice.data.id
+                                ? [choice.data.id]
+                                : []
+                        "
                         :action-label="
-                            choice.name === names.SeizeBankContainer
+                            choice.name === names.ReturnBankContainer
+                                ? 'Choose return destination'
+                                : choice.name === names.SeizeBankContainer
                                 ? 'Select for loan default'
                                 : 'Pay into container lot ' + (distributionLot + 1)
                         "
-                        @select="emitMove(choice)"
+                        @select="
+                            choice.name === names.ReturnBankContainer
+                                ? $emit('select-return', choice.data.id)
+                                : emitMove(choice)
+                        "
                     />
-                    <template v-if="choice.name === names.ReturnBankContainer">
-                        <g
-                            v-for="price in returnPrices(choice)"
-                            :key="price"
-                            role="button"
-                            tabindex="0"
-                            :aria-label="'Return at $' + price"
-                            @click.stop="emitMove({ ...choice, extraData: { price } })"
-                            @keydown.enter.prevent.stop="emitMove({ ...choice, extraData: { price } })"
-                            @keydown.space.prevent.stop="emitMove({ ...choice, extraData: { price } })"
-                        >
-                            <rect
-                                :x="29 + (price - 1) * 30"
-                                y="-3"
-                                width="27"
-                                height="24"
-                                fill="#c6c6b8"
-                                stroke="#899997"
-                            />
-                            <text :x="42 + (price - 1) * 30" y="12" text-anchor="middle" font-size="16">{{
-                                price
-                            }}</text>
-                        </g>
-                    </template>
                 </g>
                 <Button
                     v-if="decisionPages > 1"
-                    :transform="bank.decision.kind === 'distribute' ? 'translate(0 40)' : 'translate(0 190)'"
+                    :transform="bank.decision.kind !== 'seize' ? 'translate(0 40)' : 'translate(0 190)'"
                     :width="100"
                     :text="'More ' + (decisionPage + 1) + '/' + decisionPages"
                     @click="decisionPage = (decisionPage + 1) % decisionPages"
@@ -300,6 +287,7 @@ import PlayerToken from './PlayerToken.vue';
 export default class OffshoreBank extends Vue {
     @Prop({ required: true }) state!: GameState;
     @Prop() player?: number;
+    @Prop() selectedReturn?: string;
     @Prop() selectedOffer?: { type: BankAuctionType; lot: number };
     @Prop({ default: () => ({}) }) availableMoves!: AvailableMoves;
     @Prop({ default: () => playerColors }) playerColors!: string[];
@@ -360,15 +348,10 @@ export default class OffshoreBank extends Vue {
     }
     get decisionTitle() {
         return this.bank?.decision?.kind === 'return'
-            ? 'Outbid'
+            ? 'Outbid containers'
             : this.bank?.decision?.kind === 'seize'
             ? 'Loan default'
             : '';
-    }
-    returnPrices(choice: Moves.MoveBankContainer) {
-        return [1, 2, 3, 4, 5, 6].filter((price) =>
-            legalBankAction(this.state, this.player, { ...choice, extraData: { price } })
-        );
     }
     get distributionLot() {
         const lots = [0, 1, 2].filter((i) => !this.bank?.auctions.some((a) => a.type === 'containers' && a.lot === i));

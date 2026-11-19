@@ -6,7 +6,24 @@ require('../../../engine/node_modules/ts-node').register({
 });
 const { createTutorial } = require('@boardgamers/protocol/tutorial');
 const { stripSecret } = require('../../../engine/src/engine');
-const { lessons } = require('../../src/tutorial/lessons');
+const { lessons, tutorialCatalog } = require('../../src/tutorial/lessons');
+test('BGS chapters are grouped into Base game and Offshore Island without changing lesson identities', () => {
+    assert.deepEqual(
+        tutorialCatalog.sections.map(({ id, title }) => [id, title]),
+        [
+            ['base-game', 'Base game'],
+            ['offshore-island', 'Offshore Island'],
+        ]
+    );
+    assert.deepEqual(
+        tutorialCatalog.chapters.map(({ id, version }) => ({ id, version })),
+        lessons.map(({ id, version }) => ({ id, version }))
+    );
+    assert.equal(tutorialCatalog.chapters.filter((c) => c.section === 'base-game').length, 6);
+    assert.equal(tutorialCatalog.chapters.filter((c) => c.section === 'offshore-island').length, 3);
+    for (const chapter of tutorialCatalog.chapters)
+        assert.ok(tutorialCatalog.sections.some((section) => section.id === chapter.section));
+});
 const expectedCash = {
     'supply-chain': 21,
     buildings: 7,

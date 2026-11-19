@@ -42,6 +42,24 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXE
 try {
     for (const width of [390, 1400]) {
         const page = await browser.newPage({ viewport: { width, height: 900 } });
+        await page.addInitScript(() => {
+            window.cargoAnimations = [];
+            const animate = Element.prototype.animate;
+            Element.prototype.animate = function (frames, options) {
+                if (options?.duration === 320 && this.hasAttribute('data-piece-id')) {
+                    window.cargoAnimations.push({
+                        id: this.getAttribute('data-piece-id'),
+                        frames,
+                        copies: [...document.querySelectorAll('[data-piece-id]')].filter(
+                            (node) =>
+                                node.getAttribute('data-piece-id') === this.getAttribute('data-piece-id') &&
+                                !node.closest('.bank-lot-draft')
+                        ).length,
+                    });
+                }
+                return animate.call(this, frames, options);
+            };
+        });
         const errors = [];
         page.on('pageerror', (e) => errors.push(e.message));
         page.on('console', (msg) => {
@@ -303,7 +321,8 @@ try {
         );
         await page.evaluate((player) => host.emit('player', { index: player }), player);
         await push();
-        await page.getByRole('button', { name: 'Return at $3', exact: true }).click();
+        await page.locator('.bank-choice [data-piece-id]').click();
+        await page.getByRole('button', { name: 'Return to factory store at $3', exact: true }).click();
         const repricing = await page.evaluate(() => moves.at(-1));
         assert.equal(repricing.length, 1, 'interruption is not appended to the previous bid buffer');
         state = engine.move(state, repricing[0], player);
@@ -539,6 +558,18 @@ try {
         }, engine.stripSecret(copy(state)));
         assert.equal(await page.locator('.bank-holding [data-piece-id][role="button"]').count(), 0);
         assert.equal(await page.locator('.bank-harbor.canClick').count(), 0);
+        const cargoAnimations = await page.evaluate(() => window.cargoAnimations);
+        assert.ok(cargoAnimations.length >= 4, 'bank transfers animate physical cargo');
+        assert.ok(
+            cargoAnimations.every((animation) => animation.copies === 1),
+            'no duplicate animated cargo'
+        );
+        assert.ok(
+            cargoAnimations.every((animation) =>
+                animation.frames.every((frame) => !/NaN|Infinity/.test(frame.transform))
+            ),
+            'SVG motion matrices remain finite'
+        );
         assert.deepEqual(errors, []);
         await page.close();
         console.log(

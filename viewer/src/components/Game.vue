@@ -212,6 +212,8 @@
                     <g v-if="G && G.options.offshoreIsland">
                         <OffshoreBank
                             :selectedOffer="bankDraft"
+                            :selected-return="bankReturnCargo?.container.piece.id"
+                            @select-return="selectBankReturn"
                             :draft-cargo="
                                 bankCashOffer ? bankBidCargo.filter((c) => offshoreContainers.has(c.id)) : null
                             "
@@ -438,6 +440,31 @@
                             @click="endScoreVisible = true"
                         />
                     </template>
+
+                    <g v-if="bankReturnCargo" class="bank-return-destinations">
+                        <rect
+                            v-for="price in bankReturnPrices"
+                            :key="price"
+                            class="bank-return-destination"
+                            :data-price="price"
+                            :data-district="bankReturnCargo.district"
+                            :x="player * 250 + 8 + (price - (bankReturnCargo.district === 'factory' ? 1 : 2)) * 48"
+                            :y="bankReturnCargo.district === 'factory' ? 160 : 250"
+                            width="40"
+                            height="40"
+                            fill="#1b6c8722"
+                            stroke="blue"
+                            stroke-width="2"
+                            role="button"
+                            tabindex="0"
+                            :aria-label="'Return to ' + bankReturnCargo.district + ' store at $' + price"
+                            @click.stop="returnBankContainer(price)"
+                            @keydown.enter.prevent.stop="returnBankContainer(price)"
+                            @keydown.space.prevent.stop="returnBankContainer(price)"
+                        >
+                            <title>{{ 'Return to ' + bankReturnCargo.district + ' store at $' + price }}</title>
+                        </rect>
+                    </g>
 
                     <rect
                         v-for="zone in bankBidZones"
@@ -826,6 +853,7 @@
 import InlineLog from './InlineLog.vue';
 import OffshoreBank from './OffshoreBank.vue';
 import { legalBankAction } from '../offshore-actions';
+import { OffshoreMotion } from '../offshore-motion';
 import { islandValue } from '../island-value';
 import ColorBlindButton from './buttons/ColorBlindButton.vue';
 import { colorBadgeHtml } from '../color-blind';
@@ -1008,7 +1036,14 @@ export default class Game extends Vue {
             .every((item, i) => item.type === 'move' && isEqual(item.move, this.turnMoves[i]));
     }
 
+    private offshoreMotion = new OffshoreMotion();
+
+    beforeDestroy() {
+        this.offshoreMotion.destroy();
+    }
+
     replaceState(state: GameState) {
+        this.offshoreMotion.transition(this.$el, this.G, state, (callback) => this.$nextTick(callback));
         this.ui.selected = null;
         this.G = JSON.parse(JSON.stringify(state));
 
@@ -1606,9 +1641,47 @@ export default class Game extends Vue {
     @Watch('player')
     @Watch('interactionDisabled')
     resetBankDraft() {
+        this.selectedBankReturn = null;
         this.bankDraft = null;
         this.offshoreContainers = new Set();
         this.bankBidError = false;
+    }
+    selectedBankReturn: string | null = null;
+    get bankReturnCargo() {
+        const decision = this.G?.offshoreBank?.decision;
+        if (!this.canMove || decision?.kind !== 'return') return undefined;
+        return decision.containers.find(
+            (c) =>
+                c.container.piece.id === this.selectedBankReturn &&
+                this.getCurrentPlayerMoves()[MoveName.ReturnBankContainer]?.some(
+                    (piece) => piece.id === c.container.piece.id
+                )
+        );
+    }
+    get bankReturnPrices() {
+        const cargo = this.bankReturnCargo;
+        if (!cargo) return [];
+        return [1, 2, 3, 4, 5, 6].filter((price) =>
+            legalBankAction(this.G!, this.player, {
+                name: MoveName.ReturnBankContainer,
+                data: cargo.container.piece,
+                extraData: { price },
+            })
+        );
+    }
+    selectBankReturn(id: string) {
+        this.selectedBankReturn = id;
+        if (this.bankReturnCargo) {
+            this.viewPlayerBoard(this.player!);
+            this.$nextTick(() => (this.$el.querySelector('.bank-return-destination') as SVGElement)?.focus?.());
+        }
+    }
+    returnBankContainer(price: number) {
+        const cargo = this.bankReturnCargo;
+        if (!cargo || !this.bankReturnPrices.includes(price)) return;
+        this.sendBankMove({ name: MoveName.ReturnBankContainer, data: cargo.container.piece, extraData: { price } });
+        this.selectedBankReturn = null;
+        this.viewBank();
     }
     bankDraft: { type: 'cash' | 'containers'; lot: number } | null = null;
     bankBidError = false;
@@ -2786,5 +2859,17 @@ text {
         border-top: 0;
         margin: 0;
     }
+}
+</style>
+
+<style scoped>
+.bank-return-destination {
+    cursor: pointer;
+}
+.bank-return-destination:hover,
+.bank-return-destination:focus-visible {
+    fill: #1b6c8755;
+    stroke-width: 3;
+    outline: none;
 }
 </style>

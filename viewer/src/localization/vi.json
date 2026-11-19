@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "Chọn nơi trả hàng",
+    "Return to factory store at ${p0}": "Trả về khu bán hàng của nhà máy với giá ${p0}",
+    "Return to warehouse store at ${p0}": "Trả về khu bán hàng của nhà kho với giá ${p0}",
     "$10 with all five colours; otherwise $5": "$10 nếu có đủ năm màu; nếu không thì $5",
     "$30 in containers minus the $6 payment.": "$30 trong container trừ đi khoản thanh toán $6.",
     "$5 or $10": "$5 hoặc $10",

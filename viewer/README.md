@@ -59,9 +59,12 @@ sidecars together (do not upload only the entry bundle).
 ## Tutorials on BGS
 
 Upload the same JS, CSS and locale sidecars as the ordinary viewer. The `container` global exposes
-both `launch` and `launchTutorial`. Chapter metadata is exported as `chapterCards`
-from `src/tutorial/lessons.ts`; enter these IDs, versions, titles and descriptions
-in the BGS version's Tutorial settings.
+both `launch` and `launchTutorial`. Complete BGS metadata is exported as `tutorialCatalog`
+from `src/tutorial/lessons.ts` (`chapterSections` and `chapterCards` are also exported).
+Save that payload in the BGS version's Tutorial settings, including the `sections`
+array and each chapter's `section`. The six original chapters belong to **Base game**;
+the three bank chapters belong to **Offshore Island**. Preserve chapter IDs and
+versions when changing grouping so existing progress stays associated with its lesson.
 
 Lessons run the real engine locally with deterministic opponents and private
 player views. The extra lesson controls make drag actions accessible on mobile.

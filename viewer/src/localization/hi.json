@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "वापसी का स्थान चुनें",
+    "Return to factory store at ${p0}": "${p0} की कीमत पर कारखाना भंडार में लौटाएँ",
+    "Return to warehouse store at ${p0}": "${p0} की कीमत पर गोदाम भंडार में लौटाएँ",
     "$10 with all five colours; otherwise $5": "सभी पाँच रंगों के साथ $10; अन्यथा $5",
     "$30 in containers minus the $6 payment.": "कंटेनरों में $30 घटाकर $6 भुगतान।",
     "$5 or $10": "$5 या $10",

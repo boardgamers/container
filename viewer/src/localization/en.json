@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "Choose return destination",
+    "Return to factory store at ${p0}": "Return to factory store at ${p0}",
+    "Return to warehouse store at ${p0}": "Return to warehouse store at ${p0}",
     "$10 with all five colours; otherwise $5": "$10 with all five colours; otherwise $5",
     "$30 in containers minus the $6 payment.": "$30 in containers minus the $6 payment.",
     "$5 or $10": "$5 or $10",

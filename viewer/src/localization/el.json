@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "Επιλέξτε προορισμό επιστροφής",
+    "Return to factory store at ${p0}": "Επιστροφή στην αποθήκη εργοστασίου με τιμή ${p0}",
+    "Return to warehouse store at ${p0}": "Επιστροφή στην αποθήκη λιμανιού με τιμή ${p0}",
     "$10 with all five colours; otherwise $5": "$10 με και τα πέντε χρώματα· αλλιώς $5",
     "$30 in containers minus the $6 payment.": "$30 σε κοντέινερ μείον την πληρωμή $6.",
     "$5 or $10": "$5 ή $10",

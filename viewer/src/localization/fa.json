@@ -1,4 +1,7 @@
 {
+    "Choose return destination": "مقصد بازگشت را انتخاب کنید",
+    "Return to factory store at ${p0}": "بازگرداندن به موجودی کارخانه با قیمت ${p0}",
+    "Return to warehouse store at ${p0}": "بازگرداندن به موجودی انبار با قیمت ${p0}",
     "$10 with all five colours; otherwise $5": "با هر پنج رنگ: ۱۰ دلار؛ در غیر این صورت: ۵ دلار",
     "$30 in containers minus the $6 payment.": "۳۰ دلار ارزش کانتینرها منهای پرداخت ۶ دلار.",
     "$5 or $10": "۵ یا ۱۰ دلار",

@@ -4,7 +4,6 @@ import OffshoreBank from '@/components/OffshoreBank.vue';
 import OffshoreCargo from '@/components/OffshoreCargo.vue';
 import Container from '@/components/pieces/Container.vue';
 import PlayerToken from '@/components/PlayerToken.vue';
-import { legalBankAction } from '@/offshore-actions';
 import { escapeJournal, offshoreJournal } from '@/offshore-journal';
 import { mount, shallowMount } from '@vue/test-utils';
 import { availableMoves, MoveName, setup } from 'container-engine';
@@ -413,7 +412,7 @@ describe('Offshore bank viewer', () => {
         wrapper.destroy();
     });
 
-    it('offers only engine-valid return prices, preserving escrow and holding cargo', () => {
+    it('selects return cargo and offers only original-district store destinations', async () => {
         const { state, player, own, factory, warehouse, refresh, render } = fixture();
         own.bankHolding!.push(state.containersLeft.pop()!);
         state.phase = Phase.BankDecision;
@@ -430,11 +429,36 @@ describe('Offshore bank viewer', () => {
         };
         refresh();
         const wrapper = render();
-        const vm = wrapper.vm as any;
-        expect(vm.returnPrices({ name: MoveName.ReturnBankContainer, data: factory })).toEqual([1, 2, 3, 4]);
-        expect(vm.returnPrices({ name: MoveName.ReturnBankContainer, data: warehouse })).toEqual([2, 3, 4, 5, 6]);
         expect(wrapper.findAll('.bank-choice').length).toBe(2);
         expect(wrapper.find('.bank-holding [data-piece-id]').exists()).toBe(true);
+        expect(wrapper.find('[aria-label="Return at $3"]').exists()).toBe(false);
+        await wrapper.find(`.bank-choice [data-piece-id="${warehouse.id}"]`).trigger('keydown.enter');
+        expect(wrapper.emitted('select-return')![0]).toEqual([warehouse.id]);
+        expect(wrapper.emitted('move')).toBeUndefined();
+        const game = shallowMount(Game, {
+            propsData: { state, player, emitter: new EventEmitter(), preferences: { sound: false } },
+        });
+        const vm = game.vm as any;
+        vm.selectBankReturn(factory.id);
+        await game.vm.$nextTick();
+        expect(vm.bankReturnPrices).toEqual([1, 2, 3, 4]);
+        expect(game.findAll('.bank-return-destination').length).toBe(4);
+        expect(game.find('.bank-return-destination').attributes('data-district')).toBe('factory');
+        vm.selectBankReturn(warehouse.id);
+        await game.vm.$nextTick();
+        expect(vm.bankReturnPrices).toEqual([2, 3, 4, 5, 6]);
+        expect(game.find('.bank-return-destination').attributes('data-district')).toBe('warehouse');
+        const returned: any[] = [];
+        vm.sendBankMove = (action: any) => returned.push(action);
+        vm.returnBankContainer(1);
+        expect(returned).toEqual([]);
+        await game.find('.bank-return-destination[data-price="6"]').trigger('keydown.space');
+        expect(returned).toEqual([{ name: MoveName.ReturnBankContainer, data: warehouse, extraData: { price: 6 } }]);
+        expect(vm.selectedBankReturn).toBeNull();
+        vm.selectBankReturn(factory.id);
+        await game.setProps({ player: undefined });
+        expect(game.find('.bank-return-destination').exists()).toBe(false);
+        game.destroy();
         wrapper.destroy();
     });
 
@@ -502,8 +526,8 @@ describe('Offshore bank viewer', () => {
         await wrapper.find('[aria-label="More 2/3"]').trigger('click');
         expect(wrapper.findAll('.bank-choice').length).toBe(3);
         await wrapper.find('.bank-choice [role="button"]').trigger('click');
-        const action = wrapper.emitted('move')![0][0];
-        expect(legalBankAction(state, player, action)).toBe(true);
+        expect(wrapper.emitted('select-return')![0]).toEqual([containers[8].container.piece.id]);
+        expect(wrapper.emitted('move')).toBeUndefined();
         wrapper.destroy();
     });
 

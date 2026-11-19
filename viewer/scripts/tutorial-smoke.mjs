@@ -96,8 +96,10 @@ async function playOnBoard(page, move) {
         }
         return;
     }
-    if (move.name === 'returnBankContainer')
-        return page.getByRole('button', { name: `Return at $${move.extraData.price}`, exact: true }).click();
+    if (move.name === 'returnBankContainer') {
+        await page.locator(`.bank-choice [data-piece-id="${move.data.id}"]`).click();
+        return page.locator(`.bank-return-destination[data-price="${move.extraData.price}"]`).click();
+    }
     if (move.name === 'distributeBankContainer')
         return page.locator(`.bank-choice [data-piece-id="${move.data.id}"]`).click();
     if (move.name === 'loadBankContainer')
