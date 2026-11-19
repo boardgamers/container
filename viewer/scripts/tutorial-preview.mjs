@@ -1,16 +1,24 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const viewer = new URL('../', import.meta.url);
+// Catalogue names are the whitelist; preserve packaged chunk casing (pt-BR, zh-CN, zh-TW).
+const locales = (await readdir(new URL('src/localization/', viewer)))
+    .filter((name) => name.endsWith('.json'))
+    .map((name) => name.slice(0, -5));
 const files = {
     '/bundle.js': fileURLToPath(new URL('dist/container-viewer.umd.min.js', viewer)),
     '/bundle.css': fileURLToPath(new URL('dist/container-viewer.css', viewer)),
     '/vue.js': require.resolve('vue/dist/vue.min.js'),
 };
+for (const locale of locales.filter((locale) => locale !== 'en')) {
+    const name = `container-viewer.umd.min.locale-${locale}.js`;
+    files[`/${name}`] = fileURLToPath(new URL(`dist/${name}`, viewer));
+}
 const html =
-    '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Container tutorial</title><link rel="stylesheet" href="/bundle.css"><div id="app"></div><script src="/vue.js"></script><script src="/bundle.js"></script><script>container.launchTutorial("#app",{chapter:new URLSearchParams(location.search).get("chapter")||"supply-chain"});</script>';
+    '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Container tutorial</title><link rel="stylesheet" href="/bundle.css"><div id="app"></div><script src="/vue.js"></script><script src="/bundle.js"></script><script>container.launchTutorial("#app",{chapter:new URLSearchParams(location.search).get("chapter")||"supply-chain",locale:new URLSearchParams(location.search).get("locale")||"en"});</script>';
 const server = createServer(async (req, res) => {
     const path = new URL(req.url, 'http://localhost').pathname;
     try {
@@ -19,6 +27,9 @@ const server = createServer(async (req, res) => {
         if (files[path]) {
             res.setHeader('Content-Type', path.endsWith('.css') ? 'text/css' : 'text/javascript');
             res.end(await readFile(files[path]));
+        } else if (path === '/favicon.ico') {
+            res.statusCode = 204;
+            res.end();
         } else if (path === '/') {
             res.setHeader('Content-Type', 'text/html');
             res.end(html);

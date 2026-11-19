@@ -1,6 +1,6 @@
 # Viewer translations
 
-The viewer follows BGS's shared `preferences.locale` value. Tutorials receive `options.locale`. Supported locales match BGS: English, German, French, Polish, Romanian, Greek, Hindi, Russian, Danish, Brazilian Portuguese, Korean, Traditional Chinese, Vietnamese, Italian, Dutch and Persian.
+The viewer follows BGS's shared `preferences.locale` value. Tutorials receive `options.locale`. Supported locales match BGS: English, German, French, Polish, Romanian, Greek, Hindi, Russian, Danish, Brazilian Portuguese, Korean, Simplified Chinese, Traditional Chinese, Vietnamese, Italian, Dutch and Persian.
 
 `en.json` contains source UI text, including tutorial explanations and engine-generated descriptions rendered by the viewer. The other catalogues use the same keys. `{p0}`, `{p1}`, etc. represent dynamic display values: translators may reorder them but must preserve every placeholder. Add or update the corresponding entries in all catalogues when changing source wording. Component names and terminology need game-specific review; translations were initially machine-assisted.
 
@@ -10,6 +10,6 @@ For rich text that is split into icons and spans, call `translateText` on the co
 
 Run `node scripts/check-locales.mjs viewer/src/localization` to verify catalogue coverage and placeholders. The viewer's normal build and browser tests should also cover language switching, action controls, translated tutorial progression and narrow layouts. Browser text must remain readable if a translation is missing; English is the fallback.
 
-The Offshore Island expansion currently includes UI strings in English and French. Its newly added entries in other catalogues explicitly retain English as a readable fallback pending translation; they are not silently omitted. Classic translations are unchanged.
+The Offshore Island expansion's bank UI and its three interactive lessons are translated in all 17 supported languages. New tutorial and expansion messages must also receive translations in every catalogue, rather than permanent English fallback entries. Tutorial tests check that all Offshore lesson prose is present and translated; browser checks exercise localized lesson rendering. Classic translations are preserved.
 
 Persian (`fa`, including `fa-IR`) was authored with game-specific context. Scoped RTL prose leaves the SVG board, coordinates, sale slots and calculator in their original physical order. Player names and chat remain user content; technical extraction keys retain their source spelling.

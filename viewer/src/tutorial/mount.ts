@@ -178,6 +178,33 @@ export const mountTutorial: TutorialMount = async (target, { chapter, onProgress
             business.append(table);
             summary.append(business);
         }
+        if (game.offshoreBank) {
+            const bank = element('div', 'tutorial-bank');
+            bank.dataset.tutorial = 'bank-summary';
+            bank.append(element('h3', '', 'Public bank auctions'));
+            for (const auction of game.offshoreBank.auctions) {
+                const leader = element('p');
+                leader.append(
+                    element('span', '', game.players[auction.bidder].name),
+                    document.createTextNode(' · '),
+                    element('span', '', auction.type === 'cash' ? 'Cash lot' : 'Container lot'),
+                    document.createTextNode(` · ${auction.lot + 1}`)
+                );
+                bank.append(leader);
+                bank.append(
+                    element(
+                        'p',
+                        '',
+                        auction.type === 'containers' ? `$${auction.cash}` : String(auction.containers.length)
+                    )
+                );
+            }
+            if (!game.offshoreBank.auctions.length) bank.append(element('p', '', 'No active bank auction'));
+            bank.append(element('h3', '', 'Your safe bank holding'));
+            for (const piece of you.bankHolding || []) bank.append(swatch(piece.color));
+            if (!you.bankHolding?.length) bank.append(element('span', 'tutorial-muted', 'Empty'));
+            summary.append(bank);
+        }
         const owner =
             game.auctioningPlayer != null && game.auctioningPlayer >= 0
                 ? game.auctioningPlayer

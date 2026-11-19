@@ -13,7 +13,11 @@ pnpm --dir viewer serve
 Add `?offshoreIsland=1` to opt into Offshore Island in the local demo. Without that query parameter the demo remains classic. The expansion panel displays public auctions, escrow and holding areas; its bid, return-price, distribution, default and loading controls follow the engine's legal moves.
 
 Add `?chapter=supply-chain` to open a tutorial. The other chapter IDs are
-`buildings`, `selling`, `bidding`, `keep-cargo` and `scoring`.
+`buildings`, `selling`, `bidding`, `keep-cargo`, `scoring`,
+`offshore-cargo`, `offshore-cash` and `offshore-outbid`.
+The last three opt into the Offshore Island expansion; the classic lessons retain their saved progress.
+Chapter cards are exported for host integration. BGS tutorial metadata must be updated separately when publishing.
+Add `&locale=fr` (or another supported locale) to preview a translated lesson.
 
 ## Build and check
 

@@ -7,7 +7,17 @@ require('../../../engine/node_modules/ts-node').register({
 const { createTutorial } = require('@boardgamers/protocol/tutorial');
 const { stripSecret } = require('../../../engine/src/engine');
 const { lessons } = require('../../src/tutorial/lessons');
-const expectedCash = { 'supply-chain': 21, buildings: 7, selling: 36, bidding: 10, 'keep-cargo': 14, scoring: 54 };
+const expectedCash = {
+    'supply-chain': 21,
+    buildings: 7,
+    selling: 36,
+    bidding: 10,
+    'keep-cargo': 14,
+    scoring: 54,
+    'offshore-cargo': 19,
+    'offshore-cash': 23,
+    'offshore-outbid': 20,
+};
 function memory() {
     const entries = new Map();
     return { getItem: (key) => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, value) };
@@ -38,8 +48,22 @@ for (const lesson of lessons) {
             const game = controller.snapshot.state.game;
             const pieces = [
                 ...game.containersLeft,
+                ...(game.offshoreBank?.containerLots.flat() || []),
+                ...(game.offshoreBank?.auctions.flatMap((a) =>
+                    a.containers
+                        .filter(
+                            (c) =>
+                                !game.offshoreBank.decision?.settlement ||
+                                game.offshoreBank.decision.settlement.bidder !== a.bidder
+                        )
+                        .map((c) => c.container.piece)
+                ) || []),
+                ...(game.offshoreBank?.decision?.kind === 'return'
+                    ? game.offshoreBank.decision.containers.map((c) => c.container.piece)
+                    : game.offshoreBank?.decision?.payment || []),
                 ...game.players.flatMap((player) => [
                     ...player.ship.containers,
+                    ...(player.bankHolding || []),
                     ...player.containersOnIsland,
                     ...player.containersOnFactoryStore.map((item) => item.piece),
                     ...player.containersOnWarehouseStore.map((item) => item.piece),
@@ -131,4 +155,83 @@ test('the keep-or-sell questions compare the net value before the actual choice'
     await c.play(actionFor(lesson, c.snapshot));
     assert.equal(c.snapshot.state.game.players[0].money, 14);
     assert.equal(c.snapshot.state.game.players[0].containersOnIsland.length, 8);
+});
+
+for (const lesson of lessons.filter((l) => l.id.startsWith('offshore-'))) {
+    test(`${lesson.id}: every checkpoint resumes, replays deterministically and rejects wrong moves`, async () => {
+        const storage = memory();
+        let controller = await createTutorial({ ...lesson, storage });
+        const initial = structuredClone(controller.snapshot.state);
+        let iterations = 0;
+        while (!controller.snapshot.completed && ++iterations < 25) {
+            const checkpoint = structuredClone(controller.snapshot.state);
+            const step = controller.snapshot.step;
+            assert.equal(await controller.play({ kind: 'answer', answer: 'skip' }), false);
+            assert.equal(
+                await controller.play({
+                    kind: 'move',
+                    move: { name: 'callBank', data: { type: 'containers', lot: 2 }, extraData: { cash: 1 } },
+                }),
+                false
+            );
+            assert.deepEqual(controller.snapshot.state, checkpoint, 'invalid actions never mutate bank state');
+            await controller.restartStep();
+            assert.deepEqual(controller.snapshot.state, checkpoint, 'replay restores escrow, decisions and holding');
+            controller.destroy();
+            controller = await createTutorial({ ...lesson, storage });
+            assert.equal(controller.snapshot.step, step);
+            assert.deepEqual(controller.snapshot.state, checkpoint, 'mid-lesson resume restores the checkpoint');
+            const publicGame = stripSecret(checkpoint.game, 0);
+            assert.ok(publicGame.players[0].pointCard);
+            for (const opponent of publicGame.players.slice(1)) assert.equal(opponent.pointCard, null);
+            const action = actionFor(lesson, controller.snapshot);
+            const expected = lesson.move(structuredClone(checkpoint), action);
+            const frames = [];
+            lesson.move(structuredClone(checkpoint), action, (game) => frames.push(game));
+            assert.ok(frames.length, 'all interactive and scripted steps use engine moves');
+            assert.equal(await controller.play(action), true, controller.snapshot.error);
+            assert.deepEqual(controller.snapshot.state, expected, 'replayed action has deterministic results');
+            const game = controller.snapshot.state.game;
+            if (lesson.id === 'offshore-cargo' && game.offshoreBank.won) {
+                assert.equal(game.players[0].availableMoves?.callBank, undefined, 'no Call Bank in the winning turn');
+                assert.equal(game.players[0].bankHolding.length + game.players[0].ship.containers.length, 2);
+            }
+            if (lesson.id === 'offshore-cash' && controller.snapshot.completed) {
+                assert.equal(game.players[0].ship.shipPosition, initial.game.players[0].ship.shipPosition);
+                assert.equal(game.offshoreBank.decision, undefined, 'last same-colour payment resolved automatically');
+                assert.equal(game.offshoreBank.cashLots[2], 0);
+            }
+            if (lesson.id === 'offshore-outbid' && lesson.steps[step].id === 'new-leader') {
+                assert.equal(game.currentPlayers[0], 0);
+                assert.equal(game.offshoreBank.auctions[0].bidder, 1, 'leader survives across learner turns');
+                assert.equal(game.players[0].containersOnFactoryStore.find((c) => c.piece.color === 'white').price, 3);
+            }
+        }
+        assert.equal(controller.snapshot.completed, true);
+        await controller.restart();
+        assert.deepEqual(controller.snapshot.state, initial);
+        controller.destroy();
+    });
+}
+
+test('Offshore lesson prose is translated in every supported catalogue', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const directory = path.resolve(__dirname, '../../src/localization');
+    const messages = lessons
+        .filter((lesson) => lesson.id.startsWith('offshore-'))
+        .flatMap((lesson) => [
+            lesson.title,
+            lesson.description,
+            lesson.completion.title,
+            lesson.completion.text,
+            ...lesson.steps.flatMap((step) => [step.title, step.text]),
+        ]);
+    for (const file of fs.readdirSync(directory).filter((file) => file.endsWith('.json'))) {
+        const catalogue = JSON.parse(fs.readFileSync(path.join(directory, file), 'utf8'));
+        for (const message of messages) {
+            assert.ok(catalogue[message], `${file}: missing ${message}`);
+            if (file !== 'en.json') assert.notEqual(catalogue[message], message, `${file}: untranslated ${message}`);
+        }
+    }
 });

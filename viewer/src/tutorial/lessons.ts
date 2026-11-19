@@ -4,6 +4,7 @@ import { availableMoves, ended, move as engineMove, setup } from 'container-engi
 import pointCards from 'container-engine/src/cards';
 import { ContainerColor as Color, ContainerPiece, Phase, ShipPosition } from 'container-engine/src/gamestate';
 import { MoveName } from 'container-engine/src/move';
+import { offshoreLessons } from './offshore-lessons';
 
 export type TutorialAction = { kind: 'move'; move: Move } | { kind: 'watch' } | { kind: 'answer'; answer: string };
 export interface LessonState {
@@ -655,5 +656,5 @@ const scoring: Lesson = {
         return step === 'finish' ? [choice('Done · score the game', pass)] : [];
     },
 };
-export const lessons: Lesson[] = [supply, buildings, selling, bidding, keeping, scoring];
+export const lessons: Lesson[] = [supply, buildings, selling, bidding, keeping, scoring, ...offshoreLessons];
 export const chapterCards = lessons.map(({ id, version, title, description }) => ({ id, version, title, description }));
