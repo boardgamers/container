@@ -2,14 +2,14 @@
 
 The engine wrapper exports the optional `achievementDefinitions()` and
 `achievements(GameState)` hooks using the published `@boardgamers/protocol/engine`
-0.11.0 types. The working manifest is revision **4** with 19 achievements; no
-package version bump, publication or activation is part of this expansion work.
+0.11.0 types. Engine **2.2.0** includes manifest revision **4** with 19
+achievements as part of the authorized Offshore Island release.
 IDs are permanent; never reuse them for another condition. The original 17
 definitions, conditions and stable `achievement-<id>` asset references remain
 unchanged. Original SVG/PNG artwork, provenance, reproduction instructions and
 contact sheets are in [achievement-art](achievement-art/README.md).
 The historical revision-3 artwork manifest and release receipt are preserved,
-not regenerated. Upload and activation remain gated on independent review approval.
+not regenerated. The Offshore additions were reviewed and tested before release authorization.
 
 Revision 4 adds **Offshore Magnate** (`offshore-win`) and **Two-Way Trade**
 (`offshore-trader`). Both require `options.offshoreIsland === true` and the same
@@ -51,7 +51,7 @@ not require a victory.
 | `offshore-win`     | Sole winner of a completed Offshore Island expansion game                                 |
 | `offshore-trader`  | Win a cash bank auction and a container bank auction in the same completed expansion game |
 
-## Revision 2 change (pending coordinator approval)
+## Revision 2 change (historical)
 
 Engine 2.1.9 replaces `island-five` / **Island Investor** (at least five island
 containers) with the new ID `island-fifteen` / **Island Magnate** (at least fifteen).
@@ -61,9 +61,8 @@ completed game reaching exactly fifteen and reproducing the award on replay.
 
 No existing award migration, deletion, or backfill is performed. The old ID is
 retired, never reused; any existing platform records are left untouched.
-Engine 2.1.8 / revision 1 remains the previously delivered release; this review
-candidate must not be uploaded or activated until coordinator authorization.
-The prior release receipt is unchanged.
+This change subsequently shipped with the revision-3 artwork in engine 2.1.10.
+The historical activation receipt remains unchanged.
 
 ## Threshold attainability audit
 

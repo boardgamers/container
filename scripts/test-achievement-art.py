@@ -24,7 +24,7 @@ assert [a['id'] for a in manifest['assets']] == ids
 assert len(ids) == len(set(ids)) == 17
 assert 'island-fifteen' in ids and not {'island-five', 'warehouse-six'} & set(ids)
 assert manifest['revision'] == 3 and manifest['engineVersion'] == '2.1.10'
-assert json.loads((ROOT/'engine/package.json').read_text())['version'] == manifest['engineVersion']
+# This manifest attests the historical artwork release, not the current engine version.
 assert hashlib.sha256((ROOT/manifest['generator']).read_bytes()).hexdigest() == manifest['generatorSha256']
 hashes = set()
 for a in manifest['assets']:

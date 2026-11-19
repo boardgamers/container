@@ -8,7 +8,10 @@ const packed = path.resolve(process.argv[2]);
 const hooks = require(path.join(packed, 'dist/wrapper.js'));
 const { setup } = require(path.join(packed, 'dist/index.js'));
 const manifest = require(path.join(root, 'docs/achievement-art/manifest.json'));
-assert.equal(require(path.join(packed, 'package.json')).version, manifest.engineVersion);
+assert.equal(
+    require(path.join(packed, 'package.json')).version,
+    require(path.join(root, 'engine/package.json')).version
+);
 const definitions = hooks.achievementDefinitions();
 assert.equal(definitions.revision, 4);
 const historical = definitions.achievements.filter((a) => !a.id.startsWith('offshore-'));
@@ -51,5 +54,5 @@ for (const n of [3, 4, 5]) {
     }
 }
 console.log(
-    'PASS: exact extracted 2.1.10 package, revision 4, 17 historical asset refs and 2 text badges, legal 3/4/5-player completion and replay'
+    `PASS: exact extracted ${require(path.join(packed, 'package.json')).version} package, revision 4, 17 historical asset refs and 2 text badges, legal 3/4/5-player completion and replay`
 );
