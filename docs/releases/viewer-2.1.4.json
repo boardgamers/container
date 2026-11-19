@@ -1,0 +1,178 @@
+{
+    "game": "container",
+    "gameVersion": 3,
+    "viewerVersion": "2.1.4",
+    "sourceCommit": "5403d544794571cdc0645e2375b1990ca74b64b3",
+    "activated": true,
+    "bundle": "split-a3d6f2c5391655e4548e",
+    "previousViewer": {
+        "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.umd.min.js",
+        "topLevelVariable": "container",
+        "fullScreen": true,
+        "replayable": false,
+        "dependencies": {
+            "scripts": ["https://cdn.jsdelivr.net/npm/vue@^2/dist/vue.min.js"],
+            "stylesheets": [
+                "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-fe17891069e8f5c5f8a7/container-viewer.css"
+            ]
+        },
+        "chat": true,
+        "thumbnail": true,
+        "scriptBytes": 515446
+    },
+    "viewer": {
+        "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.js",
+        "topLevelVariable": "container",
+        "fullScreen": true,
+        "replayable": false,
+        "dependencies": {
+            "scripts": ["https://cdn.jsdelivr.net/npm/vue@^2/dist/vue.min.js"],
+            "stylesheets": [
+                "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.css"
+            ]
+        },
+        "chat": true,
+        "thumbnail": true,
+        "scriptBytes": 517085
+    },
+    "files": [
+        {
+            "name": "container-viewer.css",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.css",
+            "bytes": 16106,
+            "storedBytes": 4195,
+            "sha256": "9146649477b06888b915de2a91f4e41deaf71f7f0b70296219968174536ed84c"
+        },
+        {
+            "name": "container-viewer.umd.min.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.js",
+            "bytes": 517085,
+            "storedBytes": 153097,
+            "sha256": "97e0a71931492d7cb8f1b656ee42b495cd2ca4335019acb9959dbf04e40687db"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-da.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-da.js",
+            "bytes": 62352,
+            "storedBytes": 19294,
+            "sha256": "b387435e308b034220a24185b85409d31f2ea26a7ff6f782485cfbce72fb635b"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-de.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-de.js",
+            "bytes": 65765,
+            "storedBytes": 20340,
+            "sha256": "1198df009ba519cbf556a35106b3029ca94516a19f9461bf2cf2eb70244f14a5"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-el.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-el.js",
+            "bytes": 93818,
+            "storedBytes": 23552,
+            "sha256": "99ca375b1b484e36866bdfe11757091576cee36da4bc1a40fec9018319af7f6a"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-fa.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-fa.js",
+            "bytes": 83375,
+            "storedBytes": 21316,
+            "sha256": "92451e8d071b1626eeda7e44f8605034bc58bebc6d60cd07b1c8de5133e93a03"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-fr.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-fr.js",
+            "bytes": 66852,
+            "storedBytes": 19898,
+            "sha256": "cd403133ee7dba341bc321939cbf58e3da5a6a880173edafb37f8b4dda659d62"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-hi.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-hi.js",
+            "bytes": 102309,
+            "storedBytes": 22609,
+            "sha256": "0391f587f0f87994e067d3a22c657a608514672703d09adeee6c844a235059a7"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-it.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-it.js",
+            "bytes": 65980,
+            "storedBytes": 19638,
+            "sha256": "7bb554ed448ee7d2c0584f6cd89d6afe5243718b17bacd30afd61adbcfa71600"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-ko.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-ko.js",
+            "bytes": 69198,
+            "storedBytes": 20577,
+            "sha256": "a79a5e933d00c59a1381aa78c6b5d3fa8f43e2f669810aaf6b57903846e36526"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-nl.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-nl.js",
+            "bytes": 64037,
+            "storedBytes": 19532,
+            "sha256": "902a3b4af84e669f7e8c8a16b64163b372f7110827dbd8bc9c1b1596635f8882"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-pl.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-pl.js",
+            "bytes": 65086,
+            "storedBytes": 20573,
+            "sha256": "2f8b0f5fa60238c4a393c692956e4f4afc6d3f6533a69e7bf7dde7cd47d5b8b5"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-pt-BR.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-pt-BR.js",
+            "bytes": 65016,
+            "storedBytes": 19429,
+            "sha256": "fb5eb376e8b2bb9340fb2983c2813c831b4982295da5258842743351b0c602fc"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-ro.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-ro.js",
+            "bytes": 66689,
+            "storedBytes": 20055,
+            "sha256": "c85bdc5a62c4277267c6d2baf8f79a76e4cac56613742b9f6036107241020304"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-ru.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-ru.js",
+            "bytes": 85966,
+            "storedBytes": 23182,
+            "sha256": "2ca0103f534cba669380ae0f18a4deb535427113516670173f664d27f0f9636c"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-vi.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-vi.js",
+            "bytes": 71138,
+            "storedBytes": 20108,
+            "sha256": "6da4d40962ec0c9632c1526b335369599fe26a4e0527caa8e6ad9da6c642c051"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-zh-CN.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-zh-CN.js",
+            "bytes": 60002,
+            "storedBytes": 19792,
+            "sha256": "24d326f2561a108547ebceda2e72ed163e1d343a233df73c54ad34d269c1d0fc"
+        },
+        {
+            "name": "container-viewer.umd.min.locale-zh-TW.js",
+            "url": "https://s3.fr-par.scw.cloud/bgs-assets/games/container/3/viewer/split-a3d6f2c5391655e4548e/container-viewer.umd.min.locale-zh-TW.js",
+            "bytes": 60709,
+            "storedBytes": 20162,
+            "sha256": "c2bafaa14114b6cb1ca36f9040f9336d7d6c1774823e228aa1424b76b65d4e27"
+        }
+    ],
+    "checks": {
+        "unitTests": 83,
+        "tutorialTests": 18,
+        "locales": 17,
+        "typecheck": true,
+        "build": true,
+        "offshoreBrowserWidths": [390, 1400],
+        "allTutorialBrowserWidths": [390, 1400],
+        "liveTutorial": "Verified unique bid draft cargo, removal and reselection, active return tray, neutral tray after selection, and original-store return destination.",
+        "uploadedAssets": "Public downloaded bytes verified by publisher",
+        "unchanged": ["engine", "achievementManifest", "tutorial"]
+    }
+}
