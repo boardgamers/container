@@ -110,10 +110,11 @@ describe('optional Off-Shore Bank', () => {
         expect(g.currentPlayers).deep.equal([resume]);
         expect(g.newTurn).equal(true);
     });
-    it('allows payer distribution choices and frozen-lot skipping', () => {
+    it('automatically distributes a single payment and skips frozen lots', () => {
         const g = game(5);
         const first = g.players[g.currentPlayers[0]];
-        containerBid(g, [first.containersOnFactoryStore[0].piece.id]);
+        const piece = first.containersOnFactoryStore[0].piece;
+        containerBid(g, [piece.id]);
         pass(g);
         cashBid(g, 2, 0);
         payBankCash(g, 3);
@@ -122,9 +123,8 @@ describe('optional Off-Shore Bank', () => {
         pass(g);
         pass(g);
         pass(g);
-        expect(g.phase).equal(Phase.BankDecision);
-        const piece = g.offshoreBank!.decision!.payment[0];
-        act(g, { name: MoveName.DistributeBankContainer, data: piece });
+        expect(g.phase).equal(Phase.Move);
+        expect(g.offshoreBank!.decision).equal(undefined);
         expect(g.offshoreBank!.containerLots[1].some((c) => c.id === piece.id)).equal(true);
         expect(first.offshoreStats!.cashAuctionsWon).equal(1);
         expect(first.money).equal(23);
@@ -147,6 +147,116 @@ describe('optional Off-Shore Bank', () => {
         expect(p.containersOnFactoryStore.length).equal(0);
         expect(p.bankHolding!.length).equal(2);
         expect(p.loans.length).equal(2);
+    });
+    it('automatically drains same-color payments in persisted order and conserves cash and pieces', () => {
+        const g = game();
+        const p = g.players[g.currentPlayers[0]];
+        const color = p.containersOnFactoryStore[0].piece.color;
+        for (let n = 0; n < 4; n++) {
+            const i = g.containersLeft.findIndex((c) => c.color === color);
+            p.containersOnFactoryStore.push({ piece: g.containersLeft.splice(i, 1)[0], price: 2, moved: false });
+        }
+        const payment = p.containersOnFactoryStore.map((c) => c.piece);
+        const inventory = () =>
+            [
+                ...g.containersLeft,
+                ...g.offshoreBank!.containerLots.reduce((all, lot) => all.concat(lot), [] as typeof g.containersLeft),
+                ...g.players.reduce(
+                    (all, p) =>
+                        all.concat([
+                            ...p.bankHolding!,
+                            ...p.ship.containers,
+                            ...p.containersOnIsland,
+                            ...p.containersOnFactoryStore.map((c) => c.piece),
+                            ...p.containersOnWarehouseStore.map((c) => c.piece),
+                        ]),
+                    [] as typeof g.containersLeft
+                ),
+            ]
+                .map((c) => c.id)
+                .sort();
+        const before = inventory();
+        const cash = () =>
+            g.players.reduce((n, p) => n + p.money, 0) + g.offshoreBank!.cashLots.reduce((a, b) => a + b, 0);
+        const money = cash();
+        refresh(g);
+        containerBid(
+            g,
+            payment.map((c) => c.id)
+        );
+        pass(g);
+        pass(g);
+        pass(g);
+        expect(g.phase).equal(Phase.Move);
+        expect(g.offshoreBank!.decision).equal(undefined);
+        payment.forEach((piece, i) => expect(g.offshoreBank!.containerLots[i % 3]).deep.include(piece));
+        expect(inventory()).deep.equal(before);
+        expect(new Set(inventory()).size).equal(before.length);
+        expect(cash()).equal(money);
+        expect(g.log.some((e) => e.type === 'move' && e.move.name === MoveName.DistributeBankContainer)).equal(false);
+    });
+    it('pauses for multiple colors, then automatically drains the final color after an explicit choice', () => {
+        let g = game();
+        const p = g.players[g.currentPlayers[0]];
+        const first = p.containersOnFactoryStore[0].piece;
+        const color = g.containersLeft.find((c) => c.color !== first.color)!.color;
+        for (let n = 0; n < 3; n++) {
+            const i = g.containersLeft.findIndex((c) => c.color === color);
+            p.containersOnFactoryStore.push({ piece: g.containersLeft.splice(i, 1)[0], price: 2, moved: false });
+        }
+        refresh(g);
+        containerBid(
+            g,
+            p.containersOnFactoryStore.map((c) => c.piece.id)
+        );
+        pass(g);
+        pass(g);
+        pass(g);
+        expect(g.phase).equal(Phase.BankDecision);
+        expect(g.offshoreBank!.decision!.payment.length).equal(4);
+        g = JSON.parse(JSON.stringify(g));
+        act(g, { name: MoveName.DistributeBankContainer, data: first });
+        expect(g.phase).equal(Phase.Move);
+        expect(g.offshoreBank!.decision).equal(undefined);
+        expect(g.players[p.id].offshoreStats!.cashAuctionsWon).equal(1);
+        expect(g.currentPlayers).deep.equal([p.id]);
+    });
+    it('keeps seizure explicit but automatically distributes its final single payment', () => {
+        const g = game();
+        const debtor = g.players[g.currentPlayers[0]];
+        const piece = debtor.containersOnFactoryStore[0].piece;
+        debtor.money = 0;
+        debtor.loans.push(g.loansLeft.pop()!, g.loansLeft.pop()!);
+        pass(g);
+        pass(g);
+        pass(g);
+        expect(g.offshoreBank!.decision!.kind).equal('seize');
+        act(g, { name: MoveName.SeizeBankContainer, data: piece });
+        expect(g.offshoreBank!.decision).equal(undefined);
+        expect(g.offshoreBank!.containerLots[0]).deep.include(piece);
+        expect(g.phase).equal(Phase.Move);
+        expect(g.currentPlayers).deep.equal([debtor.id]);
+        expect(debtor.containersOnFactoryStore).deep.equal([]);
+    });
+    it('accepts a legacy saved single-payment decision and resumes its interrupted player', () => {
+        let g = game();
+        const id = g.currentPlayers[0];
+        const piece = g.containersLeft.pop()!;
+        g.offshoreBank!.decision = {
+            kind: 'distribute',
+            player: id,
+            resumePlayer: (id + 1) % 3,
+            payment: [piece],
+            containers: [],
+            cursor: 2,
+        };
+        g.phase = Phase.BankDecision;
+        refresh(g);
+        g = JSON.parse(JSON.stringify(g));
+        act(g, { name: MoveName.DistributeBankContainer, data: piece });
+        expect(g.offshoreBank!.containerLots[2]).deep.include(piece);
+        expect(g.phase).equal(Phase.Move);
+        expect(g.currentPlayers).deep.equal([(id + 1) % 3]);
     });
     it('loads only on arrival for free, obeys capacity and requires leaving/reentering next turn', () => {
         const g = game();
@@ -187,8 +297,6 @@ describe('optional Off-Shore Bank', () => {
         );
         refresh(g);
         pass(g);
-        expect(g.phase).equal(Phase.BankDecision);
-        decisions(g);
         expect(g.phase).equal(Phase.GameEnd);
         expect(winner.offshoreStats!.cashAuctionsWon).equal(1);
         expect(g.offshoreBank!.auctions.length).equal(0);
@@ -207,15 +315,15 @@ describe('optional Off-Shore Bank', () => {
         expect(analysis.players.map((p) => p.money)).deep.equal(g.players.map((p) => p.money));
         expect(analysis.offshoreBank).deep.equal(g.offshoreBank);
     });
-    it('logs and replays a complete container-payment decision and supports dropped decision owners', async () => {
+    it('replays automatic payments from JSON without synthetic distribution moves', async () => {
         const g = game();
         const p = g.players[g.currentPlayers[0]];
         containerBid(g, [p.containersOnFactoryStore[0].piece.id]);
         pass(g);
         pass(g);
         pass(g);
-        expect(g.phase).equal(Phase.BankDecision);
-        expect(wrapper.replay(g)).deep.equal(g);
+        expect(g.phase).equal(Phase.Move);
+        expect(wrapper.replay(JSON.parse(JSON.stringify(g)))).deep.equal(g);
         const copy = cloneDeep(g);
         await wrapper.dropPlayer(copy, p.id);
         expect(copy.phase).equal(Phase.Move);
@@ -296,7 +404,7 @@ describe('optional Off-Shore Bank', () => {
             const piece = g.offshoreBank!.decision!.payment[0];
             act(g, { name: MoveName.DistributeBankContainer, data: piece });
         }
-        expect(count).equal(2);
+        expect(count).equal(1);
         expect(g.phase).equal(Phase.GameEnd);
         expect(g.offshoreBank!.auctions).deep.equal([]);
         expect(g.players[first.id].offshoreStats!.cashAuctionsWon).equal(1);
@@ -306,7 +414,13 @@ describe('optional Off-Shore Bank', () => {
     it('optimistically completes final bank decisions without scoring secret point cards', () => {
         const g = game();
         const p = g.players[g.currentPlayers[0]];
-        containerBid(g, [p.containersOnFactoryStore[0].piece.id]);
+        const i = g.containersLeft.findIndex((c) => c.color !== p.containersOnFactoryStore[0].piece.color);
+        p.containersOnFactoryStore.push({ piece: g.containersLeft.splice(i, 1)[0], price: 2, moved: false });
+        refresh(g);
+        containerBid(
+            g,
+            p.containersOnFactoryStore.map((c) => c.piece.id)
+        );
         pass(g);
         g.players[g.currentPlayers[0]].containersOnIsland.push(g.containersLeft.pop()!);
         g.containersLeft = g.containersLeft.filter((c) => c.color === g.containersLeft[0].color);

@@ -263,6 +263,27 @@ export function applyBankMove(G: GameState, move: Move, p: Player): { handled: b
     return { handled: true };
 }
 
+/** Drain only color-equivalent payment choices, in persisted payment order.
+ * IDs distinguish physical pieces, not value; price/district no longer apply in bank lots.
+ * Reuse the normal transition so collection, default resumption and final settlements
+ * behave identically to an explicit choice (including legacy saved decisions).
+ */
+export function normalizeBankDistribution(G: GameState): { ending?: boolean } {
+    let ending: boolean | undefined;
+    while (G.phase === Phase.BankDecision) {
+        const d = G.offshoreBank?.decision;
+        if (!d || d.kind !== 'distribute' || !d.payment.length || d.payment.some((c) => c.color !== d.payment[0].color))
+            break;
+        const result = applyBankMove(
+            G,
+            { name: MoveName.DistributeBankContainer, data: d.payment[0] },
+            G.players[d.player]
+        );
+        ending = result.ending || ending;
+    }
+    return { ending };
+}
+
 /** Mandatory production must be finishable without triggering game end after Call Bank. */
 export function bankProductionAllowed(G: GameState, p: Player, first: ContainerPiece['color']): boolean {
     if (!G.offshoreBank?.called) return true;

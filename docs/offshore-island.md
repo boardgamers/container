@@ -35,6 +35,8 @@ No physical-edition artwork is copied into the viewer.
     Outbid containers return to their original district, with owner repricing.
 -   Bank payments start at lot I, cycling through the three lots and skipping
     frozen lots with active auctions. A container payer chooses the color order.
+    If only one color remains, the engine places those containers automatically;
+    the payment prompt appears only when different colors remain to choose from.
 -   Interest, delivery self-buyouts, and seized containers replenish the bank.
     Building costs and loan repayments still go to the ordinary supply.
 -   Won containers go into the winner's bank holding area, not directly onto their

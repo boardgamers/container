@@ -832,7 +832,7 @@ import { colorBadgeHtml } from '../color-blind';
 import { playerColors, playerTextColor, playerSymbol } from '../player-colors';
 import { journalPieces } from '../journal-pieces';
 import { journalOrder } from '../journal-order';
-import { offshoreJournal, escapeJournal } from '../offshore-journal';
+import { offshoreJournal } from '../offshore-journal';
 import { Vue, Component, Prop, Watch, Provide, ProvideReactive } from 'vue-property-decorator';
 import { bidRevision, MoveName, ended, isLoanReversal, move as engineMove } from 'container-engine';
 import type { GameState, Move } from 'container-engine';
@@ -2149,13 +2149,9 @@ export default class Game extends Vue {
                         logReversed.push('New event: ' + log.event.name);
                     }
                 } else if (log.type == 'move') {
-                    const bankMessage = offshoreJournal(log, this.G!);
+                    const bankMessage = offshoreJournal(log, this.G!, true, this.preferences.colorBlind);
                     logReversed.push(
-                        journalPieces(
-                            bankMessage ? escapeJournal(bankMessage) : log.pretty,
-                            this.preferences.colorBlind,
-                            this.playerColors
-                        )
+                        journalPieces(bankMessage || log.pretty, this.preferences.colorBlind, this.playerColors)
                     );
                 }
             });

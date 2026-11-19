@@ -17,7 +17,7 @@ import {
 } from './gamestate';
 import { GameEventName, LogItem, LogMove } from './log';
 import { Move, MoveName, Moves } from './move';
-import { applyBankMove, bankUpkeep, payBankCash, settleBank } from './offshore';
+import { applyBankMove, bankUpkeep, normalizeBankDistribution, payBankCash, settleBank } from './offshore';
 import { asserts, shuffle } from './utils';
 
 export const playerColors = ['dodgerblue', 'red', 'yellow', 'limegreen', 'mediumorchid'];
@@ -702,6 +702,15 @@ export function move(G: GameState, move: Move, playerNumber: number, fake?: bool
 
             break;
         }
+    }
+
+    // Normalize after every transition that can create a payment decision, before
+    // publishing legal moves. Forced placements are effects, not synthetic player moves.
+    const forcedBankResult = normalizeBankDistribution(G);
+    if (forcedBankResult.ending && !fake) {
+        G.phase = Phase.GameEnd;
+        G.currentPlayers = [];
+        calculateEndScore(G);
     }
 
     player.availableMoves = null;

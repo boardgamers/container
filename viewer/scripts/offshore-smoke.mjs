@@ -284,6 +284,35 @@ try {
             3
         );
 
+        // Public bank entries use the same badges and SVG/CB pieces as ordinary logs,
+        // even after the escrow has been outbid and returned to a store.
+        const cashEntries = page.locator('.journal-entry').filter({ hasText: 'calls bank for cash lot' });
+        assert.ok(await cashEntries.count());
+        assert.ok(await cashEntries.first().locator('svg[role="img"]').count());
+        assert.ok(await cashEntries.first().locator('.color-mark').count());
+        const journalBadge = cashEntries.first().locator('[data-localized-journal] > span').first();
+        assert.equal(await journalBadge.textContent(), state.players[player].name);
+        assert.notEqual(await journalBadge.evaluate((el) => el.style.backgroundColor), '');
+        // A temporary, legal ordinary loan gives a side-by-side styling reference.
+        const reference = engine.setup(3, {}, 'ordinary-journal');
+        reference.players[player].name = state.players[player].name;
+        const loan = engine.move(reference, { name: engine.MoveName.GetLoan, data: true }, player).log.at(-1);
+        const comparison = copy(state);
+        comparison.log.push(loan);
+        await page.evaluate((state) => host.emit('state', state), engine.stripSecret(comparison, player));
+        await page.locator('.journal-entry').filter({ hasText: 'takes a loan' }).waitFor({ state: 'attached' });
+        const ordinaryBadge = page
+            .locator('.journal-entry')
+            .filter({ hasText: 'takes a loan' })
+            .locator('[data-localized-journal] > span')
+            .first();
+        assert.equal(
+            await ordinaryBadge.evaluate((el) => el.style.backgroundColor),
+            await journalBadge.evaluate((el) => el.style.backgroundColor)
+        );
+        await page.locator('.inline-game-log').screenshot({ path: `/tmp/container-offshore-journal-${width}.png` });
+        await push();
+
         // Existing journal localization works without a separate web-style panel.
         await page.evaluate(() => host.emit('preferences', { locale: 'fr' }));
         await page.waitForFunction(() =>
@@ -372,7 +401,7 @@ try {
             assert.equal(await page.locator('.offshore-lot.destination').getAttribute('data-lot'), String(lot));
             assert.equal(await page.locator('.offshore-lot[role="button"]').count(), 0);
             assert.equal(await page.locator('.bank-decision > text').count(), 0);
-            assert.equal(await page.evaluate(() => moves.length), 0, 'never auto-pay');
+            assert.equal(await page.evaluate(() => moves.length), 0, 'color choice waits for the player');
             await page.waitForTimeout(1200);
             await page.screenshot({ path: `/tmp/container-offshore-payment-${stage}-${width}.png`, fullPage: true });
         };
@@ -387,9 +416,8 @@ try {
         await page.evaluate((player) => host.emit('player', { index: player }), player);
         await push();
         for (const [index, lot] of [
-            [1, 0],
-            [0, 2],
-            [2, 0],
+            [0, 0],
+            [1, 2],
         ]) {
             await page.locator(`.bank-choice [data-piece-id="${payments[index].id}"]`).click();
             const actions = await page.evaluate(() => moves.at(-1));
@@ -398,19 +426,27 @@ try {
             state = engine.move(state, actions[0], player);
             assert.ok(state.offshoreBank.containerLots[lot].some((piece) => piece.id === payments[index].id));
             await push();
-            if (index === 1) await checkPayment(2, 'skip');
-            if (index === 0) await checkPayment(0, 'last');
+            if (index === 0) await checkPayment(2, 'skip');
         }
+        // The final orange container is placed automatically, skipping the frozen lot.
+        assert.ok(state.offshoreBank.containerLots[0].some((piece) => piece.id === payments[2].id));
         assert.equal(await page.locator('.bank-decision, .offshore-lot.destination').count(), 0);
 
-        // Final cash settlement must remain clickable with opponents' point cards stripped.
+        // Final settlement: choose between colors, then finish automatically with stripped opponent cards.
         const payment = state.players[player].containersOnFactoryStore.pop();
+        const finalOther = state.containersLeft.splice(
+            state.containersLeft.findIndex((piece) => piece.color !== payment.piece.color),
+            1
+        )[0];
         const auction = {
             type: 'cash',
             lot: 0,
             bidder: player,
             cash: 0,
-            containers: [{ container: payment, district: 'factory' }],
+            containers: [
+                { container: payment, district: 'factory' },
+                { container: { piece: finalOther, price: 2, moved: false }, district: 'factory' },
+            ],
         };
         state.offshoreBank.auctions = [auction];
         state.offshoreBank.decision = {
@@ -418,7 +454,7 @@ try {
             player,
             resumePlayer: player,
             containers: [],
-            payment: [payment.piece],
+            payment: [payment.piece, finalOther],
             cursor: 0,
             settlement: copy(auction),
             ending: true,
@@ -427,8 +463,8 @@ try {
         state.newTurn = true;
         state.currentPlayers = [player];
         await push();
-        assert.equal(await page.evaluate(() => moves.length), 0, 'single payment requires explicit click');
-        await page.locator('.bank-choice [data-piece-id][role="button"]').click();
+        assert.equal(await page.evaluate(() => moves.length), 0, 'different colors require a choice');
+        await page.locator('.bank-choice [data-piece-id][role="button"]').first().click();
         const distribution = await page.evaluate(() => moves.at(-1));
         assert.equal(distribution.length, 1);
         state = engine.move(state, distribution[0], player);

@@ -1,4 +1,5 @@
 import { playerColors as defaults } from 'container-engine/src/engine';
+import { ContainerColor, containerColors } from 'container-engine/src/gamestate';
 import { colorMarkSvg } from './color-blind';
 import { playerTextColor } from './player-colors';
 function pieceIcon(kind: string, color = '', colorBlind = false): string {
@@ -12,6 +13,11 @@ function pieceIcon(kind: string, color = '', colorBlind = false): string {
     return `<span title="${label}" style="display:inline-block;vertical-align:middle;line-height:0"><svg role="img" aria-label="${label}" width="26" height="26" viewBox="0 0 22 22"><title>${label}</title>${shape}${
         colorBlind && color ? `<g transform="translate(6 6)">${colorMarkSvg(color)}</g>` : ''
     }</svg></span>`;
+}
+
+/** Only engine palette values may reach the SVG markup generator. */
+export function journalContainerIcon(color: ContainerColor, colorBlind = false): string {
+    return containerColors.includes(color) ? pieceIcon('container', color, colorBlind) : '';
 }
 
 export function journalPieces(html: string, colorBlind = false, playerColors: string[] = []): string {
