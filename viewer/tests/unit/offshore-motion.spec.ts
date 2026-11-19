@@ -118,10 +118,36 @@ describe('offshore physical cargo motion', () => {
         expect(destination.animate).toHaveBeenCalledOnce();
         f.motion.destroy();
     });
+    it('animates draft selection and return on the sole real node without changing engine snapshots', () => {
+        const f = fixture();
+        for (const draft of [true, false]) {
+            f.motion.draftTransition(f.root, [f.piece.id], f.tick);
+            const destination = f.node();
+            if (draft) destination.element.classList.add('bank-lot-draft');
+            while (f.callbacks.length) f.callbacks.shift()!();
+            expect(destination.animate).toHaveBeenCalledOnce();
+            expect(f.root.querySelectorAll('[data-piece-id]')).toHaveLength(1);
+        }
+        f.motion.transition(f.root, f.before, f.after, f.tick);
+        const destination = f.node();
+        while (f.callbacks.length) f.callbacks.shift()!();
+        expect(destination.animate).toHaveBeenCalledOnce();
+        f.motion.destroy();
+    });
+    it('invalidates queued draft animation on authoritative updates', () => {
+        const f = fixture();
+        f.motion.draftTransition(f.root, [f.piece.id], f.tick);
+        f.motion.transition(f.root, f.before, f.before, f.tick);
+        const destination = f.node();
+        f.callbacks.forEach((fn) => fn());
+        expect(destination.animate).not.toHaveBeenCalled();
+        f.motion.destroy();
+    });
     it('honors reduced motion', () => {
         vi.stubGlobal('matchMedia', () => ({ matches: true }));
         const f = fixture();
         f.motion.transition(f.root, f.before, f.after, f.tick);
+        f.motion.draftTransition(f.root, [f.piece.id], f.tick);
         expect(f.callbacks).toHaveLength(0);
         f.motion.destroy();
         vi.unstubAllGlobals();

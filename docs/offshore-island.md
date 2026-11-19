@@ -76,9 +76,16 @@ adds a lower bank area without shifting the classic board coordinates. On mobile
 the **Bank** navigation button brings that area into view.
 
 Each lot separates its reward from the current bidder's token and bid. Click a
-lot to offer cash or select stored cargo, then confirm the offer. During payment,
-click a container below the lots; a connecting line and highlighted lot show its
-fixed destination. Repricing and default choices appear beside the bank.
+lot to offer cash or select stored cargo, then confirm the offer. Selected draft
+cargo moves visually from its store to the bidding area; click it there to remove
+it from the draft and return it to the original store. Cancelling returns all draft
+cargo. These previews do not change the engine state until the offer is confirmed.
+During payment, click a container below the lots; a connecting line and highlighted
+lot show its fixed destination. For outbid cargo, select a container in the framed
+**Returned containers** tray above the bank and choose a highlighted price space
+in its original store. Default choices appear
+beside the bank. Bank transfers and draft selection use brief container animations,
+with reduced-motion preferences respected.
 
 Each player's open-water berth has solid player-colored piers; shared piers split
 evenly between adjacent colors. Won containers wait directly in the berth, without

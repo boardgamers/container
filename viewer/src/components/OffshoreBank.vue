@@ -118,7 +118,15 @@
                             :name="owner(player)"
                             :color="playerColors[player]"
                         />
-                        <OffshoreCargo :pieces="draftCargo" transform="translate(32 69)" :columns="2" :rows="1" />
+                        <OffshoreCargo
+                            :pieces="draftCargo"
+                            :selectable="draftCargo.map((piece) => piece.id)"
+                            action-label="Remove from bid"
+                            transform="translate(32 69)"
+                            :columns="2"
+                            :rows="1"
+                            @select="$emit('remove-draft', $event)"
+                        />
                     </g>
                     <g v-else-if="auction(type, i - 1)">
                         <PlayerToken
@@ -190,9 +198,37 @@
         <g
             v-if="bank.decision"
             class="bank-decision"
-            :transform="bank.decision.kind !== 'seize' ? 'translate(20 950)' : 'translate(520 680)'"
+            :transform="
+                bank.decision.kind === 'return'
+                    ? 'translate(140 480)'
+                    : bank.decision.kind === 'distribute'
+                    ? 'translate(20 950)'
+                    : 'translate(520 680)'
+            "
         >
-            <text v-if="decisionTitle" x="0" y="-12" font-size="14">{{ decisionTitle }}</text>
+            <!-- Between the point card and open sea, clear of all five players' harbors and the bid draft. -->
+            <rect
+                v-if="bank.decision.kind === 'return'"
+                class="bank-return-tray"
+                x="-8"
+                y="-30"
+                width="136"
+                height="150"
+                rx="4"
+                fill="#e2e0d3"
+                fill-opacity=".45"
+                stroke="#899997"
+                pointer-events="none"
+            />
+            <text
+                v-if="decisionTitle"
+                x="0"
+                y="-12"
+                :font-size="bank.decision.kind === 'return' ? 12 : 14"
+                :textLength="bank.decision.kind === 'return' ? 120 : undefined"
+                lengthAdjust="spacingAndGlyphs"
+                >{{ decisionTitle }}</text
+            >
             <g
                 v-if="bank.decision.kind === 'distribute'"
                 class="bank-payment-route"
@@ -208,16 +244,16 @@
             </g>
             <template v-if="!decisionMoves.length">
                 <PlayerToken
-                    transform="translate(9 20)"
+                    :transform="bank.decision.kind === 'return' ? 'translate(9 0)' : 'translate(9 20)'"
                     :owner="bank.decision.player"
                     :name="owner(bank.decision.player)"
                     :color="playerColors[bank.decision.player]"
                 />
                 <OffshoreCargo
                     :pieces="pendingCargo"
-                    transform="translate(0 35)"
-                    :columns="10"
-                    :rows="bank.decision.kind === 'distribute' ? 2 : 8"
+                    :transform="bank.decision.kind === 'return' ? 'translate(0 20)' : 'translate(0 35)'"
+                    :columns="bank.decision.kind === 'return' ? 5 : 10"
+                    :rows="bank.decision.kind === 'return' ? 4 : bank.decision.kind === 'distribute' ? 2 : 8"
                 />
             </template>
             <template v-else>
@@ -226,7 +262,9 @@
                     :key="choice.data.id"
                     class="bank-choice"
                     :transform="
-                        bank.decision.kind !== 'seize'
+                        bank.decision.kind === 'return'
+                            ? `translate(${(index % 2) * 60} ${Math.floor(index / 2) * 35})`
+                            : bank.decision.kind !== 'seize'
                             ? `translate(${index * 70} 0)`
                             : `translate(0 ${40 + index * 35})`
                     "
@@ -263,7 +301,13 @@
                 </g>
                 <Button
                     v-if="decisionPages > 1"
-                    :transform="bank.decision.kind !== 'seize' ? 'translate(0 40)' : 'translate(0 190)'"
+                    :transform="
+                        bank.decision.kind === 'return'
+                            ? 'translate(0 85)'
+                            : bank.decision.kind !== 'seize'
+                            ? 'translate(0 40)'
+                            : 'translate(0 190)'
+                    "
                     :width="100"
                     :text="'More ' + (decisionPage + 1) + '/' + decisionPages"
                     @click="decisionPage = (decisionPage + 1) % decisionPages"
@@ -348,7 +392,7 @@ export default class OffshoreBank extends Vue {
     }
     get decisionTitle() {
         return this.bank?.decision?.kind === 'return'
-            ? 'Outbid containers'
+            ? 'Returned containers'
             : this.bank?.decision?.kind === 'seize'
             ? 'Loan default'
             : '';

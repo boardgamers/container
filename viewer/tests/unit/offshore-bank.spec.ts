@@ -300,17 +300,71 @@ describe('Offshore bank viewer', () => {
         piece(warehouse.id).vm.$emit('bid-select');
         await wrapper.vm.$nextTick();
         expect(bank.props('validDraft')).toBe(true);
-        piece(factory.id).vm.$emit('bid-select');
+        expect(piece(factory.id)).toBeUndefined();
+        expect(piece(warehouse.id)).toBeUndefined();
+        bank.vm.$emit('remove-draft', factory.id);
         await wrapper.vm.$nextTick();
+        expect(piece(factory.id)).toBeDefined();
         expect(bank.props('draftCargo').map((p) => p.id)).toEqual([warehouse.id]);
         expect(bank.props('validDraft')).toBe(false);
-        piece(warehouse.id).vm.$emit('bid-select');
+        bank.vm.$emit('remove-draft', warehouse.id);
         await wrapper.vm.$nextTick();
         expect(bank.props('draftCargo')).toEqual([]);
         bank.vm.$emit('cancel-draft');
         await wrapper.vm.$nextTick();
         expect(submitted).toEqual([]);
         expect(bank.props('draftCargo')).toBe(null);
+        wrapper.destroy();
+    });
+
+    it('restores exact store positions on cancel, lot switch and state reset without changing stores or cash', async () => {
+        const { wrapper, state, factory, warehouse, submitted } = gameFixture();
+        const bank = wrapper.findComponent(OffshoreBank);
+        const stores = () => wrapper.findAllComponents(Container).wrappers;
+        const original = stores().map((p) => [p.props('pieceId'), p.props('targetState')]);
+        const before = JSON.stringify(state);
+        for (const reset of ['cancel', 'switch', 'state']) {
+            bank.vm.$emit('choose-offer', { type: 'cash', lot: 1 });
+            await wrapper.vm.$nextTick();
+            for (const id of [factory.id, warehouse.id])
+                stores()
+                    .find((p) => p.props('pieceId') === id)!
+                    .vm.$emit('bid-select');
+            await wrapper.vm.$nextTick();
+            expect(stores().some((p) => [factory.id, warehouse.id].includes(p.props('pieceId')))).toBe(false);
+            expect(bank.props('draftCargo').map((p) => p.price)).toEqual([2, 3]);
+            if (reset === 'cancel') bank.vm.$emit('cancel-draft');
+            if (reset === 'switch') bank.vm.$emit('choose-offer', { type: 'cash', lot: 0 });
+            if (reset === 'state') await wrapper.setProps({ state: JSON.parse(before) });
+            await wrapper.vm.$nextTick();
+            expect(stores().map((p) => [p.props('pieceId'), p.props('targetState')])).toEqual(original);
+            expect(JSON.stringify(state)).toBe(before);
+            expect(submitted).toEqual([]);
+        }
+        wrapper.destroy();
+    });
+
+    it('removes draft cargo with click, Enter and Space without selecting the lot; clamps the last page', async () => {
+        const { render, factory, warehouse, state } = fixture();
+        const wrapper = render();
+        let cargo = [factory, warehouse, state.containersLeft[0]];
+        await wrapper.setProps({ selectedOffer: { type: 'cash', lot: 1 }, draftCargo: cargo });
+        wrapper.vm.$on('remove-draft', (id: string) => {
+            cargo = cargo.filter((p) => p.id !== id);
+            wrapper.setProps({ draftCargo: cargo });
+        });
+        await wrapper.find('.bank-lot-draft [aria-label="Next cargo page"]').trigger('click');
+        for (const event of ['keydown.space', 'keydown.enter', 'click']) {
+            const piece = wrapper.find('.bank-lot-draft [data-piece-id]');
+            expect(piece.attributes('role')).toBe('button');
+            expect(piece.attributes('tabindex')).toBe('0');
+            expect(piece.attributes('aria-label')).toContain('Remove from bid');
+            await piece.trigger(event);
+            await wrapper.vm.$nextTick();
+        }
+        expect(wrapper.emitted('remove-draft')).toHaveLength(3);
+        expect(wrapper.emitted('choose-offer')).toBeUndefined();
+        expect(wrapper.findAll('.bank-lot-draft [data-piece-id]')).toHaveLength(0);
         wrapper.destroy();
     });
 
@@ -478,6 +532,7 @@ describe('Offshore bank viewer', () => {
         refresh();
         let wrapper = render();
         expect(wrapper.text()).toContain('Loan default');
+        expect(wrapper.find('.bank-decision').attributes('transform')).toBe('translate(520 680)');
         await wrapper.find('.bank-choice [data-piece-id][role="button"]').trigger('keydown.enter');
         expect(wrapper.emitted('move')![0][0].name).toBe(MoveName.SeizeBankContainer);
         wrapper.destroy();
@@ -494,6 +549,8 @@ describe('Offshore bank viewer', () => {
         expect(wrapper.find('.offshore-lot.destination').attributes('data-lot')).toBe('0');
         expect(wrapper.find('.offshore-lot.destination').attributes('role')).toBeUndefined();
         expect(wrapper.find('.bank-decision > text').exists()).toBe(false);
+        expect(wrapper.find('.bank-decision').attributes('transform')).toBe('translate(20 950)');
+        expect(wrapper.find('.bank-payment-route').exists()).toBe(true);
         expect(wrapper.emitted('move')).toBeUndefined();
         expect(wrapper.find('.bank-choice [data-piece-id][role="button"]').attributes('aria-label')).toContain(
             'Pay into container lot 1'
@@ -527,6 +584,52 @@ describe('Offshore bank viewer', () => {
         expect(wrapper.findAll('.bank-choice').length).toBe(3);
         await wrapper.find('.bank-choice [role="button"]').trigger('click');
         expect(wrapper.emitted('select-return')![0]).toEqual([containers[8].container.piece.id]);
+        expect(wrapper.emitted('move')).toBeUndefined();
+        wrapper.destroy();
+    });
+
+    it('keeps maximum pending returns in the framed tray for actors and spectators', async () => {
+        const { state, player, refresh, render } = fixture();
+        const containers = Array.from({ length: 103 }, (_, i) => ({
+            container: { piece: { ...state.containersLeft[0], id: `C${i}` as const }, price: 2, moved: false },
+            district: 'factory' as const,
+        }));
+        state.phase = Phase.BankDecision;
+        state.offshoreBank!.decision = {
+            kind: 'return',
+            player,
+            resumePlayer: player,
+            containers,
+            payment: [],
+            cursor: 0,
+        };
+        refresh();
+        const wrapper = render();
+        expect(wrapper.find('.bank-decision').attributes('transform')).toBe('translate(140 480)');
+        expect(wrapper.find('.bank-return-tray').attributes('height')).toBe('150');
+        expect(wrapper.text()).toContain('Returned containers');
+        const seen = new Set<string>();
+        for (let page = 0; page < 26; page++) {
+            wrapper.findAll('.bank-choice').wrappers.forEach((choice, i) => {
+                expect(choice.attributes('transform')).toBe(`translate(${(i % 2) * 60} ${Math.floor(i / 2) * 35})`);
+                seen.add(choice.find('[data-piece-id]').attributes('data-piece-id')!);
+            });
+            await wrapper.find(`[aria-label="More ${page + 1}/26"]`).trigger('click');
+        }
+        expect(seen.size).toBe(103);
+        await wrapper.setProps({ player: undefined });
+        const cargo = wrapper.find('.bank-decision').findComponent(OffshoreCargo);
+        expect(cargo.props('columns')).toBe(5);
+        expect(cargo.props('rows')).toBe(4);
+        seen.clear();
+        for (let page = 0; page < 6; page++) {
+            cargo.findAll('[data-piece-id]').wrappers.forEach((piece) => {
+                expect(piece.attributes('role')).toBeUndefined();
+                seen.add(piece.attributes('data-piece-id')!);
+            });
+            await cargo.find('[aria-label="Next cargo page"]').trigger('keydown.enter');
+        }
+        expect(seen.size).toBe(103);
         expect(wrapper.emitted('move')).toBeUndefined();
         wrapper.destroy();
     });

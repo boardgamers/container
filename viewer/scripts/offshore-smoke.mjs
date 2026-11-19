@@ -52,15 +52,42 @@ try {
                         frames,
                         holding: this.closest('.bank-holding')?.getAttribute('data-owner'),
                         copies: [...document.querySelectorAll('[data-piece-id]')].filter(
-                            (node) =>
-                                node.getAttribute('data-piece-id') === this.getAttribute('data-piece-id') &&
-                                !node.closest('.bank-lot-draft')
+                            (node) => node.getAttribute('data-piece-id') === this.getAttribute('data-piece-id')
                         ).length,
                     });
                 }
                 return animate.call(this, frames, options);
             };
         });
+        const checkReturnTray = async () => {
+            const geometry = await page.evaluate(() => {
+                const tray = document.querySelector('.bank-return-tray').getBoundingClientRect();
+                const decision = document.querySelector('.bank-decision');
+                const inside = [...decision.querySelectorAll('[data-piece-id], [role="button"], text')].every(
+                    (node) => {
+                        const r = node.getBoundingClientRect();
+                        return (
+                            r.left >= tray.left - 1 &&
+                            r.right <= tray.right + 1 &&
+                            r.top >= tray.top - 1 &&
+                            r.bottom <= tray.bottom + 1
+                        );
+                    }
+                );
+                const clear = [
+                    ...document.querySelectorAll('.bank-board, .bank-piers, .point-card, .piece, .island-value'),
+                ].every((node) => {
+                    const r = node.getBoundingClientRect();
+                    return r.right <= tray.left || r.left >= tray.right || r.bottom <= tray.top || r.top >= tray.bottom;
+                });
+                return {
+                    inside,
+                    clear,
+                    aboveBank: tray.bottom < document.querySelector('.bank-board').getBoundingClientRect().top,
+                };
+            });
+            assert.deepEqual(geometry, { inside: true, clear: true, aboveBank: true });
+        };
         const errors = [];
         page.on('pageerror', (e) => errors.push(e.message));
         page.on('console', (msg) => {
@@ -236,23 +263,66 @@ try {
         await page.locator(`.piece.bid-eligible[data-piece-id="${second.id}"]`).click();
         assert.equal(await page.evaluate(() => moves.length), 0, 'selection never auto-submits');
         assert.equal(await page.locator('.piece.canDrag, .loan.canDrag, .offshore-lot.legal').count(), 0);
-        assert.equal(await page.locator('.piece.bid-selected').count(), 2);
+        assert.equal(await page.locator('.piece.bid-selected').count(), 0);
+        for (const id of [offered.id, second.id])
+            assert.equal(await page.locator(`[data-piece-id="${id}"]`).count(), 1, 'draft has no store duplicate');
         assert.equal(
             await page.locator('rect[stroke="blue"]').count(),
             2,
             'only the two eligible own storage zones have action outlines'
         );
+        const originalStore = copy(state.players[player]);
+        const draftPiece = () => page.locator(`.bank-lot-draft [data-piece-id="${second.id}"]`);
+        await page.waitForTimeout(350);
+        await draftPiece().focus();
+        await draftPiece().press('Space');
         const selectedPiece = page.locator(`.piece[data-piece-id="${second.id}"]`);
+        assert.equal(await selectedPiece.count(), 1);
+        assert.equal(await draftPiece().count(), 0);
         await selectedPiece.focus();
-        await selectedPiece.press('Space');
-        assert.equal(await selectedPiece.getAttribute('aria-pressed'), 'false');
         await selectedPiece.press('Enter');
-        assert.equal(await selectedPiece.getAttribute('aria-pressed'), 'true');
+        assert.equal(await selectedPiece.count(), 0);
+        assert.equal(await draftPiece().count(), 1);
+        await draftPiece().focus();
+        await draftPiece().press('Enter');
+        assert.equal(await selectedPiece.count(), 1);
+        await selectedPiece.click();
+        const draftAnimations = await page.evaluate(() => cargoAnimations);
+        assert.ok(draftAnimations.filter((a) => a.id === second.id).length >= 5, 'draft selection and removal animate');
+        assert.ok(
+            draftAnimations.every((a) => a.copies === 1),
+            'animation never introduces a duplicate'
+        );
+        assert.deepEqual(state.players[player], originalStore, 'local draft never changes engine stores or money');
+        const returnAnimation = draftAnimations.filter((a) => a.id === second.id)[1];
+        assert.notEqual(
+            returnAnimation.frames[0].transform,
+            returnAnimation.frames[1].transform,
+            'removal travels back to storage'
+        );
+        await page.waitForTimeout(350);
+        const animationsBeforeSwitch = await page.evaluate(() => cargoAnimations.length);
+        await page.locator('.offshore-lot[data-type="cash"][data-lot="0"]').click();
+        assert.equal(await page.locator('.bank-lot-draft [data-piece-id]').count(), 0);
+        for (const id of [offered.id, second.id]) {
+            assert.equal(await page.locator(`[data-piece-id="${id}"]`).count(), 1);
+            assert.equal(
+                await page.locator(`.piece[data-piece-id="${id}"]`).count(),
+                1,
+                'switch restores original store'
+            );
+        }
+        const returnAnimations = await page.evaluate((count) => cargoAnimations.slice(count), animationsBeforeSwitch);
+        assert.equal(returnAnimations.length, 2, 'switch cancels draft with both return animations');
+        assert.ok(returnAnimations.every((a) => a.copies === 1));
+        await page.locator('.offshore-lot[data-type="cash"][data-lot="1"]').click();
+        for (const id of [offered.id, second.id]) await page.locator(`.piece[data-piece-id="${id}"]`).click();
+
         if (width < 600) await page.locator('.player-board-tab').nth(player).click();
         await page.screenshot({ path: `/tmp/container-offshore-cargo-focus-${width}.png`, fullPage: true });
 
-        await page.locator(`.piece.bid-eligible[data-piece-id="${offered.id}"]`).click();
-        await page.locator(`.piece.bid-eligible[data-piece-id="${second.id}"]`).click();
+        await page.locator(`.bank-lot-draft [data-piece-id="${offered.id}"]`).click();
+        await page.locator(`.bank-lot-draft [data-piece-id="${second.id}"]`).click();
         assert.equal(await page.locator('.bank-lot-draft [data-piece-id]').count(), 0);
         await page.getByRole('button', { name: 'Cancel', exact: true }).click();
         assert.equal(await page.locator('.bid-eligible, .bid-selected, .bank-draft').count(), 0);
@@ -265,7 +335,11 @@ try {
         await page.locator(`.piece.bid-eligible[data-piece-id="${second.id}"]`).click();
         if (width < 600) {
             await page.getByRole('button', { name: 'Bid (2)', exact: true }).click();
-            assert.equal(await page.locator('.piece.bid-selected').count(), 2, 'navigation preserves draft');
+            assert.equal(
+                await page.locator('.bank-lot-draft [data-piece-id]').count(),
+                2,
+                'navigation preserves draft'
+            );
         }
         await checkDraft('cash', 1);
         await page.screenshot({ path: `/tmp/container-offshore-cargo-draft-${width}.png`, fullPage: true });
@@ -283,6 +357,24 @@ try {
         assert.deepEqual(cargoBid.at(-1).extraData.containers, [offered.id, second.id]);
         for (const action of cargoBid) state = engine.move(state, action, player);
         await push();
+        assert.equal(await page.locator('.bank-lot-draft').count(), 0);
+        for (const id of [offered.id, second.id]) {
+            assert.equal(
+                await page.locator(`[data-piece-id="${id}"]`).count(),
+                1,
+                'confirmed escrow has no duplicates'
+            );
+            assert.equal(await page.locator(`.piece[data-piece-id="${id}"]`).count(), 0);
+        }
+        assert.deepEqual(
+            state.offshoreBank.auctions
+                .find((a) => a.type === 'cash' && a.lot === 1)
+                .containers.map((c) => [c.district, c.container.price]),
+            [
+                ['factory', originalStore.containersOnFactoryStore[0].price],
+                ['warehouse', 3],
+            ]
+        );
 
         await page.locator('.board-scroll').evaluate((el) => {
             el.scrollLeft = 0;
@@ -309,7 +401,9 @@ try {
             host.emit('player', { index: undefined });
             host.emit('state', state);
         }, engine.stripSecret(copy(state)));
-        await page.waitForFunction(() => document.querySelector('.bank-decision')?.textContent.includes('Outbid'));
+        await page.waitForFunction(() =>
+            document.querySelector('.bank-decision')?.textContent.includes('Returned containers')
+        );
         assert.equal(
             await page.locator('.bank-decision [data-piece-id]').count(),
             1,
@@ -320,8 +414,11 @@ try {
             0,
             'spectator has no decision controls'
         );
+        await checkReturnTray();
         await page.evaluate((player) => host.emit('player', { index: player }), player);
         await push();
+        await checkReturnTray();
+        await page.screenshot({ path: `/tmp/container-offshore-return-tray-${width}.png`, fullPage: true });
         await page.locator('.bank-choice [data-piece-id]').click();
         await page.getByRole('button', { name: 'Return to factory store at $3', exact: true }).click();
         const repricing = await page.evaluate(() => moves.at(-1));
@@ -559,6 +656,29 @@ try {
         }, engine.stripSecret(copy(state)));
         assert.equal(await page.locator('.bank-holding [data-piece-id][role="button"]').count(), 0);
         assert.equal(await page.locator('.bank-harbor.canClick').count(), 0);
+        // A large pending return remains bounded with all five berths populated, including spectators.
+        state.phase = 'bankDecision';
+        state.offshoreBank.decision = {
+            kind: 'return',
+            player,
+            resumePlayer: player,
+            containers: state.containersLeft
+                .splice(0)
+                .map((piece) => ({ container: { piece, price: 2, moved: false }, district: 'factory' })),
+            payment: [],
+            cursor: 0,
+        };
+        await page.evaluate((state) => host.emit('state', state), engine.stripSecret(copy(state)));
+        await page.waitForSelector('.bank-return-tray');
+        await checkReturnTray();
+        await page.locator('.bank-decision [aria-label="Next cargo page"]').click();
+        await checkReturnTray();
+        await page.screenshot({ path: `/tmp/container-offshore-return-spectator-${width}.png`, fullPage: true });
+        await page.evaluate((player) => host.emit('player', { index: player }), player);
+        await push();
+        await checkReturnTray();
+        await page.locator('.bank-decision .button').click();
+        await checkReturnTray();
         // A real pass settles a cash bid for containers and appends an upkeep event.
         // Both prize pieces must visibly move from their lot into the winner's holding.
         state = engine.setup(3, { offshoreIsland: true }, 'offshore-browser');

@@ -789,5 +789,7 @@
     "Pay into container lot {p0}: brown container": "कंटेनर लॉट {p0} में भुगतान करें: भूरा कंटेनर",
     "Pay into container lot {p0}: dark green container": "कंटेनर लॉट {p0} में भुगतान करें: गहरा हरा कंटेनर",
     "{p0} wins bank containers lot {p1}": "{p0} बैंक का कंटेनर लॉट {p1} जीतता है",
-    "{p0} wins bank cash lot {p1}": "{p0} बैंक का नकदी लॉट {p1} जीतता है"
+    "{p0} wins bank cash lot {p1}": "{p0} बैंक का नकदी लॉट {p1} जीतता है",
+    "Remove from bid": "बोली से हटाएँ",
+    "Returned containers": "वापस किए गए कंटेनर"
 }

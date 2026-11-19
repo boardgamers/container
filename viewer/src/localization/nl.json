@@ -789,5 +789,7 @@
     "Pay into container lot {p0}: brown container": "Betalen in containerkavel {p0}: bruine container",
     "Pay into container lot {p0}: dark green container": "Betalen in containerkavel {p0}: donkergroene container",
     "{p0} wins bank containers lot {p1}": "{p0} wint containerkavel {p1} van de bank",
-    "{p0} wins bank cash lot {p1}": "{p0} wint geldkavel {p1} van de bank"
+    "{p0} wins bank cash lot {p1}": "{p0} wint geldkavel {p1} van de bank",
+    "Remove from bid": "Uit bod verwijderen",
+    "Returned containers": "Teruggegeven containers"
 }

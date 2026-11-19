@@ -54,9 +54,10 @@ export function offshoreJournal(
  * Match the complete public name and suffix rather than replacing name substrings.
  * Ambiguous or unknown names keep their original prose without guessing a seat.
  */
-export function offshoreWinJournal(message: string, state: GameState): string | undefined {
+export function offshoreWinJournal(message: string, state: GameState, rich = true): string | undefined {
     const match = /^(.*)( wins bank (?:containers|cash) lot [1-3])$/.exec(message);
     if (!match) return undefined;
+    if (!rich) return message;
     const players = state.players.filter((player) => player.name === match[1]);
     if (players.length !== 1) return escapeJournal(message);
     return playerBadge(match[1], players[0].id) + match[2];

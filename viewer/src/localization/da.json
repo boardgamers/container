@@ -789,5 +789,7 @@
     "Pay into container lot {p0}: brown container": "Betal til containerparti {p0}: brun container",
     "Pay into container lot {p0}: dark green container": "Betal til containerparti {p0}: mørkegrøn container",
     "{p0} wins bank containers lot {p1}": "{p0} vinder bankens containerparti {p1}",
-    "{p0} wins bank cash lot {p1}": "{p0} vinder bankens pengeparti {p1}"
+    "{p0} wins bank cash lot {p1}": "{p0} vinder bankens pengeparti {p1}",
+    "Remove from bid": "Fjern fra bud",
+    "Returned containers": "Returnerede containere"
 }

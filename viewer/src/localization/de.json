@@ -789,5 +789,7 @@
     "Pay into container lot {p0}: brown container": "In Containerlos {p0} einzahlen: brauner Container",
     "Pay into container lot {p0}: dark green container": "In Containerlos {p0} einzahlen: dunkelgrüner Container",
     "{p0} wins bank containers lot {p1}": "{p0} gewinnt Containerlos {p1} der Bank",
-    "{p0} wins bank cash lot {p1}": "{p0} gewinnt Geldlos {p1} der Bank"
+    "{p0} wins bank cash lot {p1}": "{p0} gewinnt Geldlos {p1} der Bank",
+    "Remove from bid": "Aus Gebot entfernen",
+    "Returned containers": "Zurückgegebene Container"
 }

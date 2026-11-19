@@ -789,5 +789,7 @@
     "Pay into container lot {p0}: brown container": "پرداخت به بستهٔ کانتینر {p0}: کانتینر قهوه‌ای",
     "Pay into container lot {p0}: dark green container": "پرداخت به بستهٔ کانتینر {p0}: کانتینر سبز تیره",
     "{p0} wins bank containers lot {p1}": "{p0} برندهٔ بستهٔ کانتینر {p1} بانک می‌شود",
-    "{p0} wins bank cash lot {p1}": "{p0} برندهٔ بستهٔ پول نقد {p1} بانک می‌شود"
+    "{p0} wins bank cash lot {p1}": "{p0} برندهٔ بستهٔ پول نقد {p1} بانک می‌شود",
+    "Remove from bid": "حذف از پیشنهاد",
+    "Returned containers": "کانتینرهای بازگردانده‌شده"
 }

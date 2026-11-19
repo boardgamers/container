@@ -220,6 +220,7 @@
                             :valid-draft="validContainerBid"
                             @confirm-draft="confirmBankContainers"
                             @cancel-draft="resetBankDraft"
+                            @remove-draft="toggleBankContainer"
                             :state="G"
                             :player="player"
                             :player-colors="playerColors"
@@ -243,6 +244,7 @@
 
                     <template v-for="container in containers">
                         <Container
+                            v-if="!bankCashOffer || !offshoreContainers.has(container.id)"
                             ref="containerPieces"
                             :key="container.id"
                             :pieceId="container.id"
@@ -1640,7 +1642,14 @@ export default class Game extends Vue {
     @Watch('G')
     @Watch('player')
     @Watch('interactionDisabled')
-    resetBankDraft() {
+    resetBankDraftForState() {
+        this.resetBankDraft(false);
+    }
+    resetBankDraft(animate = true) {
+        if (animate && this.bankCashOffer && this.offshoreContainers.size)
+            this.offshoreMotion.draftTransition(this.$el, this.offshoreContainers, (callback) =>
+                this.$nextTick(callback)
+            );
         this.selectedBankReturn = null;
         this.bankDraft = null;
         this.offshoreContainers = new Set();
@@ -1720,7 +1729,7 @@ export default class Game extends Vue {
     }
     sendBankMove(action: Move) {
         if (this.canMove && this.G && legalBankAction(this.G, this.player, action)) {
-            this.resetBankDraft();
+            this.resetBankDraft(false);
             this.sendMove(action);
         } else this.bankBidError = true;
     }
@@ -1789,6 +1798,7 @@ export default class Game extends Vue {
     }
     toggleBankContainer(id: string) {
         if (!this.bankContainerHighlights.includes(id)) return;
+        this.offshoreMotion.draftTransition(this.$el, [id], (callback) => this.$nextTick(callback));
         const selected = new Set(this.offshoreContainers);
         if (selected.has(id)) selected.delete(id);
         else selected.add(id);
@@ -2214,10 +2224,11 @@ export default class Game extends Vue {
                     logReversed.push('New phase: ' + log.phase);
                 } else if (log.type == 'event') {
                     if (log.event.name == GameEventName.Upkeep) {
+                        const bankWin = offshoreWinJournal(log.event.interest, this.G!);
                         logReversed.push(
-                            'New event: ' +
+                            (bankWin === undefined ? 'New event: ' : '') +
                                 journalPieces(
-                                    offshoreWinJournal(log.event.interest, this.G!) ?? log.event.interest,
+                                    bankWin ?? log.event.interest,
                                     this.preferences.colorBlind,
                                     this.playerColors
                                 )
@@ -2247,7 +2258,9 @@ export default class Game extends Vue {
                     logReversed.push('New phase: ' + log.phase);
                 } else if (log.type == 'event') {
                     if (log.event.name == GameEventName.Upkeep) {
-                        logReversed.push('New event: ' + log.event.interest);
+                        logReversed.push(
+                            offshoreWinJournal(log.event.interest, this.G!, false) ?? 'New event: ' + log.event.interest
+                        );
                     } else {
                         logReversed.push('New event: ' + log.event.name);
                     }

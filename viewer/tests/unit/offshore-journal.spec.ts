@@ -24,33 +24,41 @@ function render(log: LogMove, state = fixture(), blind = true) {
 }
 
 describe('Offshore rich journal', () => {
-    it.each(['containers', 'cash'])(
-        'badges %s winners in the rich journal without changing engine or plain logs',
-        (type) => {
-            const state = fixture();
-            state.players[0].name = 'You';
-            const message = `You wins bank ${type} lot 1`;
-            state.log = [{ type: 'event', event: { name: GameEventName.Upkeep, interest: message } }];
-            const context = { G: state, preferences: { colorBlind: true }, playerColors: ['#123456'] };
-            const root = document.createElement('div');
-            root.innerHTML = (Game as any).options.computed.logReversed.get.call(context)[0];
-            const badge = root.querySelector('[data-localized-journal] > span') as HTMLElement;
-            expect(badge.textContent).toBe('You');
-            expect(badge.style.backgroundColor).toBe('rgb(18, 52, 86)');
-            expect(badge.style.fontWeight).toBe('bold');
-            expect(root.textContent).toBe(`New event: ${message}`);
-            expect((Game as any).options.computed.logReversedSimple.get.call(context)).toEqual([
-                `New event: ${message}`,
-            ]);
-            expect((state.log[0] as any).event.interest).toBe(message);
-            const localization = mountLocalization(root, { fr }, 'fr');
-            expect(root.textContent).toContain('remporte');
-            expect(badge.textContent).toBe('You');
-            localization.setLocale('en');
-            expect(root.textContent).toContain(message);
-            localization.destroy();
-        }
-    );
+    it.each(['containers', 'cash'])('badges %s winners and omits the event prefix in both viewer journals', (type) => {
+        const state = fixture();
+        state.players[0].name = 'You';
+        const message = `You wins bank ${type} lot 1`;
+        state.log = [{ type: 'event', event: { name: GameEventName.Upkeep, interest: message } }];
+        const context = { G: state, preferences: { colorBlind: true }, playerColors: ['#123456'] };
+        const root = document.createElement('div');
+        root.innerHTML = (Game as any).options.computed.logReversed.get.call(context)[0];
+        const badge = root.querySelector('[data-localized-journal] > span') as HTMLElement;
+        expect(badge.textContent).toBe('You');
+        expect(badge.style.backgroundColor).toBe('rgb(18, 52, 86)');
+        expect(badge.style.fontWeight).toBe('bold');
+        expect(root.textContent).toBe(message);
+        expect((Game as any).options.computed.logReversedSimple.get.call(context)).toEqual([message]);
+        expect((state.log[0] as any).event.interest).toBe(message);
+        const localization = mountLocalization(root, { fr }, 'fr');
+        expect(root.textContent).toContain('remporte');
+        expect(badge.textContent).toBe('You');
+        localization.setLocale('en');
+        expect(root.textContent).toContain(message);
+        localization.destroy();
+    });
+
+    it('keeps the existing prefix for unrelated upkeep and game-start events', () => {
+        const state = fixture();
+        state.log = [
+            { type: 'event', event: { name: GameEventName.GameStart } },
+            { type: 'event', event: { name: GameEventName.Upkeep, interest: 'Ada pays $1 interest' } },
+        ];
+        const context = { G: state, preferences: { colorBlind: false }, playerColors: ['#123456'] };
+        const simple = (Game as any).options.computed.logReversedSimple.get.call(context);
+        expect(simple).toEqual(['New event: Ada pays $1 interest', 'New event: ' + GameEventName.GameStart]);
+        const rich = (Game as any).options.computed.logReversed.get.call(context);
+        expect(rich.every((line: string) => line.startsWith('New event: '))).toBe(true);
+    });
 
     it('escapes winner names, matches whole names and leaves unrelated upkeep alone', () => {
         const state = fixture();

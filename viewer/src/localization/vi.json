@@ -789,5 +789,7 @@
     "Pay into container lot {p0}: brown container": "Thanh toán vào lô container {p0}: container nâu",
     "Pay into container lot {p0}: dark green container": "Thanh toán vào lô container {p0}: container xanh lá đậm",
     "{p0} wins bank containers lot {p1}": "{p0} thắng lô container {p1} của ngân hàng",
-    "{p0} wins bank cash lot {p1}": "{p0} thắng lô tiền {p1} của ngân hàng"
+    "{p0} wins bank cash lot {p1}": "{p0} thắng lô tiền {p1} của ngân hàng",
+    "Remove from bid": "Loại khỏi giá đặt",
+    "Returned containers": "Container được trả lại"
 }

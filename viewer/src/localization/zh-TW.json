@@ -789,5 +789,7 @@
     "Pay into container lot {p0}: brown container": "支付至貨櫃拍賣標的 {p0}：棕色貨櫃",
     "Pay into container lot {p0}: dark green container": "支付至貨櫃拍賣標的 {p0}：深綠色貨櫃",
     "{p0} wins bank containers lot {p1}": "{p0} 標得銀行貨櫃拍賣標的 {p1}",
-    "{p0} wins bank cash lot {p1}": "{p0} 標得銀行現金拍賣標的 {p1}"
+    "{p0} wins bank cash lot {p1}": "{p0} 標得銀行現金拍賣標的 {p1}",
+    "Remove from bid": "從出價中移除",
+    "Returned containers": "已退回的貨櫃"
 }

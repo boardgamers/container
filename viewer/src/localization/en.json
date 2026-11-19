@@ -789,5 +789,7 @@
     "Pay into container lot {p0}: brown container": "Pay into container lot {p0}: brown container",
     "Pay into container lot {p0}: dark green container": "Pay into container lot {p0}: dark green container",
     "{p0} wins bank containers lot {p1}": "{p0} wins bank containers lot {p1}",
-    "{p0} wins bank cash lot {p1}": "{p0} wins bank cash lot {p1}"
+    "{p0} wins bank cash lot {p1}": "{p0} wins bank cash lot {p1}",
+    "Remove from bid": "Remove from bid",
+    "Returned containers": "Returned containers"
 }

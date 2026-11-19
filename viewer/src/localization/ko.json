@@ -789,5 +789,7 @@
     "Pay into container lot {p0}: brown container": "컨테이너 경매 물품 {p0}에 지불: 갈색 컨테이너",
     "Pay into container lot {p0}: dark green container": "컨테이너 경매 물품 {p0}에 지불: 짙은 녹색 컨테이너",
     "{p0} wins bank containers lot {p1}": "{p0}: 은행 컨테이너 경매 물품 {p1} 낙찰",
-    "{p0} wins bank cash lot {p1}": "{p0}: 은행 현금 경매 물품 {p1} 낙찰"
+    "{p0} wins bank cash lot {p1}": "{p0}: 은행 현금 경매 물품 {p1} 낙찰",
+    "Remove from bid": "입찰에서 제외",
+    "Returned containers": "반환된 컨테이너"
 }

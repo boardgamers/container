@@ -789,5 +789,7 @@
     "Pay into container lot {p0}: brown container": "Plătește în lotul de containere {p0}: container maro",
     "Pay into container lot {p0}: dark green container": "Plătește în lotul de containere {p0}: container verde închis",
     "{p0} wins bank containers lot {p1}": "{p0} câștigă lotul de containere {p1} al băncii",
-    "{p0} wins bank cash lot {p1}": "{p0} câștigă lotul de bani {p1} al băncii"
+    "{p0} wins bank cash lot {p1}": "{p0} câștigă lotul de bani {p1} al băncii",
+    "Remove from bid": "Elimină din ofertă",
+    "Returned containers": "Containere returnate"
 }
