@@ -85,14 +85,18 @@ export class OffshoreMotion {
         const revision = ++this.revision;
         const previous = this.locations || cargoLocations(before);
         const next = cargoLocations(after);
-        const logDelta = (after?.log.length ?? 0) - (this.logLength ?? before?.log.length ?? after?.log.length ?? 0);
+        const previousLogLength = this.logLength ?? before?.log.length ?? after?.log.length ?? 0;
+        const logDelta = (after?.log.length ?? 0) - previousLogLength;
+        // One move can also log upkeep/settlement events. Those effects belong to
+        // the same visible transition, not a history jump across multiple moves.
+        const appendedMoves = after?.log.slice(previousLogLength).filter((entry) => entry.type === 'move').length ?? 0;
         this.locations = next;
         this.logLength = after?.log.length;
         const origins = new Map<string, DOMMatrix>();
         const oldNodes = new Map<string, SVGGraphicsElement>();
         const reduced = () => !!this.media?.matches;
 
-        if (root && !reduced() && logDelta >= 0 && logDelta <= 1) {
+        if (root && !reduced() && logDelta >= 0 && appendedMoves <= 1) {
             visibleCargo(root).forEach((node, id) => {
                 const from = previous.get(id);
                 const to = next.get(id);

@@ -50,6 +50,7 @@ try {
                     window.cargoAnimations.push({
                         id: this.getAttribute('data-piece-id'),
                         frames,
+                        holding: this.closest('.bank-holding')?.getAttribute('data-owner'),
                         copies: [...document.querySelectorAll('[data-piece-id]')].filter(
                             (node) =>
                                 node.getAttribute('data-piece-id') === this.getAttribute('data-piece-id') &&
@@ -558,6 +559,31 @@ try {
         }, engine.stripSecret(copy(state)));
         assert.equal(await page.locator('.bank-holding [data-piece-id][role="button"]').count(), 0);
         assert.equal(await page.locator('.bank-harbor.canClick').count(), 0);
+        // A real pass settles a cash bid for containers and appends an upkeep event.
+        // Both prize pieces must visibly move from their lot into the winner's holding.
+        state = engine.setup(3, { offshoreIsland: true }, 'offshore-browser');
+        const prizeIds = state.offshoreBank.containerLots[0].map((piece) => piece.id);
+        state = engine.move(
+            state,
+            { name: 'callBank', data: { type: 'containers', lot: 0 }, extraData: { cash: 1 } },
+            player
+        );
+        for (let i = 0; i < 2; i++) state = engine.move(state, { name: 'pass', data: true }, state.currentPlayers[0]);
+        await page.evaluate((player) => host.emit('player', { index: player }), player);
+        await push();
+        await page.waitForFunction(() => document.querySelectorAll('.bank-holding [data-piece-id]').length === 0);
+        const previousAnimations = await page.evaluate(() => window.cargoAnimations.length);
+        const previousLogLength = state.log.length;
+        state = engine.move(state, { name: 'pass', data: true }, state.currentPlayers[0]);
+        assert.ok(state.log.length > previousLogLength + 1, 'settlement includes event and move');
+        await push();
+        await page.waitForFunction(
+            ({ ids, owner, start }) =>
+                ids.every((id) =>
+                    window.cargoAnimations.slice(start).some((a) => a.id === id && a.holding === String(owner))
+                ),
+            { ids: prizeIds, owner: player, start: previousAnimations }
+        );
         const cargoAnimations = await page.evaluate(() => window.cargoAnimations);
         assert.ok(cargoAnimations.length >= 4, 'bank transfers animate physical cargo');
         assert.ok(

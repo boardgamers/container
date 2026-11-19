@@ -1,5 +1,6 @@
 import { cargoLocations, OffshoreMotion } from '@/offshore-motion';
-import { setup } from 'container-engine';
+import { move, setup } from 'container-engine';
+import { MoveName } from 'container-engine/src/move';
 import { describe, expect, it, vi } from 'vitest';
 
 function fixture() {
@@ -46,6 +47,41 @@ describe('offshore physical cargo motion', () => {
         expect(destination.animate.mock.calls[0]).toBeDefined();
         f.motion.destroy();
         expect(destination.animation.cancel).toHaveBeenCalledOnce();
+    });
+    it('animates a legal bank-lot settlement with its pass and upkeep event', () => {
+        const f = fixture();
+        const game = f.before;
+        const bidder = game.currentPlayers[0];
+        move(game, { name: MoveName.CallBank, data: { type: 'containers', lot: 0 }, extraData: { cash: 1 } }, bidder);
+        const pass = () => move(game, { name: MoveName.Pass, data: true }, game.currentPlayers[0]);
+        pass();
+        pass();
+        const beforeLength = game.log.length;
+        f.motion.transition(f.root, null, game, f.tick);
+        pass(); // Mutates in place, with one move AND a settlement event.
+        expect(game.log.length - beforeLength).toBeGreaterThan(1);
+        expect(game.log.slice(beforeLength).filter((entry) => entry.type === 'move')).toHaveLength(1);
+        expect(game.players[bidder].bankHolding!.map((piece) => piece.id)).toContain(f.piece.id);
+        f.motion.transition(f.root, game, game, f.tick);
+        const destination = f.node();
+        f.callbacks.forEach((fn) => fn());
+        expect(destination.animate).toHaveBeenCalledOnce();
+        f.motion.destroy();
+    });
+    it('still skips backwards history and jumps over multiple moves', () => {
+        for (const backwards of [false, true]) {
+            const f = fixture();
+            const game = JSON.parse(JSON.stringify(f.before));
+            move(game, { name: MoveName.Pass, data: true }, game.currentPlayers[0]);
+            move(game, { name: MoveName.Pass, data: true }, game.currentPlayers[0]);
+            if (backwards) f.before.log = game.log;
+            else f.after.log = game.log;
+            f.motion.transition(f.root, f.before, f.after, f.tick);
+            const destination = f.node();
+            f.callbacks.forEach((fn) => fn());
+            expect(destination.animate).not.toHaveBeenCalled();
+            f.motion.destroy();
+        }
     });
     it('does not animate initial render, layout-only changes or pagination', () => {
         const f = fixture();
