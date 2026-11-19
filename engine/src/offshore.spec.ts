@@ -5,7 +5,14 @@ import { availableMoves } from './available-moves';
 import { move, setup, stripSecret } from './engine';
 import { GameState, Phase, ShipPosition } from './gamestate';
 import { Move, MoveName } from './move';
-import { bankProductionAllowed, payBankCash, reserved } from './offshore';
+import {
+    applyBankMove,
+    bankProductionAllowed,
+    normalizeBankDistribution,
+    payBankCash,
+    reserved,
+    settleBank,
+} from './offshore';
 
 function game(n = 3) {
     const g = setup(n, { offshoreIsland: true }, 'bank-tests');
@@ -48,6 +55,81 @@ describe('optional Off-Shore Bank', () => {
         expect(g.containersLeft.length).equal(base.containersLeft.length - 3);
         expect(game()).deep.equal(g);
     });
+    for (const type of ['cash', 'containers'] as const) {
+        it(`rejects empty ${type} rewards without mutation and enables replenished lots`, () => {
+            const g = game();
+            const p = g.players[g.currentPlayers[0]];
+            const b = g.offshoreBank!;
+            b.cashLots[2] = 0;
+            const bid: Move = {
+                name: MoveName.CallBank,
+                data: { type, lot: 2 },
+                extraData: type === 'cash' ? { containers: [p.containersOnFactoryStore[0].piece.id] } : { cash: 1 },
+            };
+            refresh(g);
+            expect(p.availableMoves!.callBank).not.to.deep.include(bid.data);
+            const before = cloneDeep(g);
+            expect(() => act(g, bid)).throw();
+            expect(g).deep.equal(before);
+            expect(() => applyBankMove(g, bid, p)).throw('Bank reward lot is empty or invalid');
+            expect(g).deep.equal(before);
+            for (const lot of [-1, 3, 0.5, NaN]) {
+                expect(() => applyBankMove(g, { ...bid, data: { type, lot } }, p)).throw(
+                    'Bank reward lot is empty or invalid'
+                );
+                expect(g).deep.equal(before);
+            }
+            if (type === 'cash') payBankCash(g, 3);
+            else b.containerLots[2].push(g.containersLeft.pop()!);
+            refresh(g);
+            expect(p.availableMoves!.callBank).to.deep.include(bid.data);
+            act(g, bid);
+            expect(b.auctions[0].lot).equal(2);
+            expect(p.actions).equal(1);
+        });
+        it(`blocks raises on legacy empty ${type} rewards but still settles them`, () => {
+            const g = game();
+            const b = g.offshoreBank!;
+            const owner = g.players[g.currentPlayers[0]];
+            b.cashLots[2] = 0;
+            const payment = type === 'cash' ? owner.containersOnFactoryStore.splice(0, 1) : [];
+            if (type === 'containers') owner.money--;
+            b.auctions.push({
+                type,
+                lot: 2,
+                bidder: owner.id,
+                cash: type === 'containers' ? 1 : 0,
+                containers: payment.map((container) => ({ container, district: 'factory' as const })),
+            });
+            const challenger = g.players[(owner.id + 1) % g.players.length];
+            challenger.containersOnFactoryStore.push({ piece: g.containersLeft.pop()!, price: 2, moved: false });
+            g.currentPlayers = [challenger.id];
+            refresh(g);
+            expect(challenger.availableMoves!.callBank).equal(undefined);
+            const before = cloneDeep(g);
+            expect(() =>
+                applyBankMove(
+                    g,
+                    {
+                        name: MoveName.CallBank,
+                        data: { type, lot: 2 },
+                        extraData:
+                            type === 'cash'
+                                ? { containers: challenger.containersOnFactoryStore.map((c) => c.piece.id) }
+                                : { cash: 2 },
+                    },
+                    challenger
+                )
+            ).throw();
+            expect(g).deep.equal(before);
+            g.currentPlayers = [owner.id];
+            settleBank(g);
+            normalizeBankDistribution(g);
+            expect(b.auctions).deep.equal([]);
+            expect(b.decision).equal(undefined);
+            expect(owner.offshoreStats![type === 'cash' ? 'cashAuctionsWon' : 'containerAuctionsWon']).equal(1);
+        });
+    }
     it('enables via expansion ID and persists the option', async () => {
         expect((await wrapper.init(3, ['offshore-island'], {}, 'seed')).options.offshoreIsland).equal(true);
         expect((await wrapper.init(3, [], {}, 'seed')).offshoreBank).equal(undefined);

@@ -14,6 +14,7 @@ import { describe, expect, it } from 'vitest';
 
 function fixture() {
     const state = setup(3, { offshoreIsland: true }, 'offshore-viewer');
+    state.offshoreBank!.containerLots[2].push(state.containersLeft.pop()!);
     const player = state.currentPlayers[0];
     state.players.forEach((p, i) => (p.name = `Trader ${i + 1}`));
     const own = state.players[player];
@@ -147,6 +148,39 @@ describe('Offshore bank viewer', () => {
                 await wrapper.find(`[data-type="${type}"][data-lot="${lot}"]`).trigger('click');
                 expect(wrapper.emitted('choose-offer')!.slice(-1)[0][0]).toEqual({ type, lot });
             }
+        wrapper.destroy();
+    });
+
+    it('keeps empty lot bid labels but disables selection until replenished', async () => {
+        const { state, refresh, render, own } = fixture();
+        state.containersLeft.push(...state.offshoreBank!.containerLots[2].splice(0));
+        state.offshoreBank!.cashLots[1] = 0;
+        refresh();
+        const wrapper = render();
+        for (const [type, lot] of [
+            ['containers', 2],
+            ['cash', 1],
+        ]) {
+            const node = wrapper.find(`[data-type="${type}"][data-lot="${lot}"]`);
+            expect(node.classes()).not.toContain('legal');
+            expect(node.attributes('role')).toBeUndefined();
+            expect(node.text()).toContain('Bid');
+            await node.trigger('click');
+        }
+        expect(wrapper.emitted('choose-offer')).toBeUndefined();
+        state.offshoreBank!.containerLots[2].push(state.containersLeft.pop()!);
+        state.offshoreBank!.cashLots[1] = 1;
+        refresh();
+        await wrapper.setProps({ availableMoves: own.availableMoves });
+        for (const [type, lot] of [
+            ['containers', 2],
+            ['cash', 1],
+        ]) {
+            const node = wrapper.find(`[data-type="${type}"][data-lot="${lot}"]`);
+            expect(node.classes()).toContain('legal');
+            await node.trigger('click');
+            expect(wrapper.emitted('choose-offer')!.slice(-1)[0][0]).toEqual({ type, lot });
+        }
         wrapper.destroy();
     });
 

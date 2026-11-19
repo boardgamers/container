@@ -28,6 +28,11 @@ export function seizureChoices(G: GameState, player: Player): ContainerPiece[] {
         ].find((a) => a.length > 0) || []
     );
 }
+function hasBankPrize(G: GameState, type: 'cash' | 'containers', lot: number): boolean {
+    if (!Number.isInteger(lot) || lot < 0 || lot >= 3) return false;
+    const b = G.offshoreBank!;
+    return type === 'cash' ? b.cashLots[lot] > 0 : type === 'containers' && b.containerLots[lot].length > 0;
+}
 export function bankMoves(G: GameState, player: Player): AvailableMoves {
     const b = G.offshoreBank!;
     const d = b.decision;
@@ -59,7 +64,7 @@ export function bankMoves(G: GameState, player: Player): AvailableMoves {
                   (active?.containers.length || 0);
         if (!canBid) continue;
         for (let lot = 0; lot < 3; lot++) {
-            if (!active || active.lot === lot) offers.push({ type, lot });
+            if ((!active || active.lot === lot) && hasBankPrize(G, type, lot)) offers.push({ type, lot });
         }
     }
     if (offers.length) moves[MoveName.CallBank] = offers;
@@ -153,6 +158,7 @@ export function applyBankMove(G: GameState, move: Move, p: Player): { handled: b
     const b = G.offshoreBank;
     if (!b) return { handled: false };
     if (move.name === MoveName.CallBank) {
+        assert(move.data && hasBankPrize(G, move.data.type, move.data.lot), 'Bank reward lot is empty or invalid');
         assert(
             move.extraData &&
                 typeof move.extraData === 'object' &&

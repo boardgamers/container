@@ -49,7 +49,9 @@ try {
         });
         await page.goto(`http://127.0.0.1:${server.address().port}/`);
         let state = engine.setup(3, { offshoreIsland: true }, 'offshore-browser');
+        state.offshoreBank.containerLots[2].push(state.containersLeft.pop());
         const player = state.currentPlayers[0];
+        state.players[player].availableMoves = engine.availableMoves(state, state.players[player]);
         state.players.forEach((p, i) => (p.name = ['Ada', 'Benoît', 'Cleo'][i]));
         state.newTurn = true;
         await page.evaluate(
@@ -73,6 +75,35 @@ try {
         await page.waitForSelector('.offshore-bank .offshore-lot', { state: 'attached' });
         assert.equal(await page.locator('.offshore-bank .offshore-lot').count(), 6);
         assert.equal(await page.locator('text=OPTIONAL EXPANSION').count(), 0);
+        // Empty rewards remain visible, but cannot open a draft or emit a move.
+        const reward = state.offshoreBank.containerLots[2].pop();
+        state.containersLeft.push(reward);
+        state.offshoreBank.cashLots[1] = 0;
+        await push();
+        for (const [type, lot] of [
+            ['containers', 2],
+            ['cash', 1],
+        ]) {
+            const node = page.locator(`.offshore-lot[data-type="${type}"][data-lot="${lot}"]`);
+            assert.equal(await node.getAttribute('role'), null);
+            assert.ok(!(await node.getAttribute('class')).split(/\s+/).includes('legal'));
+            assert.ok((await node.textContent()).includes('Bid'));
+            await node.click();
+            assert.equal(await page.locator('.bank-draft').count(), 0);
+            assert.equal(await page.evaluate(() => moves.length), 0);
+        }
+        state.offshoreBank.containerLots[2].push(state.containersLeft.pop());
+        state.offshoreBank.cashLots[1] = 2;
+        await push();
+        for (const [type, lot] of [
+            ['containers', 2],
+            ['cash', 1],
+        ]) {
+            assert.equal(
+                await page.locator(`.offshore-lot[data-type="${type}"][data-lot="${lot}"]`).getAttribute('role'),
+                'button'
+            );
+        }
         const lotBounds = await page.locator('.offshore-lot[data-type="containers"][data-lot="2"]').boundingBox();
         const pierBounds = await page.locator('.bank-piers').boundingBox();
         assert.ok(pierBounds.x >= lotBounds.x + lotBounds.width, 'harbor is beside the bank lots');
